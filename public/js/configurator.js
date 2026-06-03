@@ -797,9 +797,20 @@ async function submitAanvraag(){
 }
 
 /* ============ assistent ============ */
-const chatMsgs=[{role:'assistant',content:'Hoi! Ik help je inmeten. Gaat het om een raam, een schuifpui of een voordeur — en is het een nieuwe opening (dagmaat) of vervanging?'}];
+const ASSIST_ON = (typeof window!=='undefined' && window.__assistantOn === true);
+const chatMsgs = ASSIST_ON
+  ? [{role:'assistant',content:'Hoi! Ik help je inmeten. Gaat het om een raam, een schuifpui of een voordeur — en is het een nieuwe opening (dagmaat) of vervanging?'}]
+  : [{role:'assistant',content:'De inmeet-assistent is nog niet geactiveerd (er ontbreekt een API-sleutel). Meet ondertussen de breedte op drie hoogtes (boven, midden, onder) en de hoogte op drie breedtes (links, midden, rechts), en noteer telkens de kleinste maat. De volledige uitleg vind je op de Werkwijze-pagina.'}];
+function initAssistant(){
+  renderChat();
+  if(!ASSIST_ON){
+    const inp=$('chatInput'); if(inp){ inp.disabled=true; inp.placeholder='Assistent nog niet geactiveerd'; }
+    const b=document.querySelector('.assistant .a-input button'); if(b) b.disabled=true;
+  }
+}
 function renderChat(){ const b=$('chatBody'); if(!b)return; b.innerHTML=chatMsgs.map(m=>`<div class="msg ${m.role==='assistant'?'bot':'user'}">${m.content.replace(/</g,'&lt;')}</div>`).join(''); b.scrollTop=b.scrollHeight; }
 async function sendChat(){
+  if(!ASSIST_ON) return;
   const inp=$('chatInput'),txt=inp.value.trim(); if(!txt)return;
   chatMsgs.push({role:'user',content:txt}); inp.value=''; chatMsgs.push({role:'assistant',content:'…'}); renderChat();
   try{ const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMsgs.filter(m=>m.content!=='…')})}); const d=await r.json(); chatMsgs.pop(); chatMsgs.push({role:'assistant',content:d.ok?d.reply:(d.error||'Sorry, dat lukte niet.')}); }
@@ -844,7 +855,7 @@ function init(){
   chips('roedePatroonChips',ROEDEPATRONEN,state.roedePatroon,i=>{state.roedePatroon=i;draw();});
   chips('ventilatieChips',VENTILATIE,state.ventilatie,i=>state.ventilatie=i);
   buildDeurIndeling(); buildDeurGlas();
-  buildIndeling(); renderChat(); renderCart();
+  buildIndeling(); initAssistant(); renderCart();
   showStep(0); draw();
 }
 init();

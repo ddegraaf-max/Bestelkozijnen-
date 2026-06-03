@@ -59,7 +59,7 @@ const sampleReq = {
 // pagina-definities: key -> { view, locals }
 const pages = [
   ['home',         'home.ejs',            { ...base, active: 'home', title: 'Home' }],
-  ['configurator', 'configurator.ejs',    { ...base, active: 'configurator', title: 'Configurator' }],
+  ['configurator', 'configurator.ejs',    { ...base, active: 'configurator', title: 'Configurator', assistantEnabled: true }],
   ['kunststof',    'materiaal.ejs',       { ...base, active: 'materialen', title: 'Kunststof', m: materials.kunststof }],
   ['hout',         'materiaal.ejs',       { ...base, active: 'materialen', title: 'Hout', m: materials.hout }],
   ['aluminium',    'materiaal.ejs',       { ...base, active: 'materialen', title: 'Aluminium', m: materials.aluminium }],

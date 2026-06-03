@@ -13,6 +13,14 @@ npm start              # http://localhost:3000
 ```
 
 ## Deploy op Railway
+
+> **Upload in één keer de hele map.** Gebruik GitHub → Add file → Upload files en sleep de
+> **volledige uitgepakte map in één keer** in het uploadvak (incl. submappen). Niet bestand-voor-bestand:
+> dan blijft een map als **`routes/`** achter en crasht de start met "Cannot find module './routes/auth'".
+> Controleer dat **`routes/`**, **`views/`** en **`public/`** compleet in de repo staan.
+> Verwijder ook een eventueel los bestand **`data`** (zonder extensie) uit de repo-root — alleen `data.js` moet blijven.
+> De code start verder zonder dat je iets hoeft in te stellen; alle variabelen hieronder zijn optioneel.
+
 1. Push deze map naar GitHub, koppel de repo aan Railway (start = `npm start`).
 2. Zet de environment variables (zie `.env.example`):
    - `SESSION_SECRET` — lange willekeurige string (verplicht voor veilige login).

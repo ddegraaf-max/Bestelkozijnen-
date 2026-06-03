@@ -41,7 +41,7 @@ module.exports = function (company, mailer) {
     if (!Array.isArray(messages)) return res.status(400).json({ ok: false, error: 'Ongeldige vraag.' });
 
     if (!process.env.ANTHROPIC_API_KEY) {
-      return res.json({ ok: true, reply: 'De inmeet-assistent is nog niet geactiveerd (er ontbreekt een API-sleutel). Meet ondertussen de breedte op drie hoogtes (boven, midden, onder) en de hoogte op drie breedtes (links, midden, rechts), en noteer telkens de kleinste maat.' });
+      return res.json({ ok: true, reply: 'De inmeet-assistent is nog niet geactiveerd (er ontbreekt een API-sleutel). Meet ondertussen de breedte op drie hoogtes (boven, midden, onder) en de hoogte op drie breedtes (links, midden, rechts), en noteer telkens de kleinste maat. De volledige uitleg vind je op de Werkwijze-pagina.' });
     }
 
     const system = `Je bent de inmeet-assistent van ${company.name} (kozijnen op maat). Je helpt particuliere klanten in begrijpelijk Nederlands om hun kozijn, deur of schuifpui zelf correct op te meten. Wees kort, vriendelijk en concreet.

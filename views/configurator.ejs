@@ -271,7 +271,7 @@
               <line x1="252" y1="50" x2="252" y2="240" stroke="#2F6E4F" stroke-width="1.3"/><text x="262" y="148" font-family="JetBrains Mono,monospace" font-size="11" fill="#1d4a35" transform="rotate(-90 262 148)" text-anchor="middle">hoogte</text>
               <text x="150" y="270" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#3a382f" text-anchor="middle">buiten: buitenmaat</text></svg></figure>
           </div>
-          <p class="meet-tip">Meet de breedte op 3 hoogtes en de hoogte op 3 breedtes &mdash; we nemen automatisch de kleinste maat.</p>
+          <p class="meet-tip">Meet de breedte op 3 hoogtes en de hoogte op 3 breedtes &mdash; we nemen automatisch de kleinste maat. <a href="/werkwijze">Zo meet je op &rarr;</a></p>
           <div class="meet-grid">
             <div><label>Breedte boven/midden/onder</label><div class="trio"><input id="mb1" type="number" placeholder="boven" oninput="detail()"><input id="mb2" type="number" placeholder="midden" oninput="detail()"><input id="mb3" type="number" placeholder="onder" oninput="detail()"></div></div>
             <div><label>Hoogte links/midden/rechts</label><div class="trio"><input id="mh1" type="number" placeholder="links" oninput="detail()"><input id="mh2" type="number" placeholder="midden" oninput="detail()"><input id="mh3" type="number" placeholder="rechts" oninput="detail()"></div></div>
@@ -279,6 +279,7 @@
             <div><label>Muurdikte / inbouwdiepte</label><div class="trio"><input id="mmuur" type="number" placeholder="mm"></div></div>
           </div>
           <div class="assistant" style="margin-top:16px">
+            <script>window.__assistantOn = <%= (typeof assistantEnabled !== 'undefined' && assistantEnabled) ? 'true' : 'false' %>;</script>
             <div class="a-head"><span class="pulse"></span> Inmeet-assistent</div>
             <div class="a-body" id="chatBody"></div>
             <div class="a-input"><input id="chatInput" placeholder="Stel je vraag&hellip;" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Stuur</button></div>

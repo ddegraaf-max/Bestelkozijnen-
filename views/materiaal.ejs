@@ -11,7 +11,7 @@
 </section>
 
 <section class="wrap block" style="padding-top:10px">
-  <div style="display:grid;grid-template-columns:1.3fr .7fr;gap:36px;align-items:start">
+  <div class="mat-grid">
     <div class="prose">
       <p><%= m.intro %></p>
       <h2>Voordelen</h2>
@@ -22,12 +22,14 @@
       <% if (m.systemen) { %>
         <h2><%= m.systemenTitel || 'Profiellijnen (draai-/kiep)' %></h2>
         <p>We leveren meerdere profiellijnen, zodat je kunt kiezen tussen een scherpe standaard en topisolatie. De exacte keuze bepalen we samen op basis van je wensen en budget.</p>
-        <table class="spec-table" style="margin-top:8px">
+        <div class="table-scroll">
+        <table class="spec-table">
           <tr><th>Lijn</th><th><%= m.kolom2 || 'Kamers' %></th><th>Diepte</th><th>Uw vanaf</th><th>Geluid (dB)</th><th>Standaard glas</th></tr>
           <% m.systemen.forEach(function(s){ %>
           <tr><td style="color:var(--ink);font-weight:600"><%= s.naam %></td><td><%= s.kamers %></td><td><%= s.diepte %></td><td><%= s.uw %></td><td><%= s.db %></td><td><%= s.glas %></td></tr>
           <% }) %>
         </table>
+        </div>
         <p style="font-size:13px;color:var(--muted);margin-top:6px">Uw = warmtedoorgang van het complete kozijn (lager = beter), gemeten bij een referentiemaat. Standaardisolatie is af fabriek; triple glas is op de geïsoleerde lijnen mogelijk<% if (m.slug==='kunststof') { %>, evenals RC2-inbraakwerendheid op de meeste lijnen<% } %>.</p>
         <h3 style="margin-top:22px">Kort per lijn</h3>
         <ul>
