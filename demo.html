@@ -1902,13 +1902,22 @@ l-22 93 24 55 c14 32 29 93 35 142 13 110 13 121 0 155 -9 24 -16 27 -54 27
         KVK: 59683198<br>
         BTW: NL853603108B01
       </p>
-      <div class="placeholder" style="margin-top:16px">PLAATSHOUDER — openingstijden, werkgebied en eventueel een kaart/route.</div>
+      <div class="contact-facts" style="margin-top:18px">
+        <div class="fact"><span class="fk">Bereikbaarheid</span><span class="fv">Telefonisch ma&ndash;za <b>09:00&ndash;17:00</b></span></div>
+        <div class="fact"><span class="fk">E-mail</span><span class="fv">Reactie meestal binnen <b>1 werkdag</b></span></div>
+        <div class="fact"><span class="fk">Offerte</span><span class="fv">Meestal binnen <b>15 min</b> in je beveiligde portaal (met tweestapsverificatie)</span></div>
+        <div class="fact"><span class="fk">Werkgebied</span><span class="fv">Heel <b>Nederland</b> &mdash; levering door het hele land, montage op aanvraag</span></div>
+        <div class="fact"><span class="fk">Bezoek</span><span class="fv">Alleen op afspraak</span></div>
+      </div>
+      <iframe title="Kaart &mdash; Torenlaan 5A, 1402 AT Bussum" style="width:100%;height:220px;border:0;border-radius:12px;margin-top:16px" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Torenlaan%205A%2C%201402%20AT%20Bussum&output=embed"></iframe>
+      <a href="https://www.google.com/maps/search/?api=1&query=Torenlaan%205A%2C%201402%20AT%20Bussum" target="_blank" rel="noopener noreferrer" style="display:inline-block;margin-top:10px;color:var(--accent-ink);font-weight:600">Routebeschrijving &rarr;</a>
     </div>
     <div class="card">
       <h3>Stuur een bericht</h3>
       <div class="fld" style="margin-top:12px"><label>Naam *</label><input id="naam" placeholder="Je naam"></div>
       <div class="fld"><label>E-mail *</label><input id="email" type="email" placeholder="jij@voorbeeld.nl"></div>
       <div class="fld"><label>Bericht</label><textarea id="bericht" style="min-height:90px" placeholder="Waar kunnen we mee helpen?"></textarea></div>
+      <input id="hp_website" name="website" autocomplete="off" tabindex="-1" aria-hidden="true" style="position:absolute;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0">
       <button class="btn btn-primary" id="sendBtn" style="width:100%">Versturen</button>
       <p id="formMsg" style="margin-top:10px;font-family:var(--font-mono);font-size:13px"></p>
     </div>
@@ -1916,13 +1925,14 @@ l-22 93 24 55 c14 32 29 93 35 142 13 110 13 121 0 155 -9 24 -16 27 -54 27
 </section>
 
 <script>
+var __formLoaded = Date.now();
 document.getElementById('sendBtn').addEventListener('click', async function(){
   const msg=document.getElementById('formMsg');
-  const payload={naam:naam.value,email:email.value,bericht:bericht.value,samenvatting:'Contactformulier'};
+  const payload={naam:naam.value,email:email.value,bericht:bericht.value,samenvatting:'Contactformulier',website:document.getElementById('hp_website').value,elapsed:Date.now()-__formLoaded};
   if(!payload.naam||!payload.email){msg.style.color='var(--accent-ink)';msg.textContent='Vul minimaal naam en e-mail in.';return;}
   this.disabled=true;msg.style.color='var(--muted)';msg.textContent='Versturen…';
   try{
-    const r=await fetch('/api/offerte',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const r=await fetch('/api/contact',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     const d=await r.json();
     if(d.ok){msg.style.color='var(--ok)';msg.textContent='✓ Bedankt voor je bericht!';}
     else{msg.style.color='var(--accent-ink)';msg.textContent=d.error||'Er ging iets mis.';this.disabled=false;}
@@ -2222,11 +2232,11 @@ document.getElementById('sendBtn').addEventListener('click', async function(){
   <h3 style="font-size:18px;margin:22px 0 6px">Status</h3>
   <ul class="timeline">
     
-      <li>Offerte klaar &middot; 2-6-2026, 17:15:54</li>
+      <li>Offerte klaar &middot; 2-6-2026, 17:42:17</li>
     
-      <li>In behandeling &middot; 2-6-2026, 16:59:14</li>
+      <li>In behandeling &middot; 2-6-2026, 17:25:37</li>
     
-      <li>Ontvangen &middot; 2-6-2026, 15:12:34</li>
+      <li>Ontvangen &middot; 2-6-2026, 15:38:57</li>
     
   </ul>
 </section>
@@ -2245,7 +2255,7 @@ document.getElementById('sendBtn').addEventListener('click', async function(){
       <a class="req-row" href="/beheer/aanvraag/demo1">
         <div>
           <div class="ref">WEB-26-1024 &middot; Jolanda de Vries</div>
-          <div class="meta">jolanda@voorbeeld.nl &middot; 3 element(en) &middot; 2-6-2026, 15:12:34</div>
+          <div class="meta">jolanda@voorbeeld.nl &middot; 3 element(en) &middot; 2-6-2026, 15:38:57</div>
         </div>
         <span class="status offerte_klaar">Offerte klaar</span>
       </a>

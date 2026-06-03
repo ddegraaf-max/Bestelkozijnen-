@@ -65,8 +65,14 @@ app.get('/privacybeleid', (req, res) => render(res, 'privacy', { active: '', tit
 
 // contactformulier
 app.post('/api/contact', async (req, res) => {
-  const { naam, email, bericht } = req.body;
+  const { naam, email, bericht, website, elapsed } = req.body;
+  // Anti-spam: honeypot ingevuld of formulier verdacht snel verzonden -> stil negeren (bot niet wijzer maken)
+  if (website) return res.json({ ok: true });
+  if (typeof elapsed === 'number' && elapsed < 2500) return res.json({ ok: true });
   if (!naam || !email) return res.status(400).json({ ok: false, error: 'Vul naam en e-mail in.' });
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email))) return res.status(400).json({ ok: false, error: 'Vul een geldig e-mailadres in.' });
+  if (String(naam).length > 120 || String(email).length > 160 || String(bericht || '').length > 4000)
+    return res.status(400).json({ ok: false, error: 'Bericht is te lang.' });
   mailer.notifyNewRequest({ ref: 'CONTACT', klant: { naam, email, telefoon: '', opmerking: bericht }, samenvatting: 'Contactformulier' }).catch(() => {});
   res.json({ ok: true });
 });
