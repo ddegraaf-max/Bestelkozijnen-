@@ -37,18 +37,16 @@
       <a href="/montage" class="<%= active==='montage'?'active':'' %>">Montage</a>
       <a href="/veelgestelde-vragen" class="<%= active==='faq'?'active':'' %>">FAQ</a>
       <a href="/contact" class="<%= active==='contact'?'active':'' %>">Contact</a>
-    </nav>
-    <span class="nav-spacer"></span>
-    <div class="nav-cta">
+      <span class="nav-sep" aria-hidden="true"></span>
       <% if (currentUser) { %>
-        <% if (currentUser.role === 'beheer') { %><a href="/beheer" class="nav-mini">Beheer</a><% } %>
-        <a href="/portaal" class="nav-mini">Mijn portaal</a>
-        <a href="/uitloggen" class="btn btn-dark" style="padding:9px 15px;font-size:13.5px">Uitloggen</a>
+        <% if (currentUser.role === 'beheer') { %><a href="/beheer" class="nav-acc <%= active==='beheer'?'active':'' %>">Beheer</a><% } %>
+        <a href="/portaal" class="nav-acc">Mijn portaal</a>
+        <a href="/uitloggen" class="nav-btn">Uitloggen</a>
       <% } else { %>
-        <a href="/inloggen" class="nav-mini">Inloggen</a>
-        <a href="/configurator" class="btn btn-dark" style="padding:9px 15px;font-size:13.5px">Stel samen</a>
+        <a href="/inloggen" class="nav-acc">Inloggen</a>
+        <a href="/configurator" class="nav-btn">Stel samen</a>
       <% } %>
-    </div>
+    </nav>
   </div>
 </header>
 <main>
