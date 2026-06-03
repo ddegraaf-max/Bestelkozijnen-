@@ -1,13 +1,33 @@
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 // JSON-bestand datalaag. DATA_DIR default ./data (mount een Railway-volume
 // op dit pad voor blijvende opslag). Later eenvoudig te vervangen door Postgres.
-const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+let DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+
+// Boot-veilig: als DATA_DIR niet bruikbaar is (bijv. een verdwaald bestand met
+// de naam "data" in de repo, of een verkeerd gekoppeld volume), val terug op
+// een schrijfbare tijdelijke map zodat de app niet crasht bij het opstarten.
+function dirUsable(dir) {
+  try {
+    if (fs.existsSync(dir) && !fs.statSync(dir).isDirectory()) return false;
+    fs.mkdirSync(path.join(dir, 'uploads'), { recursive: true });
+    return true;
+  } catch (e) { return false; }
+}
+if (!dirUsable(DATA_DIR)) {
+  const fallback = path.join(os.tmpdir(), 'bko-data');
+  console.warn('[db] WAARSCHUWING: DATA_DIR "' + DATA_DIR + '" is geen bruikbare map. ' +
+    'Val tijdelijk terug op "' + fallback + '" — let op: opslag is dan NIET blijvend. ' +
+    'Controleer het Railway-volume (mountpad /app/data, als map) of verwijder een ' +
+    'eventueel bestand met de naam "data" uit de repo-root.');
+  DATA_DIR = fallback;
+  fs.mkdirSync(path.join(DATA_DIR, 'uploads'), { recursive: true });
+}
+
 const UPLOAD_DIR = path.join(DATA_DIR, 'uploads');
 const DB_FILE = path.join(DATA_DIR, 'db.json');
-
-fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
 function load() {
   try { return JSON.parse(fs.readFileSync(DB_FILE, 'utf8')); }
