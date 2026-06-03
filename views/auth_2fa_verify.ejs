@@ -1,0 +1,14 @@
+<%- include('partials/header') %>
+<section class="wrap block narrow" style="padding-top:48px">
+  <div class="auth-card">
+    <h1>Verificatiecode</h1>
+    <p class="sub">Open je authenticator-app en vul de actuele 6-cijferige code in.</p>
+    <% if (error) { %><div class="alert"><%= error %></div><% } %>
+    <form method="POST" action="/2fa">
+      <div class="fld"><label>6-cijferige code</label><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" placeholder="123 456" autofocus style="letter-spacing:.3em;font-family:var(--font-mono);font-size:18px;text-align:center"></div>
+      <button class="btn btn-primary" style="width:100%">Verifiëren &amp; inloggen</button>
+    </form>
+    <p class="muted-link" style="margin-top:16px"><a href="/inloggen">Terug naar inloggen</a></p>
+  </div>
+</section>
+<%- include('partials/footer') %>

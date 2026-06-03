@@ -3,7 +3,7 @@ const express = require('express');
 const path = require('path');
 const cookieSession = require('cookie-session');
 const db = require('./db');
-const { company, materials } = require('./data');
+const { company, materials } = require('./data.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;

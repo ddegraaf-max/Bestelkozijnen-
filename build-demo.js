@@ -3,7 +3,7 @@
 const ejs = require('ejs');
 const fs = require('fs');
 const path = require('path');
-const { company, materials } = require('./data');
+const { company, materials } = require('./data.js');
 const { STATUS_LABELS } = require('./routes/api');
 
 const V = p => path.join(__dirname, 'views', p);
