@@ -1,0 +1,235 @@
+/* =========================================================
+   Configurator — gescoped onder .cfg (geen botsing met site)
+   ========================================================= */
+.cfg .cfg-head{padding:34px 0 8px}
+.cfg .cfg-head h1{font-size:clamp(28px,5vw,46px)}
+.cfg .cfg-head h1 em{font-style:normal;color:var(--accent)}
+.cfg .cfg-head p{color:var(--muted);max-width:560px;margin-top:12px;font-size:16px}
+
+.cfg .toolbar{display:flex;justify-content:flex-end;margin:8px 0 14px}
+.cfg .cart-btn{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-mono);font-weight:500;font-size:13px;background:var(--ink);color:var(--paper);border:none;padding:10px 16px;border-radius:10px;cursor:pointer;transition:.15s}
+.cfg .cart-btn:hover{transform:translateY(-1px)}
+.cfg .cart-count{background:var(--accent);color:#fff;border-radius:20px;min-width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;padding:0 5px}
+
+.cfg .grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:26px;padding-bottom:70px;align-items:start}
+@media(max-width:960px){.cfg .grid{grid-template-columns:1fr}}
+
+.cfg .preview{position:sticky;top:90px}
+@media(max-width:960px){.cfg .preview{position:static}}
+.cfg .canvas{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.cfg .canvas-head{display:flex;justify-content:space-between;align-items:center;padding:13px 18px;border-bottom:1px solid var(--line);font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.cfg .canvas-head .dot{display:inline-flex;gap:5px}
+.cfg .canvas-head .dot i{width:8px;height:8px;border-radius:50%;background:var(--line-strong);display:block}
+.cfg .stage{padding:26px 22px;display:flex;align-items:center;justify-content:center;min-height:330px;background:repeating-linear-gradient(45deg,transparent,transparent 11px,rgba(199,194,181,.13) 11px,rgba(199,194,181,.13) 12px)}
+.cfg .stage svg{max-width:100%;height:auto;display:block}
+
+.cfg .price-card{margin-top:18px;background:var(--ink);color:var(--paper);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+.cfg .price-row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:13px;color:#bdb9af;padding:4px 0}
+.cfg .price-row span:last-child{color:var(--paper)}
+.cfg .price-row.sub{font-size:12px;color:#908c83}
+.cfg .price-divider{height:1px;background:rgba(255,255,255,.13);margin:12px 0}
+.cfg .price-total{display:flex;justify-content:space-between;align-items:baseline}
+.cfg .price-total .lbl{font-family:var(--font-mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#bdb9af}
+.cfg .price-total .val{font-family:var(--font-display);font-weight:800;font-size:34px;letter-spacing:-.02em}
+.cfg .cta{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:18px}
+.cfg .cta .btn{width:100%}
+.cfg .btn-ghost{color:var(--paper);border-color:rgba(255,255,255,.28)}
+.cfg .btn-ghost:hover{border-color:var(--paper)}
+.cfg .note{font-family:var(--font-mono);font-size:10.5px;color:#908c83;text-align:center;margin-top:12px;letter-spacing:.03em}
+
+.cfg .options{display:flex;flex-direction:column;gap:16px}
+.cfg .group{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px 18px 20px;box-shadow:var(--shadow)}
+.cfg .g-head{display:flex;align-items:center;gap:10px;margin-bottom:15px}
+.cfg .g-num{font-family:var(--font-mono);font-weight:700;font-size:11px;color:#fff;background:var(--ink);width:22px;height:22px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.cfg .g-title{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:-.01em}
+.cfg .g-head .hint{margin-left:auto;font-family:var(--font-mono);font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.1em}
+
+.cfg .chips{display:flex;flex-wrap:wrap;gap:8px}
+.cfg .chip{flex:1 1 auto;min-width:fit-content;font-family:var(--font-body);font-weight:600;font-size:13.5px;padding:11px 13px;border:1.5px solid var(--line-strong);background:var(--panel-2);border-radius:10px;cursor:pointer;transition:.13s;text-align:center;color:var(--ink)}
+.cfg .chip small{display:block;font-family:var(--font-mono);font-weight:500;font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:.02em}
+.cfg .chip:hover{border-color:var(--ink)}
+.cfg .chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink)}
+.cfg .chip[aria-pressed="true"] small{color:var(--accent-ink)}
+
+.cfg .swatches{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.cfg .swatch{cursor:pointer;border:1.5px solid var(--line);border-radius:10px;padding:7px;background:var(--panel-2);transition:.13s;text-align:center}
+.cfg .swatch:hover{border-color:var(--ink)}
+.cfg .swatch[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.cfg .swatch .sw{height:34px;border-radius:6px;border:1px solid rgba(0,0,0,.12);margin-bottom:6px}
+.cfg .swatch span{font-size:11px;font-weight:600;display:block;line-height:1.2}
+.cfg .swatch small{font-family:var(--font-mono);font-size:9.5px;color:var(--muted)}
+
+.cfg .dims{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.cfg .dim label{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.cfg .dim .field{display:flex;align-items:center;border:1.5px solid var(--line-strong);border-radius:10px;background:var(--panel-2);overflow:hidden}
+.cfg .dim input{flex:1;border:none;background:transparent;font-family:var(--font-mono);font-weight:700;font-size:17px;padding:11px 12px;width:100%;color:var(--ink);outline:none}
+.cfg .dim .unit{font-family:var(--font-mono);font-size:12px;color:var(--muted);padding-right:13px}
+.cfg .dim .field:focus-within{border-color:var(--accent)}
+.cfg .range-hint{font-family:var(--font-mono);font-size:10px;color:var(--faint);margin-top:6px}
+.cfg .area-pill{font-family:var(--font-mono);font-size:12px;color:var(--ink);background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:8px 12px;margin-top:12px;display:flex;justify-content:space-between}
+
+.cfg .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-top:1px solid var(--line)}
+.cfg .toggle-row:first-of-type{border-top:none}
+.cfg .toggle-row .t-lbl{font-weight:600;font-size:14px}
+.cfg .toggle-row .t-sub{font-family:var(--font-mono);font-size:10.5px;color:var(--muted)}
+.cfg .toggle-row .t-price{font-family:var(--font-mono);font-size:12px;color:var(--accent-ink);margin-right:12px}
+.cfg .switch{position:relative;width:46px;height:26px;flex:none;cursor:pointer}
+.cfg .switch input{opacity:0;width:0;height:0}
+.cfg .slider{position:absolute;inset:0;background:var(--line-strong);border-radius:30px;transition:.18s}
+.cfg .slider::before{content:"";position:absolute;height:20px;width:20px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.18s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.cfg .switch input:checked+.slider{background:var(--accent)}
+.cfg .switch input:checked+.slider::before{transform:translateX(20px)}
+
+.cfg .qty{display:flex;align-items:center;border:1.5px solid var(--line-strong);border-radius:10px;overflow:hidden;width:fit-content}
+.cfg .qty button{border:none;background:var(--panel-2);width:42px;height:42px;font-size:20px;cursor:pointer;color:var(--ink);font-family:var(--font-display)}
+.cfg .qty button:hover{background:var(--accent-soft)}
+.cfg .qty input{width:56px;text-align:center;border:none;border-left:1px solid var(--line);border-right:1px solid var(--line);font-family:var(--font-mono);font-weight:700;font-size:16px;height:42px;outline:none;background:var(--panel)}
+
+/* drawers / modal (binnen .cfg) */
+.cfg .scrim{position:fixed;inset:0;background:rgba(20,19,15,.45);backdrop-filter:blur(3px);opacity:0;pointer-events:none;transition:.2s;z-index:60}
+.cfg .scrim.open{opacity:1;pointer-events:auto}
+.cfg .drawer{position:fixed;top:0;right:0;height:100%;width:min(420px,92vw);background:var(--paper);box-shadow:-20px 0 60px rgba(0,0,0,.2);transform:translateX(100%);transition:.28s cubic-bezier(.4,0,.2,1);z-index:70;display:flex;flex-direction:column}
+.cfg .drawer.open{transform:none}
+.cfg .drawer-head{display:flex;justify-content:space-between;align-items:center;padding:20px;border-bottom:1px solid var(--line)}
+.cfg .drawer-head h3{font-family:var(--font-display);font-weight:800;font-size:20px}
+.cfg .x{border:none;background:none;font-size:24px;cursor:pointer;color:var(--muted);line-height:1}
+.cfg .drawer-body{flex:1;overflow:auto;padding:18px 20px}
+.cfg .cart-item{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px;background:var(--panel)}
+.cfg .cart-item .ci-top{display:flex;justify-content:space-between;gap:8px}
+.cfg .cart-item h4{font-family:var(--font-display);font-weight:700;font-size:14.5px}
+.cfg .cart-item .ci-spec{font-family:var(--font-mono);font-size:11px;color:var(--muted);margin-top:6px;line-height:1.6}
+.cfg .cart-item .ci-bot{display:flex;justify-content:space-between;align-items:center;margin-top:10px}
+.cfg .cart-item .ci-price{font-family:var(--font-mono);font-weight:700;font-size:15px}
+.cfg .ci-del{border:none;background:none;color:var(--accent);font-family:var(--font-mono);font-size:11px;cursor:pointer;text-decoration:underline}
+.cfg .cart-empty{text-align:center;color:var(--muted);padding:50px 20px;font-size:14px}
+.cfg .drawer-foot{padding:18px 20px;border-top:1px solid var(--line);background:var(--panel)}
+.cfg .drawer-foot .ftot{display:flex;justify-content:space-between;font-family:var(--font-display);font-weight:800;font-size:20px;margin-bottom:14px}
+.cfg .drawer-foot .ftot small{font-family:var(--font-mono);font-size:11px;color:var(--muted);font-weight:500}
+.cfg .quote-summary{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);line-height:1.7;margin-bottom:16px;white-space:pre-wrap}
+
+.cfg .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120%);background:var(--ink);color:var(--paper);padding:14px 22px;border-radius:12px;font-weight:600;font-size:14px;z-index:90;transition:.3s;box-shadow:var(--shadow);display:flex;align-items:center;gap:10px}
+.cfg .toast.show{transform:translateX(-50%)}
+.cfg .toast .ok{color:#7bd9a3}
+
+/* ---- inmeet-hulp ---- */
+.cfg .inmeet{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
+.cfg .inmeet summary{cursor:pointer;font-family:var(--font-display);font-weight:700;font-size:14px;color:var(--accent-ink);list-style:none;display:flex;align-items:center;gap:8px}
+.cfg .inmeet summary::-webkit-details-marker{display:none}
+.cfg .inmeet summary::before{content:"+";font-size:18px;color:var(--accent)}
+.cfg .inmeet[open] summary::before{content:"\2212"}
+.cfg .meet-draw{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.cfg .meet-draw figure{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:6px;margin:0}
+.cfg .meet-draw svg{width:100%;height:auto;display:block}
+.cfg .meet-tip{font-size:13px;color:var(--muted);margin:12px 0}
+.cfg .meet-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.cfg .meet-grid,.cfg .meet-draw{grid-template-columns:1fr}}
+.cfg .meet-grid label{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:5px}
+.cfg .trio{display:flex;gap:6px}
+.cfg .trio input{flex:1;width:100%;border:1.5px solid var(--line-strong);background:var(--panel-2);border-radius:8px;padding:9px 8px;font-family:var(--font-mono);font-size:13px;outline:none}
+.cfg .trio input:focus{border-color:var(--accent)}
+
+/* ---- wizard ---- */
+.cfg .wsteps{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px}
+.cfg .wstep{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel);border-radius:30px;padding:6px 12px 6px 6px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-body)}
+.cfg .wstep b{display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:50%;background:var(--panel-2);color:var(--muted);font-size:11px}
+.cfg .wstep.active{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-soft)}
+.cfg .wstep.active b{background:var(--accent);color:#fff}
+.cfg .wstep.done b{background:var(--ok);color:#fff}
+.cfg .wpanel{animation:fade .2s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.cfg .wnav{display:flex;justify-content:space-between;gap:10px;margin-top:18px;border-top:1px solid var(--line);padding-top:16px}
+.cfg .sub-lbl{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:16px 0 8px}
+.cfg .fld-lbl{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
+.cfg .txt{width:100%;border:1.5px solid var(--line-strong);border-radius:10px;padding:11px 13px;font-family:var(--font-body);font-size:14px;outline:none}
+.cfg .txt:focus{border-color:var(--accent)}
+.cfg .hint-box{margin-top:10px;font-size:13px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px 12px}
+.cfg .vak-editor{display:flex;flex-direction:column;gap:8px}
+.cfg .vak-row{display:flex;align-items:center;gap:10px}
+.cfg .vak-no{font-family:var(--font-mono);font-size:11px;color:var(--muted);min-width:48px}
+.cfg .sel{flex:1;border:1.5px solid var(--line-strong);background:var(--panel);border-radius:10px;padding:10px 12px;font-family:var(--font-body);font-size:14px;outline:none}
+.cfg .sel:focus{border-color:var(--accent)}
+.cfg .overzicht .spec-table{width:100%}
+.cfg .canvas-foot{padding:10px 14px;border-top:1px solid var(--line);font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+
+/* ---- aanzicht-tabs & veiligheidsglas ---- */
+.cfg .az-tabs{display:flex;gap:6px;padding:0 14px 10px}
+.cfg .az{flex:1;border:1px solid var(--line);background:var(--panel);border-radius:8px;padding:7px 10px;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer;font-family:var(--font-body)}
+.cfg .az.active{border-color:var(--accent);color:var(--accent-ink);background:var(--accent-soft)}
+.cfg .veilig-box{border:1px solid var(--line);border-radius:12px;padding:4px 12px 10px;margin-top:10px;background:var(--panel-2)}
+.cfg .veilig-box.locked{border-color:var(--accent);background:var(--accent-soft)}
+
+/* ---- voordeur-paneel preview ---- */
+.cfg .dp-wrap{--fc:#888;display:flex;flex-direction:column;align-items:center;gap:5px;padding:14px 10px}
+.cfg .dp-bovenlicht{width:62%;height:30px;background:linear-gradient(135deg,#cfe0e6,#eef4f5);border:3px solid var(--fc);border-radius:3px;display:flex;align-items:center;justify-content:center;font:600 9px/1 var(--font-mono);color:#5f6b6e}
+.cfg .dp-row{display:flex;gap:5px;align-items:stretch;height:300px}
+.cfg .dp-side{width:42px;background:linear-gradient(135deg,#cfe0e6,#eef4f5);border:3px solid var(--fc);border-radius:3px}
+.cfg .dp-door{position:relative;width:150px;background:var(--fc);border:3px solid var(--fc);border-radius:3px;display:flex;gap:3px;overflow:hidden}
+.cfg .dp-door-2{width:226px}
+.cfg .dp-leaf{position:relative;flex:1;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cfg .dp-leaf.dp-noimg{background:var(--fc)}
+.cfg .dp-img{max-width:100%;max-height:100%;object-fit:contain;background:#fff;display:block}
+.cfg .dp-leaf-m .dp-img{transform:scaleX(-1)}
+.cfg .dp-leaf.dp-noimg::after{content:attr(data-code);color:#fff;font:600 11px var(--font-mono);text-align:center;padding:6px;white-space:pre-line}
+.cfg .dp-side-col{width:42px;display:flex;flex-direction:column;gap:5px}
+.cfg .dp-side-col .dp-side{flex:1;width:auto}
+.cfg .dp-handle{position:absolute;top:50%;width:5px;height:36px;border-radius:3px;background:#1d1d1b;transform:translateY(-50%);box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+.cfg .dp-handle.r{right:8px}.cfg .dp-handle.l{left:8px}
+.cfg .dp-glasslabel{position:absolute;top:8px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.85);border-radius:4px;padding:2px 6px;font:600 8px var(--font-mono);color:#3a382f;white-space:nowrap}
+.cfg .dp-dims{font:700 11px var(--font-mono);color:#3a382f;margin-top:6px}
+.cfg .dp-panel{position:relative;border-radius:4px;overflow:hidden;box-shadow:0 16px 36px rgba(27,27,26,.22)}
+.cfg .dp-panel svg.dp-img{width:100%;height:100%;display:block;background:transparent}
+.cfg .dp-panel.dp-mirror .dp-img,.cfg .dp-mirror .dp-panel svg.dp-img{transform:scaleX(-1)}
+.cfg .dp-note{font:500 11px var(--font-mono);color:var(--muted);text-align:center;max-width:280px;margin-top:2px}
+
+/* ---- buitenaanzicht = spiegelbeeld (voordeur) ---- */
+.cfg .dp-mirror .dp-row{transform:scaleX(-1)}
+.cfg .dp-mirror .dp-glasslabel{transform:translateX(-50%) scaleX(-1)}
+.cfg .dp-mirror .dp-leaf.dp-noimg::after{display:inline-block;transform:scaleX(-1)}
+
+/* ---- schuifschema-galerij ---- */
+.cfg .sch-gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-top:6px}
+.cfg .sch-card{display:flex;flex-direction:column;align-items:center;gap:7px;padding:9px 8px;border:1px solid var(--line);border-radius:11px;background:var(--panel);cursor:pointer;font:inherit;text-align:center;transition:.15s}
+.cfg .sch-card svg{width:100%;height:auto;max-width:128px}
+.cfg .sch-card span{font-size:11px;color:var(--muted);line-height:1.25}
+.cfg .sch-card:hover{border-color:var(--line-strong)}
+.cfg .sch-card.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft);background:#fff}
+.cfg .sch-card.sel span{color:var(--ink)}
+@media(max-width:560px){.cfg .sch-gallery{grid-template-columns:repeat(2,1fr)}}
+
+/* ---- beslag-beeldtegels (schuif) ---- */
+.cfg .tile-chips{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.cfg .tile-chip{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 7px;border:1px solid var(--line);border-radius:11px;background:var(--panel);cursor:pointer;font:inherit;text-align:center;transition:.15s}
+.cfg .tile-chip svg{width:48px;height:44px}
+.cfg .tile-chip span{font-size:10.5px;color:var(--muted);line-height:1.25}
+.cfg .tile-chip:hover{border-color:var(--line-strong)}
+.cfg .tile-chip.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft);background:#fff}
+.cfg .tile-chip.sel span{color:var(--ink)}
+
+/* ---- zijlicht-invulling ---- */
+.cfg .dp-side.dp-zg1{background:linear-gradient(135deg,#e3e7e9,#eef1f2)}
+.cfg .dp-side.dp-zg2{position:relative}
+.cfg .dp-side.dp-zg2::after{content:"";position:absolute;inset:0;background:linear-gradient(var(--fc),var(--fc)) center/2px 100% no-repeat,linear-gradient(var(--fc),var(--fc)) center/100% 2px no-repeat}
+.cfg .dp-side.dp-zg3{background:var(--fc)}
+
+/* ---- hoogteverdeling bovenlicht/borstwering ---- */
+.cfg .hoogteVeld{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:8px 0 2px}
+.cfg .hoogteVeld label{font-size:13px;color:#3a382f}
+.cfg .numsuffix{display:inline-flex;align-items:center;gap:6px}
+.cfg .numsuffix input{width:92px;padding:8px 10px;border:1px solid var(--line,#e4ded3);border-radius:8px;font:600 14px var(--font-mono,monospace);text-align:right}
+.cfg .numsuffix span{font:600 12px var(--font-mono,monospace);color:#8a8579}
+.cfg .verdeelInfo{margin-top:8px;font:600 12px var(--font-mono,monospace);color:#9a3b1c;background:#f6ece4;border:1px solid #ecd9cc;border-radius:8px;padding:8px 10px}
+
+/* uitgegrijsde wizard-knop (bv. Vorige op stap 1) */
+.cfg .btn[disabled]{opacity:.4;cursor:not-allowed;pointer-events:none}
+
+/* inline deurpaneel vult de vleugel */
+.cfg .dp-leaf svg.dp-img{width:100%;height:100%;display:block;background:transparent}
+
+/* link naar paneelcollectie (nieuw venster) */
+.cfg .paneel-link{display:inline-block;margin-top:10px;font:600 13px var(--font-mono,monospace);color:var(--accent-ink,#9a3b1c);text-decoration:none;border-bottom:1px solid currentColor;padding-bottom:1px}
+.cfg .paneel-link:hover{opacity:.75}
+
+/* deur: draairichting + scharnieren */
+.cfg .dp-swing{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+.cfg .dp-hinge{position:absolute;width:5px;height:30px;background:#1d1d1b;border-radius:2px;transform:translateY(-50%);box-shadow:0 0 0 1px rgba(255,255,255,.3);z-index:2}
+.cfg .dp-hinge.l{left:3px}.cfg .dp-hinge.r{right:3px}

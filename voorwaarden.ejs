@@ -1,0 +1,32 @@
+<%- include('partials/header') %>
+<section class="wrap block" style="padding-top:36px">
+  <a href="/portaal" class="muted-link">&larr; Terug naar portaal</a>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:12px 0 20px">
+    <h1 style="font-size:30px">Aanvraag <%= r.ref %></h1>
+    <span class="status <%= r.status %>"><%= STATUS_LABELS[r.status] %></span>
+  </div>
+
+  <% if (r.offertePdf) { %>
+    <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px">
+      <div><h3 style="font-size:18px">Je offerte staat klaar</h3><p style="color:var(--muted);font-size:14px;margin-top:4px">Bekijk en download je offerte op maat.</p></div>
+      <a class="btn btn-primary" href="/portaal/aanvraag/<%= r.id %>/offerte">Offerte downloaden</a>
+    </div>
+  <% } else { %>
+    <div class="card" style="margin-bottom:18px"><p style="color:var(--muted)">Je offerte wordt samengesteld en verschijnt hier zodra die klaar is — meestal binnen 15 minuten.</p></div>
+  <% } %>
+
+  <h3 style="font-size:18px;margin:18px 0 10px">Kozijnen</h3>
+  <% r.elementen.forEach(function(e,i){ %>
+    <%- include('partials/element_spec', { e: e, i: i }) %>
+  <% }) %>
+
+  <% if (r.klant.opmerking) { %><p style="color:var(--muted);font-size:14px"><strong>Opmerking:</strong> <%= r.klant.opmerking %></p><% } %>
+
+  <h3 style="font-size:18px;margin:22px 0 6px">Status</h3>
+  <ul class="timeline">
+    <% r.statusHistory.slice().reverse().forEach(function(h){ %>
+      <li><%= STATUS_LABELS[h.status] %> &middot; <%= new Date(h.at).toLocaleString('nl-NL') %></li>
+    <% }) %>
+  </ul>
+</section>
+<%- include('partials/footer') %>

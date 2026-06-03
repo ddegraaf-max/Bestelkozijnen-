@@ -1,0 +1,28 @@
+<%- include('partials/header') %>
+<section class="wrap hero" style="padding-bottom:10px">
+  <h1 style="margin-top:8px">Privacybeleid</h1>
+  <p class="lead">Hoe Creditline omgaat met je persoonsgegevens.</p>
+  <span class="muted" style="font-size:13px">Versie 1.0 · juni 2026</span>
+</section>
+<section class="wrap block" style="padding-top:6px">
+  <div class="prose voorwaarden">
+    <% const pv = [
+      ['1. Verwerkingsverantwoordelijke', ['<b>Creditline Montage B.V.</b>, handelend onder bestelkozijnenopmaat.nl, Torenlaan 5A, 1402 AT Bussum, is verantwoordelijk voor de verwerking van je persoonsgegevens. Vragen? Mail naar montage@creditline.nl of bel 06 46 15 01 60.']],
+      ['2. Welke gegevens we verwerken', ['Wij verwerken de gegevens die je zelf aan ons verstrekt, zoals je naam, e-mailadres, telefoonnummer en (aflever)adres, samen met de gegevens van je kozijnconfiguratie, opmetingen en aanvraag. Daarnaast verwerken we accountgegevens (inloggegevens en de instellingen voor tweestapsverificatie) en, bij gebruik van de Website, beperkte technische gegevens.']],
+      ['3. Doeleinden', ['We gebruiken je gegevens om: je offerteaanvraag te behandelen en een offerte op te stellen; de overeenkomst uit te voeren, te leveren en eventueel te monteren; met je te communiceren over je aanvraag, account en bestelling; en om te voldoen aan wettelijke verplichtingen, zoals de administratie- en bewaarplicht.']],
+      ['4. Grondslag', ['De verwerking is gebaseerd op de uitvoering van de overeenkomst met jou, op het nakomen van wettelijke verplichtingen, en op ons gerechtvaardigd belang om onze dienstverlening en de beveiliging van je account te waarborgen.']],
+      ['5. Bewaartermijn', ['We bewaren je gegevens niet langer dan nodig. Gegevens uit offertes en bestellingen bewaren we voor de duur van de overeenkomst en daarna conform de wettelijke (fiscale) bewaartermijn van zeven jaar. Accountgegevens bewaren we zolang je account bestaat.']],
+      ['6. Delen met derden (verwerkers)', ['We delen je gegevens alleen wanneer dat nodig is voor onze dienstverlening of wettelijk verplicht is. We schakelen onder meer de volgende verwerkers in: onze hostingpartij (Railway) voor het draaien van de website en het opslaan van gegevens, onze e-mailprovider (Resend) voor het versturen van e-mails, en de leverancier van de inmeet-assistent (Anthropic) voor het beantwoorden van inmeetvragen. Met deze partijen zijn de vereiste afspraken gemaakt. Je gegevens worden niet verkocht.']],
+      ['7. Beveiliging', ['We nemen passende technische en organisatorische maatregelen om je gegevens te beschermen. Wachtwoorden worden versleuteld opgeslagen en je account is beveiligd met verplichte tweestapsverificatie (authenticator).']],
+      ['8. Cookies', ['De Website gebruikt uitsluitend functionele cookies die nodig zijn om in te loggen en de website goed te laten werken. We plaatsen geen tracking- of advertentiecookies.']],
+      ['9. Je rechten', ['Je hebt het recht om je gegevens in te zien, te corrigeren of te laten verwijderen, en om bezwaar te maken tegen of beperking te vragen van de verwerking. Ook kun je vragen om overdracht van je gegevens. Stuur je verzoek naar montage@creditline.nl; we reageren binnen de wettelijke termijn.']],
+      ['10. Klacht', ['Ben je het niet eens met hoe we met je gegevens omgaan, dan kun je een klacht indienen bij de Autoriteit Persoonsgegevens (autoriteitpersoonsgegevens.nl).']],
+      ['11. Wijzigingen', ['We kunnen dit privacybeleid aanpassen. De meest actuele versie staat altijd op de Website.']]
+    ]; %>
+    <% pv.forEach(function(s){ %>
+      <h2><%- s[0] %></h2>
+      <% s[1].forEach(function(par){ %><p><%- par %></p><% }) %>
+    <% }) %>
+  </div>
+</section>
+<%- include('partials/footer') %>

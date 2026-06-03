@@ -1,0 +1,49 @@
+<%- include('partials/header') %>
+
+<section class="wrap hero" style="padding-bottom:18px">
+  <span class="eyebrow"><b></b>Contact</span>
+  <h1 style="margin-top:16px">Neem contact op</h1>
+  <p class="lead">Vragen over je kozijnen of je bestelling? We helpen je graag verder.</p>
+</section>
+
+<section class="wrap block" style="padding-top:10px">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
+    <div class="card">
+      <h3>Gegevens</h3>
+      <p class="co" style="margin-top:12px;line-height:1.9;color:var(--muted)">
+        <b style="color:var(--ink)"><%= company.legalName %></b><br>
+        <%= company.address %><br><br>
+        Telefoon: <a href="tel:<%= company.phone.replace(/\s/g,'') %>" style="color:var(--accent-ink)"><%= company.phone %></a><br>
+        E-mail: <a href="mailto:<%= company.email %>" style="color:var(--accent-ink)"><%= company.email %></a><br><br>
+        KVK: <%= company.kvk %><br>
+        BTW: <%= company.btw %>
+      </p>
+      <div class="placeholder" style="margin-top:16px">PLAATSHOUDER — openingstijden, werkgebied en eventueel een kaart/route.</div>
+    </div>
+    <div class="card">
+      <h3>Stuur een bericht</h3>
+      <div class="fld" style="margin-top:12px"><label>Naam *</label><input id="naam" placeholder="Je naam"></div>
+      <div class="fld"><label>E-mail *</label><input id="email" type="email" placeholder="jij@voorbeeld.nl"></div>
+      <div class="fld"><label>Bericht</label><textarea id="bericht" style="min-height:90px" placeholder="Waar kunnen we mee helpen?"></textarea></div>
+      <button class="btn btn-primary" id="sendBtn" style="width:100%">Versturen</button>
+      <p id="formMsg" style="margin-top:10px;font-family:var(--font-mono);font-size:13px"></p>
+    </div>
+  </div>
+</section>
+
+<script>
+document.getElementById('sendBtn').addEventListener('click', async function(){
+  const msg=document.getElementById('formMsg');
+  const payload={naam:naam.value,email:email.value,bericht:bericht.value,samenvatting:'Contactformulier'};
+  if(!payload.naam||!payload.email){msg.style.color='var(--accent-ink)';msg.textContent='Vul minimaal naam en e-mail in.';return;}
+  this.disabled=true;msg.style.color='var(--muted)';msg.textContent='Versturen…';
+  try{
+    const r=await fetch('/api/offerte',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const d=await r.json();
+    if(d.ok){msg.style.color='var(--ok)';msg.textContent='✓ Bedankt voor je bericht!';}
+    else{msg.style.color='var(--accent-ink)';msg.textContent=d.error||'Er ging iets mis.';this.disabled=false;}
+  }catch(e){msg.style.color='var(--accent-ink)';msg.textContent='Verbinding mislukt.';this.disabled=false;}
+});
+</script>
+
+<%- include('partials/footer') %>

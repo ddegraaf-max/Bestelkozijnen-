@@ -1,0 +1,107 @@
+<%- include('partials/header') %>
+
+<section class="wrap hero" style="padding-bottom:24px">
+  <span class="eyebrow"><b></b>Materiaal</span>
+  <h1 style="margin-top:16px"><%= m.title %></h1>
+  <p class="lead"><%= m.lead %></p>
+  <div class="hero-actions">
+    <a href="/configurator" class="btn btn-primary">Configureer <%= m.slug %> &rarr;</a>
+    <a href="/contact" class="btn btn-ghost">Vraag advies</a>
+  </div>
+</section>
+
+<section class="wrap block" style="padding-top:10px">
+  <div style="display:grid;grid-template-columns:1.3fr .7fr;gap:36px;align-items:start">
+    <div class="prose">
+      <p><%= m.intro %></p>
+      <h2>Voordelen</h2>
+      <ul>
+        <% m.voordelen.forEach(function(v){ %><li><%= v %></li><% }) %>
+      </ul>
+
+      <% if (m.systemen) { %>
+        <h2><%= m.systemenTitel || 'Profiellijnen (draai-/kiep)' %></h2>
+        <p>We leveren meerdere profiellijnen, zodat je kunt kiezen tussen een scherpe standaard en topisolatie. De exacte keuze bepalen we samen op basis van je wensen en budget.</p>
+        <table class="spec-table" style="margin-top:8px">
+          <tr><th>Lijn</th><th><%= m.kolom2 || 'Kamers' %></th><th>Diepte</th><th>Uw vanaf</th><th>Geluid (dB)</th><th>Standaard glas</th></tr>
+          <% m.systemen.forEach(function(s){ %>
+          <tr><td style="color:var(--ink);font-weight:600"><%= s.naam %></td><td><%= s.kamers %></td><td><%= s.diepte %></td><td><%= s.uw %></td><td><%= s.db %></td><td><%= s.glas %></td></tr>
+          <% }) %>
+        </table>
+        <p style="font-size:13px;color:var(--muted);margin-top:6px">Uw = warmtedoorgang van het complete kozijn (lager = beter), gemeten bij een referentiemaat. Standaardisolatie is af fabriek; triple glas is op de geïsoleerde lijnen mogelijk<% if (m.slug==='kunststof') { %>, evenals RC2-inbraakwerendheid op de meeste lijnen<% } %>.</p>
+        <h3 style="margin-top:22px">Kort per lijn</h3>
+        <ul>
+          <% m.systemen.forEach(function(s){ %><li><strong><%= s.naam %></strong> — <%= s.note %></li><% }) %>
+        </ul>
+      <% } %>
+
+      <% if (m.schuif) { %>
+        <h2>Schuif-, hef- &amp; vouwsystemen</h2>
+        <% m.schuif.forEach(function(grp){ %>
+          <h3 style="margin-top:18px"><%= grp.groep %></h3>
+          <ul>
+            <% grp.items.forEach(function(s){ %><li><strong><%= s.naam %></strong><% if (s.detail) { %> — <%= s.detail %><% } %></li><% }) %>
+          </ul>
+        <% }) %>
+      <% } %>
+
+      <% if (m.deuren) { %>
+        <h2>Deuren</h2>
+        <% if (m.deurenNote) { %><p><%= m.deurenNote %></p><% } %>
+        <ul>
+          <% m.deuren.forEach(function(s){ %><li><strong><%= s.naam %></strong><% if (s.detail) { %> — <%= s.detail %><% } %></li><% }) %>
+        </ul>
+      <% } %>
+
+      <% if (m.brandwerend) { %>
+        <h2>Brandwerende systemen</h2>
+        <p>Moet de constructie brand of rook keren? Dan leveren we de Drutex MB-EI-lijn, geclassificeerd volgens ITB-KOT — als deuren, puien met doorzicht en scheidingswanden.</p>
+        <ul>
+          <% m.brandwerend.forEach(function(s){ %><li><strong><%= s.naam %></strong> — <%= s.detail %></li><% }) %>
+        </ul>
+      <% } %>
+
+      <% if (m.secties) { %>
+        <% m.secties.forEach(function(sec){ %>
+          <h2><%= sec.titel %></h2>
+          <p><%= sec.tekst %></p>
+        <% }) %>
+      <% } %>
+    </div>
+
+    <aside class="card">
+      <h3><%= m.systeem %></h3>
+      <p style="margin-top:8px">Je ontvangt een offerte op maat in je portaal — meestal binnen 15 minuten.</p>
+      <a href="/configurator" class="btn btn-primary" style="width:100%;margin-top:16px">Stel samen &rarr;</a>
+      <div class="trust" style="margin-top:18px;flex-direction:column;align-items:stretch;gap:8px">
+        <% if (m.slug==='kunststof') { %>
+          <span class="badge" style="text-align:center">Tot <b>7 kamers</b></span>
+          <span class="badge" style="text-align:center"><b>Uw</b> vanaf 0,66 W/m&sup2;K</span>
+          <span class="badge" style="text-align:center"><b>RC2</b> inbraakwerend mogelijk</span>
+        <% } else if (m.slug==='aluminium') { %>
+          <span class="badge" style="text-align:center"><b>Uw</b> vanaf 0,76 W/m&sup2;K</span>
+          <span class="badge" style="text-align:center">Brandwerend tot <b>EI90</b></span>
+          <span class="badge" style="text-align:center">Grote <b>glaspartijen</b> &amp; puien</span>
+        <% } else if (m.slug==='hout') { %>
+          <span class="badge" style="text-align:center"><b>Uw</b> vanaf 0,76 W/m&sup2;K</span>
+          <span class="badge" style="text-align:center">Massief hout of <b>hout-alu</b></span>
+          <span class="badge" style="text-align:center">Geschikt voor <b>monumenten</b></span>
+        <% } else { %>
+          <span class="badge" style="text-align:center">Volledig <b>op maat</b></span>
+          <span class="badge" style="text-align:center">Inclusief <b>montage</b> mogelijk</span>
+          <span class="badge" style="text-align:center">Offerte <b>binnen 15 min</b></span>
+        <% } %>
+      </div>
+    </aside>
+  </div>
+</section>
+
+<section class="wrap block">
+  <div class="cta-band">
+    <h2>Stel je <%= m.title.toLowerCase() %> samen</h2>
+    <p>Configureer je kozijn en ontvang je offerte op maat in je portaal.</p>
+    <a href="/configurator" class="btn btn-primary">Naar de configurator &rarr;</a>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

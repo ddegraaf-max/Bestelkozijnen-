@@ -1,0 +1,26 @@
+<%- include('partials/header') %>
+<section class="wrap hero" style="padding-bottom:14px">
+  <span class="eyebrow"><b></b>Mijn portaal</span>
+  <h1 style="margin-top:14px">Hallo <%= user.naam.split(' ')[0] %></h1>
+  <p class="lead">Hier vind je je aanvragen en offertes terug.</p>
+  <div class="hero-actions"><a href="/configurator" class="btn btn-primary">Nieuwe aanvraag &rarr;</a></div>
+</section>
+<section class="wrap block" style="padding-top:10px">
+  <% if (requests.length === 0) { %>
+    <div class="card" style="text-align:center;padding:40px">
+      <p style="color:var(--muted)">Je hebt nog geen aanvragen. Stel je eerste kozijn samen.</p>
+      <a href="/configurator" class="btn btn-primary" style="margin-top:14px">Naar de configurator</a>
+    </div>
+  <% } else { %>
+    <% requests.forEach(function(r){ %>
+      <a class="req-row" href="/portaal/aanvraag/<%= r.id %>">
+        <div>
+          <div class="ref"><%= r.ref %></div>
+          <div class="meta"><%= r.elementen.length %> element(en) &middot; <%= new Date(r.createdAt).toLocaleDateString('nl-NL') %></div>
+        </div>
+        <span class="status <%= r.status %>"><%= STATUS_LABELS[r.status] %></span>
+      </a>
+    <% }) %>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

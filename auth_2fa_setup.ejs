@@ -1,0 +1,15 @@
+<%- include('partials/header') %>
+<section class="wrap block narrow" style="padding-top:48px">
+  <div class="auth-card">
+    <h1>Inloggen</h1>
+    <p class="sub">Log in om je aanvragen en offertes te bekijken.</p>
+    <% if (error) { %><div class="alert"><%= error %></div><% } %>
+    <form method="POST" action="/inloggen">
+      <div class="fld"><label>E-mail</label><input name="email" type="email" value="<%= vals.email||'' %>" placeholder="jij@voorbeeld.nl"></div>
+      <div class="fld"><label>Wachtwoord</label><input name="wachtwoord" type="password" placeholder="Je wachtwoord"></div>
+      <button class="btn btn-primary" style="width:100%">Inloggen</button>
+    </form>
+    <p class="muted-link" style="margin-top:16px">Nog geen account? <a href="/registreren">Account aanmaken</a></p>
+  </div>
+</section>
+<%- include('partials/footer') %>

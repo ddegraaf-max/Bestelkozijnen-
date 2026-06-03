@@ -1,0 +1,22 @@
+<%- include('partials/header') %>
+<section class="wrap hero" style="padding-bottom:12px">
+  <span class="eyebrow"><b></b>Beheer</span>
+  <h1 style="margin-top:14px">Aanvragen</h1>
+  <p class="lead"><%= requests.length %> aanvraag(en) totaal.</p>
+</section>
+<section class="wrap block" style="padding-top:10px">
+  <% if (requests.length === 0) { %>
+    <div class="card" style="text-align:center;color:var(--muted);padding:40px">Nog geen aanvragen.</div>
+  <% } else { %>
+    <% requests.forEach(function(r){ %>
+      <a class="req-row" href="/beheer/aanvraag/<%= r.id %>">
+        <div>
+          <div class="ref"><%= r.ref %> &middot; <%= r.klant.naam %></div>
+          <div class="meta"><%= r.klant.email %> &middot; <%= r.elementen.length %> element(en) &middot; <%= new Date(r.createdAt).toLocaleString('nl-NL') %></div>
+        </div>
+        <span class="status <%= r.status %>"><%= STATUS_LABELS[r.status] %></span>
+      </a>
+    <% }) %>
+  <% } %>
+</section>
+<%- include('partials/footer') %>

@@ -1,0 +1,65 @@
+</main>
+<footer class="site">
+  <div class="wrap foot">
+    <div>
+      <a class="brand" href="/" style="margin-bottom:14px">
+        <svg class="mark" viewBox="0 0 30 30" aria-hidden="true"><rect x="1.6" y="1.6" width="26.8" height="26.8" rx="3.5" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="3" x2="15" y2="27" stroke="var(--accent)" stroke-width="2.2"/><line x1="3" y1="15" x2="27" y2="15" stroke="var(--accent)" stroke-width="2.2"/></svg>
+        <span>bestelkozijnen<span style="color:var(--accent)">opmaat</span>
+          <small>.nl · kozijnen op maat</small>
+        </span>
+      </a>
+      <p class="co">Kozijnen op maat in kunststof, hout en aluminium. Direct online samenstellen, scherpe prijs, vakkundige montage.</p>
+    </div>
+    <div>
+      <h5>Producten</h5>
+      <a href="/kozijnen/kunststof">Kunststof kozijnen</a>
+      <a href="/kozijnen/hout">Houten kozijnen</a>
+      <a href="/kozijnen/aluminium">Aluminium kozijnen</a>
+      <a href="/configurator">Configurator</a>
+    </div>
+    <div>
+      <h5>Info</h5>
+      <a href="/werkwijze">Werkwijze</a>
+      <a href="/veelgestelde-vragen">Veelgestelde vragen</a>
+      <a href="/montage">Montageservice</a>
+      <a href="/configurator">Offerte via configurator</a>
+      <a href="/contact">Contact</a>
+    </div>
+    <div>
+      <h5>Contact</h5>
+      <p class="co">
+        <b><%= company.legalName %></b><br>
+        <%= company.address %><br>
+        T: <a href="tel:<%= company.phone.replace(/\s/g,'') %>" style="display:inline;padding:0"><%= company.phone %></a><br>
+        E: <a href="mailto:<%= company.email %>" style="display:inline;padding:0"><%= company.email %></a><br>
+        KVK: <%= company.kvk %> · BTW: <%= company.btw %>
+      </p>
+    </div>
+  </div>
+  <div class="wrap" style="padding-bottom:20px">
+    <div class="trust">
+      <span class="badge"><b>RC2</b> inbraakwerend (optie)</span>
+      <span class="badge">Tot <b>7 kamers</b> &middot; Uw vanaf <b>0,66</b></span>
+      <span class="badge"><b>MACO / G-U / Siegenia</b> beslag</span>
+      <span class="badge">Eigen <b>montageservice</b></span>
+    </div>
+  </div>
+  <div class="wrap partner-bar">
+    <span class="partner-cap">Wij verwerken originele systemen van</span>
+    <img src="/img/drutex-logo.png" alt="Drutex — windows, doors, shutters, gates" class="partner-logo">
+  </div>
+  <div class="wrap foot-bar">
+    <span>© <%= new Date().getFullYear() %> <%= company.legalName %> — <%= company.name %></span>
+    <span><a href="/algemene-voorwaarden" style="display:inline">Algemene voorwaarden</a> · <a href="/privacybeleid" style="display:inline">Privacybeleid</a></span>
+  </div>
+</footer>
+<script>
+  // Mobiel menu
+  (function(){
+    var b=document.getElementById('burger'), n=document.getElementById('navLinks');
+    if(b&&n) b.addEventListener('click',function(){n.classList.toggle('open');});
+  })();
+</script>
+<% if (typeof extraJs !== 'undefined') { %><script src="<%= extraJs %>"></script><% } %>
+</body>
+</html>

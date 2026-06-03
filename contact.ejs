@@ -1,0 +1,70 @@
+<%- include('partials/header') %>
+
+<section class="wrap hero">
+  <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center">
+    <div>
+      <span class="eyebrow"><b></b>Kunststof &middot; Hout &middot; Aluminium</span>
+      <h1 style="margin-top:18px">Kozijnen op maat,<br><em>zelf</em> samengesteld.</h1>
+      <p class="lead">Stel je raam, deur of schuifpui samen, meet zelf in met onze slimme assistent, en ontvang je offerte op maat in je eigen portaal — meestal binnen 15 minuten.</p>
+      <div class="hero-actions">
+        <a href="/configurator" class="btn btn-primary">Stel je kozijn samen &rarr;</a>
+        <a href="/werkwijze" class="btn btn-ghost">Hoe het werkt</a>
+      </div>
+    </div>
+    <div aria-hidden="true" class="hero-visual">
+      <div class="hw-stage" id="hwStage"></div>
+      <span class="hero-cap hw-cap-in" id="hwCap">Antraciet &middot; draaikiep &middot; triple glas</span>
+    </div>
+  </div>
+</section>
+<script src="/js/herowindow.js" defer></script>
+
+<section class="wrap block" style="padding-top:10px">
+  <div class="usp">
+    <div class="u"><div class="ic">Op maat</div><h4>Exact jouw maat</h4><p>Tot op de millimeter geconfigureerd.</p></div>
+    <div class="u"><div class="ic">Assistent</div><h4>Zelf inmeten</h4><p>Onze assistent helpt je stap voor stap.</p></div>
+    <div class="u"><div class="ic">Snel</div><h4>Offerte in portaal</h4><p>Meestal binnen 15 minuten.</p></div>
+    <div class="u"><div class="ic">Service</div><h4>Inclusief montage</h4><p>Vakkundig geplaatst, desgewenst.</p></div>
+  </div>
+</section>
+
+<section class="wrap block">
+  <div class="section-head">
+    <span class="eyebrow"><b></b>Materialen</span>
+    <h2 style="margin-top:14px">Kies wat bij je woning past</h2>
+    <p>Drie materialen, elk met eigen voordelen. Allemaal op maat te configureren.</p>
+  </div>
+  <div class="cards c3">
+    <% Object.values(materials).forEach(function(m){ %>
+    <div class="card">
+      <h3><%= m.title %></h3>
+      <p><%= m.lead %></p>
+      <div class="price-from"><%= m.systeem %></div>
+      <a class="card-link" href="/kozijnen/<%= m.slug %>">Meer over <%= m.slug %> &rarr;</a>
+    </div>
+    <% }) %>
+  </div>
+</section>
+
+<section class="wrap block">
+  <div class="section-head">
+    <span class="eyebrow"><b></b>Zo werkt het</span>
+    <h2 style="margin-top:14px">In een paar stappen geregeld</h2>
+  </div>
+  <div class="steps">
+    <div class="step"><div class="n"></div><div><h4>Samenstellen</h4><p>Kies product, uitvoering, kleur en glas.</p></div></div>
+    <div class="step"><div class="n"></div><div><h4>Zelf inmeten</h4><p>Onze assistent helpt je de juiste maten te nemen.</p></div></div>
+    <div class="step"><div class="n"></div><div><h4>Offerte in je portaal</h4><p>Je ontvangt je offerte op maat, meestal binnen 15 minuten.</p></div></div>
+    <div class="step"><div class="n"></div><div><h4>Productie &amp; montage</h4><p>Akkoord? Wij produceren en plaatsen — desgewenst.</p></div></div>
+  </div>
+</section>
+
+<section class="wrap block">
+  <div class="cta-band">
+    <h2>Klaar om te beginnen?</h2>
+    <p>Stel je kozijn samen en ontvang je offerte op maat in je eigen portaal.</p>
+    <a href="/configurator" class="btn btn-primary">Naar de configurator &rarr;</a>
+  </div>
+</section>
+
+<%- include('partials/footer') %>

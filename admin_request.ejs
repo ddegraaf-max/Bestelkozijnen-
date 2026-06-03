@@ -1,0 +1,325 @@
+<%- include('partials/header', { company, title, active, currentUser, materials, extraCss: '/css/configurator.css' }) %>
+
+<div class="cfg">
+  <section class="wrap cfg-head">
+    <span class="eyebrow"><b></b>Configurator</span>
+    <h1 style="margin-top:14px">Stel je <em>kozijn</em> samen</h1>
+    <p>Doorloop de stappen: indeling, profiel, kleur, glas, beslag, opties en inmeten. Je aanvraag komt 1-op-1 overeen met onze bestelspecificatie.</p>
+  </section>
+
+  <div class="wrap toolbar">
+    <button class="cart-btn" onclick="openCart()">Mijn aanvraag <span class="cart-count" id="cartCount">0</span></button>
+  </div>
+
+  <div class="wrap grid">
+    <!-- PREVIEW -->
+    <div class="preview">
+      <div class="canvas">
+        <div class="canvas-head"><span class="dot"><i></i><i></i><i></i></span><span id="previewLabel">KOZIJN</span></div>
+        <div class="az-tabs"><button class="az active" id="azBinnen" onclick="setAanzicht('binnen')">Binnenaanzicht</button><button class="az" id="azBuiten" onclick="setAanzicht('buiten')">Buitenaanzicht</button></div>
+        <div class="stage" id="stage"></div>
+        <div class="canvas-foot" id="previewSpec"></div>
+      </div>
+    </div>
+
+    <!-- WIZARD -->
+    <div class="options">
+      <div class="wsteps" id="wsteps"></div>
+
+      <!-- STAP 2: indeling -->
+      <div class="wpanel" data-step="1" hidden>
+        <div class="g-head"><span class="g-num">2</span><span class="g-title">Positie &amp; indeling</span></div>
+        <label class="fld-lbl">Plek/ruimte (optioneel)</label>
+        <input class="txt" id="inPositie" placeholder="bijv. Woonkamer voorzijde">
+        <div id="raamIndeling">
+          <div id="schuifSchemaWrap" hidden>
+            <div class="sub-lbl">Schuifsysteem &amp; opening</div>
+            <div class="sch-gallery" id="schuifSchemaGallery"></div>
+          </div>
+          <div id="vakManualWrap">
+            <div class="sub-lbl" id="vakAantalLbl">Aantal vleugels (naast elkaar)</div>
+            <div class="chips" id="vakAantalChips"></div>
+            <div id="rijenWrap">
+              <div class="sub-lbl">Bovenlicht (boven)</div>
+              <div class="chips" id="bovenlichtChips"></div>
+              <div class="hoogteVeld" id="bovenlichtHWrap" hidden>
+                <label>Hoogte bovenlicht</label>
+                <span class="numsuffix"><input type="number" id="bovenlichtH" min="100" max="1000" step="10"><span>mm</span></span>
+              </div>
+              <div class="sub-lbl">Borstwering (onder)</div>
+              <div class="chips" id="borstweringChips"></div>
+              <div class="hoogteVeld" id="borstweringHWrap" hidden>
+                <label>Hoogte borstwering</label>
+                <span class="numsuffix"><input type="number" id="borstweringH" min="100" max="1200" step="10"><span>mm</span></span>
+              </div>
+              <div class="verdeelInfo" id="verdeelInfo" hidden></div>
+            </div>
+            <div class="sub-lbl" id="vakEditorLbl">Per vleugel: functie</div>
+            <div id="vakEditor" class="vak-editor"></div>
+          </div>
+        </div>
+        <div id="deurIndeling" hidden>
+          <div class="sub-lbl">Collectie</div>
+          <div class="chips" id="collectieChips"></div>
+          <div class="sub-lbl">Paneelmodel</div>
+          <select class="sel" id="modelSelect"></select>
+          <input class="txt" id="modelVrij" placeholder="Andere modelcode (bijv. MD-12)" style="margin-top:8px" hidden>
+          <a id="paneelLink" class="paneel-link" href="https://besteldeurpanelenopmaat.nl/deurpanelen/standard/" target="_blank" rel="noopener noreferrer">Bekijk alle paneelmodellen van deze collectie &#8599;</a>
+          <div class="toggle-row" style="margin-top:14px">
+            <div><div class="t-lbl">Alleen het paneel</div><div class="t-sub">Voor je bestaande PVC-deur — wij maken alleen het deurpaneel op maat</div></div>
+            <label class="switch"><input type="checkbox" id="paneelOnlyToggle"><span class="slider"></span></label>
+          </div>
+          <div id="deurFrameOpts">
+          <div class="sub-lbl">Indeling (deur, zijlicht, bovenlicht)</div>
+          <div class="sch-gallery" id="deurSchemaGallery"></div>
+          <div id="deurMaatWrap" hidden>
+            <div class="sub-lbl">Maatverdeling extra glas</div>
+            <div class="hoogteVeld" id="bovenlichtDeurHWrap" hidden>
+              <label>Hoogte bovenlicht</label>
+              <span class="numsuffix"><input type="number" id="bovenlichtDeurH" min="100" max="1000" step="10"><span>mm</span></span>
+            </div>
+            <div class="hoogteVeld" id="zijlichtBWrap" hidden>
+              <label>Breedte zijlicht (per stuk)</label>
+              <span class="numsuffix"><input type="number" id="zijlichtB" min="80" max="900" step="10"><span>mm</span></span>
+            </div>
+            <div class="verdeelInfo" id="deurVerdeelInfo" hidden></div>
+          </div>
+          <div id="zijlichtGlasWrap" hidden>
+            <div class="sub-lbl">Zijlicht-invulling</div>
+            <div class="chips" id="zijlichtGlasChips"></div>
+          </div>
+          <div class="sub-lbl">Scharnierzijde</div>
+          <div class="chips" id="scharnierChips"></div>
+          <div class="sub-lbl">Opendraairichting</div>
+          <div class="chips" id="opendraaiChips"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAP 1: profiel -->
+      <div class="wpanel" data-step="0">
+        <div class="g-head"><span class="g-num">1</span><span class="g-title">Profiel</span></div>
+        <div class="sub-lbl">Materiaal</div>
+        <div class="chips" id="matChips"></div>
+        <div id="soortWrap">
+          <div class="sub-lbl">Soort systeem</div>
+          <div class="chips" id="soortChips"></div>
+        </div>
+        <div id="lijnWrap">
+          <div class="sub-lbl">Profiellijn</div>
+          <div class="chips" id="lijnChips"></div>
+          <p class="hint-box" id="lijnHint"></p>
+        </div>
+        <div id="paneelWrap" hidden>
+          <div class="sub-lbl">Paneelmateriaal</div>
+          <div class="chips" id="paneelMatChips"></div>
+          <div class="sub-lbl">Paneeldikte</div>
+          <div class="chips" id="dikteChips"></div>
+        </div>
+      </div>
+
+      <!-- STAP 3: kleur -->
+      <div class="wpanel" data-step="2" hidden>
+        <div class="g-head"><span class="g-num">3</span><span class="g-title">Kleur</span></div>
+        <div class="toggle-row">
+          <div><div class="t-lbl">Binnen en buiten dezelfde kleur</div><div class="t-sub">Zet uit voor een andere kleur binnen</div></div>
+          <label class="switch"><input type="checkbox" id="gelijkeKleurToggle" checked><span class="slider"></span></label>
+        </div>
+        <div class="sub-lbl" id="kleurBuitenLbl">Kleur (buiten &amp; binnen)</div>
+        <div class="swatches" id="kleurBuiten"></div>
+        <div id="kleurBinnenWrap" hidden>
+          <div class="sub-lbl">Kleur binnen</div>
+          <div class="swatches" id="kleurBinnen"></div>
+        </div>
+        <div id="raamKleur">
+          <div class="sub-lbl">Afdichting</div>
+          <div class="chips" id="afdichtingChips"></div>
+          <div id="kernWrap">
+            <div class="sub-lbl">Kern profiel</div>
+            <div class="chips" id="kernChips"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAP 4: beglazing -->
+      <div class="wpanel" data-step="3" hidden>
+        <div class="g-head"><span class="g-num">4</span><span class="g-title">Beglazing</span></div>
+        <div id="raamGlas">
+          <div class="sub-lbl">Standaard glas (alle vakken)</div>
+          <div class="chips" id="glasChips"></div>
+          <div id="vakGlasWrap">
+            <div class="sub-lbl">Glas per vak (optioneel afwijken)</div>
+            <div id="vakGlas" class="vak-editor"></div>
+          </div>
+        </div>
+        <div id="deurGlas" hidden>
+          <div class="sub-lbl">Glas in paneel</div>
+          <div class="chips" id="glassoortChips"></div>
+          <div id="patroonWrap" hidden>
+            <div class="sub-lbl">Patroon</div>
+            <select class="sel" id="patroonSelect"></select>
+          </div>
+        </div>
+        <div id="veiligWrap" class="veilig-box">
+          <div class="toggle-row">
+            <div><div class="t-lbl">Veiligheidsglas (gelaagd)</div><div class="t-sub" id="veiligReden">Aanbevolen bij risico op letsel.</div></div>
+            <label class="switch"><input type="checkbox" id="veiligheidsglasToggle"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div><div class="t-lbl">Glas tot &lt; 85 cm / badkamer / balustrade</div><div class="t-sub">Maakt veiligheidsglas verplicht</div></div>
+            <label class="switch"><input type="checkbox" id="laagGlasToggle"><span class="slider"></span></label>
+          </div>
+          <p class="hint-box" id="veiligInfo">Volgens NEN 3569 is veiligheidsglas verplicht in en naast deuren, bij glas tot &lt; 85 cm boven de vloer, bij schuifpuien, balustrades en in badkamers.</p>
+        </div>
+        <div id="raamGlasOpties">
+          <div class="sub-lbl">Glaslat</div>
+          <div class="chips" id="glaslatChips"></div>
+          <div class="toggle-row" style="margin-top:12px">
+            <div><div class="t-lbl">Warme afstandhouder (Swisspacer)</div><div class="t-sub">Betere isolatie aan de glasrand</div></div>
+            <label class="switch"><input type="checkbox" id="warmeRandToggle" checked><span class="slider"></span></label>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAP 5: beslag & veiligheid -->
+      <div class="wpanel" data-step="4" hidden>
+        <div class="g-head"><span class="g-num">5</span><span class="g-title">Beslag &amp; veiligheid</span></div>
+        <div id="raamBeslag">
+          <div class="sub-lbl">Krukken</div>
+          <div class="chips" id="krukChips"></div>
+          <div class="toggle-row" style="margin-top:12px">
+            <div><div class="t-lbl">Kruk met sleutel</div><div class="t-sub">Kinderveilig / extra beveiliging</div></div>
+            <label class="switch"><input type="checkbox" id="sleutelToggle"><span class="slider"></span></label>
+          </div>
+          <div class="toggle-row">
+            <div><div class="t-lbl">Verdekte scharnieren</div><div class="t-sub">Niet zichtbaar bij gesloten raam</div></div>
+            <label class="switch"><input type="checkbox" id="scharnierToggle"><span class="slider"></span></label>
+          </div>
+        </div>
+        <div class="toggle-row">
+          <div><div class="t-lbl">Inbraakwerend RC2</div><div class="t-sub">Antiverwijderpennen + MAX-beslag</div></div>
+          <label class="switch"><input type="checkbox" id="rc2Toggle"><span class="slider"></span></label>
+        </div>
+        <div id="deurWrap" hidden>
+          <div class="sub-lbl">Greep / trekker</div>
+          <div class="chips" id="greepChips"></div>
+          <div class="sub-lbl" id="slotLbl">Deur-/schuifbeslag</div>
+          <div class="chips" id="deurBeslagChips"></div>
+          <div id="dorpelWrap">
+            <div class="sub-lbl">Dorpel</div>
+            <div class="chips" id="dorpelChips"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STAP 6: roedes & extra's -->
+      <div class="wpanel" data-step="5" hidden>
+        <div class="g-head"><span class="g-num">6</span><span class="g-title">Roedes &amp; extra's</span></div>
+        <div id="raamOpties">
+          <div class="sub-lbl">Roedes (glasverdelers)</div>
+          <div class="chips" id="roedeTypeChips"></div>
+          <div id="roedeOpties" hidden>
+            <div class="sub-lbl">Patroon</div>
+            <div class="chips" id="roedePatroonChips"></div>
+          </div>
+          <div class="sub-lbl">Ventilatierooster</div>
+          <div class="chips" id="ventilatieChips"></div>
+          <div class="sub-lbl">Extra's</div>
+          <div class="toggle-row"><div><div class="t-lbl">Rolluik</div></div><label class="switch"><input type="checkbox" id="rolluikToggle"><span class="slider"></span></label></div>
+          <div class="toggle-row"><div><div class="t-lbl">Hor / insectenwering</div></div><label class="switch"><input type="checkbox" id="horToggle"><span class="slider"></span></label></div>
+          <div class="toggle-row"><div><div class="t-lbl">Screen / zonwering</div></div><label class="switch"><input type="checkbox" id="screenToggle"><span class="slider"></span></label></div>
+        </div>
+        <div id="deurExtra" hidden>
+          <div class="sub-lbl">Voordeur-extra's</div>
+          <div class="toggle-row"><div><div class="t-lbl">Brievenbus</div></div><label class="switch"><input type="checkbox" id="brievenbusToggle"><span class="slider"></span></label></div>
+          <div class="toggle-row"><div><div class="t-lbl">Spionoog</div></div><label class="switch"><input type="checkbox" id="spionToggle"><span class="slider"></span></label></div>
+          <div class="toggle-row"><div><div class="t-lbl">Huisnummer op paneel</div></div><label class="switch"><input type="checkbox" id="huisnummerToggle"><span class="slider"></span></label></div>
+        </div>
+        <div class="toggle-row"><div><div class="t-lbl">Smart Home-aansturing</div><div class="t-sub">Somfy / G-U</div></div><label class="switch"><input type="checkbox" id="smartToggle"><span class="slider"></span></label></div>
+      </div>
+
+      <!-- STAP 7: afmetingen & inmeten -->
+      <div class="wpanel" data-step="6" hidden>
+        <div class="g-head"><span class="g-num">7</span><span class="g-title">Afmetingen &amp; inmeten</span><span class="hint">in mm</span></div>
+        <div class="toggle-row">
+          <div><div class="t-lbl">Zelfde maatvoering binnen en buiten</div><div class="t-sub">Zet uit als de binnen- en buitenmaat verschillen</div></div>
+          <label class="switch"><input type="checkbox" id="gelijkeMaatToggle" checked><span class="slider"></span></label>
+        </div>
+        <div class="sub-lbl" id="binnenMaatLbl">Binnenmaat (dagmaat)</div>
+        <div class="dims">
+          <div class="dim"><label>Breedte</label><div class="field"><input type="number" id="inW" value="1500"><span class="unit">mm</span></div><div class="range-hint" id="hintW"></div></div>
+          <div class="dim"><label>Hoogte</label><div class="field"><input type="number" id="inH" value="1400"><span class="unit">mm</span></div><div class="range-hint" id="hintH"></div></div>
+        </div>
+        <div id="buitenMaatWrap" hidden>
+          <div class="sub-lbl">Buitenmaat</div>
+          <div class="dims">
+            <div class="dim"><label>Breedte</label><div class="field"><input type="number" id="inWb" value="1500"><span class="unit">mm</span></div></div>
+            <div class="dim"><label>Hoogte</label><div class="field"><input type="number" id="inHb" value="1400"><span class="unit">mm</span></div></div>
+          </div>
+        </div>
+        <details class="inmeet" open>
+          <summary>Hulp bij inmeten &mdash; tekening &amp; assistent</summary>
+          <div class="meet-draw">
+            <figure><svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+              <rect x="70" y="50" width="160" height="190" rx="3" fill="#F1EFE8" stroke="#C7C2B5"/><rect x="84" y="64" width="132" height="162" fill="#dfeaee" stroke="#C7C2B5"/>
+              <line x1="70" y1="34" x2="230" y2="34" stroke="#C8502D" stroke-width="1.3"/><text x="150" y="26" font-family="JetBrains Mono,monospace" font-size="11" fill="#8E3417" text-anchor="middle">breedte</text>
+              <line x1="252" y1="50" x2="252" y2="240" stroke="#2F6E4F" stroke-width="1.3"/><text x="262" y="148" font-family="JetBrains Mono,monospace" font-size="11" fill="#1d4a35" transform="rotate(-90 262 148)" text-anchor="middle">hoogte</text>
+              <text x="150" y="270" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#3a382f" text-anchor="middle">binnen: dagmaat</text></svg></figure>
+            <figure><svg viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+              <rect x="70" y="50" width="160" height="190" rx="3" fill="#F1EFE8" stroke="#C7C2B5"/><rect x="84" y="64" width="132" height="162" fill="#dfeaee" stroke="#C7C2B5"/><polygon points="84,170 160,110 184,110 84,210" fill="#fff" opacity=".3"/>
+              <line x1="70" y1="34" x2="230" y2="34" stroke="#C8502D" stroke-width="1.3"/><text x="150" y="26" font-family="JetBrains Mono,monospace" font-size="11" fill="#8E3417" text-anchor="middle">breedte</text>
+              <line x1="252" y1="50" x2="252" y2="240" stroke="#2F6E4F" stroke-width="1.3"/><text x="262" y="148" font-family="JetBrains Mono,monospace" font-size="11" fill="#1d4a35" transform="rotate(-90 262 148)" text-anchor="middle">hoogte</text>
+              <text x="150" y="270" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#3a382f" text-anchor="middle">buiten: buitenmaat</text></svg></figure>
+          </div>
+          <p class="meet-tip">Meet de breedte op 3 hoogtes en de hoogte op 3 breedtes &mdash; we nemen automatisch de kleinste maat.</p>
+          <div class="meet-grid">
+            <div><label>Breedte boven/midden/onder</label><div class="trio"><input id="mb1" type="number" placeholder="boven" oninput="detail()"><input id="mb2" type="number" placeholder="midden" oninput="detail()"><input id="mb3" type="number" placeholder="onder" oninput="detail()"></div></div>
+            <div><label>Hoogte links/midden/rechts</label><div class="trio"><input id="mh1" type="number" placeholder="links" oninput="detail()"><input id="mh2" type="number" placeholder="midden" oninput="detail()"><input id="mh3" type="number" placeholder="rechts" oninput="detail()"></div></div>
+            <div><label>Diagonalen (haaksheid)</label><div class="trio"><input id="md1" type="number" placeholder="diag 1"><input id="md2" type="number" placeholder="diag 2"></div></div>
+            <div><label>Muurdikte / inbouwdiepte</label><div class="trio"><input id="mmuur" type="number" placeholder="mm"></div></div>
+          </div>
+          <div class="assistant" style="margin-top:16px">
+            <div class="a-head"><span class="pulse"></span> Inmeet-assistent</div>
+            <div class="a-body" id="chatBody"></div>
+            <div class="a-input"><input id="chatInput" placeholder="Stel je vraag&hellip;" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Stuur</button></div>
+          </div>
+        </details>
+      </div>
+
+      <!-- STAP 8: overzicht -->
+      <div class="wpanel" data-step="7" hidden>
+        <div class="g-head"><span class="g-num">8</span><span class="g-title">Overzicht</span></div>
+        <div id="overzicht" class="overzicht"></div>
+        <div class="toggle-row" style="margin-top:14px">
+          <div><div class="t-lbl">Inclusief montage</div><div class="t-sub">Nameten, plaatsen &amp; afwerken</div></div>
+          <label class="switch"><input type="checkbox" id="montageToggle"><span class="slider"></span></label>
+        </div>
+        <div class="sub-lbl">Aantal (identieke kozijnen)</div>
+        <div class="qty"><button onclick="setQty(-1)">&minus;</button><input type="number" id="qtyInput" value="1" min="1"><button onclick="setQty(1)">+</button></div>
+        <button class="btn btn-primary" style="width:100%;margin-top:16px" onclick="addElement()">Voeg toe aan aanvraag</button>
+      </div>
+
+      <!-- WIZARD NAVIGATIE -->
+      <div class="wnav">
+        <button class="btn btn-ghost" id="prevBtn" onclick="goStep(-1)">&larr; Vorige</button>
+        <button class="btn btn-dark" id="nextBtn" onclick="goStep(1)">Volgende &rarr;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AANVRAAG DRAWER -->
+  <div class="scrim" id="scrimCart" onclick="closeCart()"></div>
+  <div class="drawer" id="cartDrawer">
+    <div class="drawer-head"><h3>Mijn aanvraag</h3><button class="x" onclick="closeCart()">&times;</button></div>
+    <div class="drawer-body" id="cartBody"></div>
+    <div class="drawer-foot" id="cartFoot" style="display:none">
+      <div class="fld" style="margin-bottom:12px"><label>Opmerking (optioneel)</label><textarea id="aanvraagOpm" style="min-height:64px" placeholder="Bijv. gewenste leverdatum"></textarea></div>
+      <div id="loginPrompt" style="display:none" class="alert">Maak een account of log in om je aanvraag te versturen. <a href="/inloggen" style="color:var(--accent-ink);font-weight:700">Inloggen</a> &middot; <a href="/registreren" style="color:var(--accent-ink);font-weight:700">Account aanmaken</a><br><span style="font-size:12px">Je aanvraag blijft bewaard tot je terugkomt.</span></div>
+      <button class="btn btn-primary" style="width:100%" id="submitBtn" onclick="submitAanvraag()">Aanvraag versturen</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<%- include('partials/footer', { company, currentUser, extraJs: '/js/configurator.js' }) %>

@@ -1,0 +1,31 @@
+<%- include('partials/header') %>
+
+<section class="wrap hero" style="padding-bottom:20px">
+  <span class="eyebrow"><b></b>FAQ</span>
+  <h1 style="margin-top:16px">Veelgestelde vragen</h1>
+  <p class="lead">De meestgestelde vragen over kozijnen op maat, levertijd en montage.</p>
+</section>
+
+<section class="wrap block" style="padding-top:10px;max-width:820px">
+  <% const faqs = [
+      ['Wat is de levertijd?','Binnen 2 weken na bestelling.'],
+      ['Hoe werkt de betaling?','50% aanbetaling bij bestelling en de andere 50% bij levering.'],
+      ['In welk gebied leveren jullie?','Wij leveren door heel Nederland.'],
+      ['Welke materialen kan ik kiezen?','Kunststof, hout en aluminium — elk met eigen voordelen. Bekijk de materiaalpagina\u2019s voor details.'],
+      ['Is montage inbegrepen?','Montage is optioneel bij te bestellen. In de configurator kun je dit per kozijn toevoegen.'],
+      ['Zijn de kozijnen inbraakwerend?','Ja, met inbraakwerend RC2-beslag op aanvraag en hang- en sluitwerk van MACO, G-U of Siegenia.'],
+      ['Hoe vraag ik een offerte aan?','Stel je kozijn samen in de configurator en klik op \u201COfferte aanvragen\u201D, of gebruik het offerteformulier.'],
+      ['Kan ik subsidie krijgen voor isolatieglas (ISDE)?','Vaak wel. Via de landelijke ISDE-regeling (RVO) kunnen woningeigenaren subsidie krijgen voor isolerend glas; ook isolerende deuren en kozijnpanelen tellen mee. In 2026 gaat het om ongeveer \u20AC 25 per m\u00B2 voor HR++ glas en \u20AC 111 per m\u00B2 voor triple glas, en dat bedrag verdubbelt als je binnen 24 maanden twee of meer isolatiemaatregelen uitvoert. Er geldt een minimum van 3 m\u00B2 en een maximum van 45 m\u00B2 glas, en je vraagt de subsidie n\u00E1 plaatsing aan via rvo.nl. Standaard dubbel glas komt niet in aanmerking. Bedragen en voorwaarden kunnen wijzigen \u2014 controleer je situatie altijd op rvo.nl. Voor VvE\u2019s geldt de SVVE-regeling, voor verhuurders de SVOH.'],
+      ['Kan ik annuleren of retourneren (herroepingsrecht)?','Onze kozijnen, deuren en schuifpuien zijn maatwerk: ze worden speciaal op jouw afmetingen en keuzes gemaakt. Daardoor vallen ze niet onder het wettelijke herroepingsrecht en kunnen ze na bevestiging niet worden geretourneerd of geannuleerd.'],
+      ['Wie is verantwoordelijk voor de maatvoering?','Je meet zelf in met onze inmeet-assistent en bent zelf verantwoordelijk voor de juiste maten. Is er een fout gemaakt in de maatvoering en hebben wij niet zelf ingemeten, dan ligt de verantwoordelijkheid bij de klant. Twijfel je over het opmeten? Laat dan een vakkundige inmeting doen.'],
+      ['Wat is de garantie?','Je krijgt fabrieksgarantie; de exacte termijn staat per product in je offerte.']
+    ]; %>
+  <% faqs.forEach(function(f){ %>
+    <details class="faq-item">
+      <summary><%= f[0] %></summary>
+      <div class="a"><%= f[1] %></div>
+    </details>
+  <% }) %>
+</section>
+
+<%- include('partials/footer') %>

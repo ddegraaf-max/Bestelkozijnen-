@@ -1,0 +1,23 @@
+<%- include('partials/header') %>
+<section class="wrap block narrow" style="padding-top:48px">
+  <div class="auth-card">
+    <h1>Tweestapsverificatie<% if (reconfig) { %> opnieuw instellen<% } %></h1>
+    <p class="sub">Beveilig je account met een authenticator-app (Google Authenticator, Microsoft Authenticator, Authy, 1Password&hellip;). Scan de QR-code en voer ter bevestiging de 6-cijferige code in.</p>
+    <% if (error) { %><div class="alert"><%= error %></div><% } %>
+
+    <div style="display:flex;flex-direction:column;align-items:center;gap:14px;margin:18px 0">
+      <% if (qr) { %><img src="<%= qr %>" alt="QR-code voor authenticator" width="220" height="220" style="border:1px solid var(--line);border-radius:10px;background:#fff;padding:6px"><% } %>
+      <div style="text-align:center">
+        <div class="muted" style="font-size:12px;margin-bottom:4px">Lukt scannen niet? Voer deze sleutel handmatig in:</div>
+        <code style="font-family:var(--font-mono);font-size:13px;letter-spacing:.12em;background:var(--panel-2);padding:6px 10px;border-radius:8px;display:inline-block;word-break:break-all"><%= secret %></code>
+      </div>
+    </div>
+
+    <form method="POST" action="/2fa/instellen">
+      <div class="fld"><label>Code uit je app</label><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" placeholder="123 456" autofocus style="letter-spacing:.3em;font-family:var(--font-mono);font-size:18px;text-align:center"></div>
+      <button class="btn btn-primary" style="width:100%">Bevestigen &amp; activeren</button>
+    </form>
+    <p class="muted-link" style="margin-top:16px"><a href="/uitloggen">Afmelden</a></p>
+  </div>
+</section>
+<%- include('partials/footer') %>

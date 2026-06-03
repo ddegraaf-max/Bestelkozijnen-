@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><%= title %> | <%= company.name %></title>
+<meta name="description" content="Kozijnen op maat in kunststof, hout of aluminium. Stel je kozijn samen, meet zelf in met onze assistent en ontvang je offerte in je persoonlijke portaal.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/css/style.css">
+<% if (typeof extraCss !== 'undefined') { %><link rel="stylesheet" href="<%= extraCss %>"><% } %>
+</head>
+<body>
+<header class="site">
+  <div class="wrap nav">
+    <a class="brand" href="/">
+      <svg class="mark" viewBox="0 0 30 30" aria-hidden="true"><rect x="1.6" y="1.6" width="26.8" height="26.8" rx="3.5" fill="none" stroke="currentColor" stroke-width="2.5"/><line x1="15" y1="3" x2="15" y2="27" stroke="var(--accent)" stroke-width="2.2"/><line x1="3" y1="15" x2="27" y2="15" stroke="var(--accent)" stroke-width="2.2"/></svg>
+      <span>bestelkozijnen<span style="color:var(--accent)">opmaat</span>
+        <small>.nl · kozijnen op maat</small>
+      </span>
+    </a>
+    <button class="burger" id="burger" aria-label="Menu"><span></span><span></span><span></span></button>
+    <nav class="nav-links" id="navLinks">
+      <a href="/" class="<%= active==='home'?'active':'' %>">Home</a>
+      <a href="/configurator" class="<%= active==='configurator'?'active':'' %>">Configurator</a>
+      <span class="has-drop">
+        <a href="/kozijnen/kunststof" class="<%= active==='materialen'?'active':'' %>">Materialen &#9662;</a>
+        <span class="drop">
+          <a href="/kozijnen/kunststof">Kunststof</a>
+          <a href="/kozijnen/hout">Hout</a>
+          <a href="/kozijnen/aluminium">Aluminium</a>
+        </span>
+      </span>
+      <a href="/werkwijze" class="<%= active==='werkwijze'?'active':'' %>">Werkwijze</a>
+      <a href="/montage" class="<%= active==='montage'?'active':'' %>">Montage</a>
+      <a href="/veelgestelde-vragen" class="<%= active==='faq'?'active':'' %>">FAQ</a>
+      <a href="/contact" class="<%= active==='contact'?'active':'' %>">Contact</a>
+    </nav>
+    <span class="nav-spacer"></span>
+    <div class="nav-cta">
+      <% if (currentUser) { %>
+        <% if (currentUser.role === 'beheer') { %><a href="/beheer" class="nav-mini">Beheer</a><% } %>
+        <a href="/portaal" class="nav-mini">Mijn portaal</a>
+        <a href="/uitloggen" class="btn btn-dark" style="padding:9px 15px;font-size:13.5px">Uitloggen</a>
+      <% } else { %>
+        <a href="/inloggen" class="nav-mini">Inloggen</a>
+        <a href="/configurator" class="btn btn-dark" style="padding:9px 15px;font-size:13.5px">Stel samen</a>
+      <% } %>
+    </div>
+  </div>
+</header>
+<main>

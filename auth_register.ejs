@@ -1,0 +1,44 @@
+<%- include('partials/header') %>
+<section class="wrap block" style="padding-top:36px">
+  <a href="/beheer" class="muted-link">&larr; Terug naar beheer</a>
+  <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:12px 0 18px">
+    <h1 style="font-size:30px">Aanvraag <%= r.ref %></h1>
+    <span class="status <%= r.status %>"><%= STATUS_LABELS[r.status] %></span>
+  </div>
+
+  <table class="spec-table" style="margin-bottom:16px">
+    <tr><th colspan="2">Klant</th></tr>
+    <tr><td>Naam</td><td><%= r.klant.naam %></td></tr>
+    <tr><td>E-mail</td><td><%= r.klant.email %></td></tr>
+    <tr><td>Telefoon</td><td><%= r.klant.telefoon || '-' %></td></tr>
+  </table>
+
+  <% r.elementen.forEach(function(e,i){ %>
+    <%- include('partials/element_spec', { e: e, i: i }) %>
+  <% }) %>
+  <% if (r.klant.opmerking) { %><p style="color:var(--muted);font-size:14px;margin-bottom:18px"><strong>Opmerking:</strong> <%= r.klant.opmerking %></p><% } %>
+
+  <div class="cards c2" style="margin-top:8px">
+    <div class="card">
+      <h3 style="font-size:17px">Status wijzigen</h3>
+      <form method="POST" action="/beheer/aanvraag/<%= r.id %>/status" style="margin-top:12px;display:flex;gap:8px">
+        <select name="status" style="flex:1;padding:11px;border:1.5px solid var(--line-strong);border-radius:10px;font-family:var(--font-body)">
+          <% Object.keys(STATUS_LABELS).forEach(function(s){ %>
+            <option value="<%= s %>" <%= r.status===s?'selected':'' %>><%= STATUS_LABELS[s] %></option>
+          <% }) %>
+        </select>
+        <button class="btn btn-dark">Opslaan</button>
+      </form>
+    </div>
+    <div class="card">
+      <h3 style="font-size:17px">Offerte-PDF uploaden</h3>
+      <p style="color:var(--muted);font-size:13.5px;margin-top:6px">De PDF uit je leveranciersportaal. De klant ziet 'm direct in zijn portaal.</p>
+      <form method="POST" action="/beheer/aanvraag/<%= r.id %>/offerte" enctype="multipart/form-data" style="margin-top:12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input type="file" name="offerte" accept="application/pdf" required style="flex:1;font-size:13px">
+        <button class="btn btn-primary">Uploaden</button>
+      </form>
+      <% if (r.offertePdf) { %><p style="color:var(--ok);font-size:13px;margin-top:8px">&#10003; Offerte geüpload</p><% } %>
+    </div>
+  </div>
+</section>
+<%- include('partials/footer') %>

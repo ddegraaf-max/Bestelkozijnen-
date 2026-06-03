@@ -1,0 +1,39 @@
+<%- include('partials/header') %>
+<section class="wrap hero" style="padding-bottom:10px">
+  <h1 style="margin-top:8px">Algemene voorwaarden</h1>
+  <p class="lead">Van <b>Creditline Montage B.V.</b>, handelend onder bestelkozijnenopmaat.nl.</p>
+  <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px">
+    <a class="btn btn-primary" href="/docs/algemene-voorwaarden.pdf" target="_blank" rel="noopener">Download als PDF</a>
+    <span class="muted" style="font-size:13px">Versie 1.0 · juni 2026</span>
+  </div>
+</section>
+<section class="wrap block" style="padding-top:6px">
+  <div class="prose voorwaarden">
+    <% const av = [
+      ['1. Definities', ['In deze algemene voorwaarden betekenen de met een hoofdletter geschreven begrippen onder meer: <b>Aanbod</b> (elke aanbieding of offerte), <b>Consument</b> (natuurlijke persoon die niet beroeps- of bedrijfsmatig handelt), <b>Creditline</b> (Creditline Montage B.V., handelend onder bestelkozijnenopmaat.nl), <b>Herroepingsrecht</b>, <b>Klant</b> (Consument of Zakelijke klant), <b>Maatwerk</b> (op de afmetingen en keuzes van de Klant vervaardigde producten), <b>Overeenkomst</b>, <b>Website</b> (bestelkozijnenopmaat.nl, inclusief configurator en inmeet-assistent) en <b>Zakelijke klant</b>.']],
+      ['2. Wie is Creditline', ['Creditline Montage B.V., Torenlaan 5A, 1402 AT Bussum. Telefoon 06 46 15 01 60, e-mail montage@creditline.nl, website bestelkozijnenopmaat.nl. KvK 59683198, btw NL853603108B01.']],
+      ['3. Wanneer gelden deze voorwaarden', ['Deze voorwaarden gelden voor elk Aanbod en elke Overeenkomst tussen Creditline en de Klant. Door te bestellen of een Aanbod te aanvaarden, gaat de Klant met deze voorwaarden akkoord.', 'Eigen voorwaarden van de Klant worden afgewezen, tenzij Creditline die schriftelijk aanvaardt. Voor Consumenten gelden deze voorwaarden alleen voor zover zij niet in strijd zijn met dwingend consumentenrecht.']],
+      ['4. Het Aanbod en de offerte', ['Een schriftelijke offerte is 30 dagen geldig, tenzij anders vermeld. Een Aanbod op de Website geldt zolang het wordt getoond en zolang de voorraad strekt.', 'Afbeeldingen, kleuren en maten zijn een indicatie; geringe kleurafwijkingen zijn geen tekortkoming. Blijkt door de Klant aangeleverde informatie onjuist, dan mag Creditline het Aanbod en de prijs aanpassen.']],
+      ['5. Maatwerk en zelf inmeten', ['De producten worden vrijwel altijd als Maatwerk vervaardigd op basis van de keuzes en afmetingen die de Klant via de configurator en de inmeet-assistent doorgeeft.', 'De Klant is zelf verantwoordelijk voor het juist en volledig opmeten en doorgeven van de afmetingen. Onjuiste maten komen voor rekening en risico van de Klant. De inmeet-assistent is een hulpmiddel en ontslaat de Klant niet van die verantwoordelijkheid.', 'Omdat het om Maatwerk gaat, geldt het Herroepingsrecht hierop niet (zie artikel 10).']],
+      ['6. Totstandkoming van de Overeenkomst', ['De Overeenkomst komt tot stand zodra de Klant het Aanbod aanvaardt of Creditline een bestelling bevestigt. Creditline mag bestellen onder de voorwaarde van voldoende beschikbaarheid en schakelt leveranciers en derden in, waaronder de fabrikant.']],
+      ['7. Prijzen en betaling', ['Voor Consumenten zijn prijzen inclusief btw; voor Zakelijke klanten exclusief btw, tenzij anders vermeld.', 'Tenzij anders overeengekomen geldt bij Maatwerk een aanbetaling van 50% bij bestelling; de resterende 50% voldoet de Klant bij levering. Bij te late betaling stuurt Creditline een herinnering met een termijn van 14 dagen; daarna is de Klant in verzuim en mag Creditline de wettelijke rente en incassokosten in rekening brengen.']],
+      ['8. Levering, levertijd en risico', ['Levering vindt plaats op het door de Klant opgegeven adres. De levertijd is binnen 2 weken na bestelling; genoemde termijnen zijn indicatief en geen fatale termijnen.', 'Producten worden geleverd op een geschikte transporteenheid (bok of pallet); een bok blijft eigendom van Creditline of de vervoerder. Het risico gaat over zodra de producten aan de Klant zijn afgegeven.']],
+      ['9. Montage (optioneel)', ['Montage valt alleen onder de Overeenkomst als dit is overeengekomen en in het Aanbod staat. De Klant zorgt voor een tijdig bereikbare, geschikte montageplek. Hak-, breek-, stuc-, schilder- of afwerkwerk valt niet onder de montage, tenzij schriftelijk anders afgesproken.']],
+      ['10. Herroepingsrecht van de Consument', ['Voor niet op maat gemaakte producten kan de Consument de Overeenkomst op afstand binnen 14 dagen na ontvangst zonder opgaaf van reden ontbinden.', 'Het Herroepingsrecht geldt niet voor Maatwerk en voor producten die na levering zijn gemonteerd. Vrijwel alle kozijnen, deuren en schuifpuien van Creditline vallen hieronder en zijn daarom uitgesloten van herroeping.']],
+      ['11. Controle, conformiteit en garantie', ['De producten voldoen aan de Overeenkomst en aan de geldende eisen op het moment van het Aanbod. Op de producten geldt de fabrieksgarantie zoals per product in het Aanbod vermeld, naast de wettelijke rechten van de Consument.', 'De Klant controleert de producten bij ontvangst op zichtbare gebreken en meldt deze tijdig schriftelijk. Garantie geldt niet bij normale slijtage, onjuist gebruik, onvoldoende onderhoud, onjuist opmeten door de Klant of invloeden van buitenaf.']],
+      ['12. Klachten', ['Klachten kunnen worden gemeld via montage@creditline.nl of het contactformulier. Creditline streeft ernaar een klacht binnen 14 dagen te behandelen en laat het weten als er meer tijd nodig is.']],
+      ['13. Aansprakelijkheid', ['Voor zover wettelijk toegestaan is de aansprakelijkheid van Creditline per gebeurtenis beperkt tot het factuurbedrag van de betreffende levering. Indirecte schade, waaronder gevolgschade, is uitgesloten.', 'Deze beperkingen gelden niet bij opzet of bewuste roekeloosheid, en niet voor zover dwingend recht een ruimere aansprakelijkheid voorschrijft. Aansprakelijkheid ontstaat pas na schriftelijke ingebrekestelling met een redelijke hersteltermijn.']],
+      ['14. Overmacht', ['Bij overmacht hoeft Creditline een verplichting niet na te komen. Onder overmacht vallen onder meer storingen bij leveranciers en vervoerders, materiaalschaarste, extreme weersomstandigheden, stakingen, epidemieën en overheidsmaatregelen. Duurt overmacht langer dan 90 dagen, dan mogen beide partijen het niet-uitgevoerde deel ontbinden.']],
+      ['15. Eigendomsvoorbehoud', ['Geleverde producten blijven eigendom van Creditline totdat de Klant alles volledig heeft betaald. Tot die tijd mag de Klant de producten niet verpanden of in zekerheid geven.']],
+      ['16. Intellectuele eigendom', ['Alle intellectuele eigendomsrechten op de Website, de configurator, ontwerpen en materialen berusten bij Creditline of haar licentiegevers. De Klant krijgt uitsluitend een niet-overdraagbaar gebruiksrecht voor het doel van de Overeenkomst.']],
+      ['17. Persoonsgegevens', ['Creditline verwerkt persoonsgegevens uitsluitend voor het uitvoeren van de Overeenkomst en de bijbehorende communicatie, conform de AVG. Zie het privacybeleid voor meer informatie.']],
+      ['18. Toepasselijk recht en geschillen', ['Op alle Overeenkomsten is Nederlands recht van toepassing; het Weens Koopverdrag is uitgesloten. Geschillen worden voorgelegd aan de bevoegde rechter van de Rechtbank Midden-Nederland, tenzij dwingend recht anders bepaalt.']],
+      ['19. Slotbepalingen', ['Onder \u201Cschriftelijk\u201D valt ook e-mail. Is een bepaling ongeldig, dan blijven de overige bepalingen gelden. Creditline mag deze voorwaarden wijzigen; de actuele versie staat op de Website.']]
+    ]; %>
+    <% av.forEach(function(a){ %>
+      <h2><%- a[0] %></h2>
+      <% a[1].forEach(function(par){ %><p><%- par %></p><% }) %>
+    <% }) %>
+  </div>
+</section>
+<%- include('partials/footer') %>

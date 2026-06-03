@@ -1,0 +1,29 @@
+<%
+// verwacht: e (element), i (index). Toont alleen aanwezige velden.
+function R(k, v){ return (v===undefined||v===null||v==='') ? '' : '<tr><td>'+k+'</td><td>'+v+'</td></tr>'; }
+%>
+<table class="spec-table" style="margin-bottom:14px">
+  <tr><th colspan="2">Kozijn <%= String(i+1).padStart(3,'0') %><%= e.positie && e.positie!=='—' ? ' · '+e.positie : '' %> &middot; <%= e.aantal || 1 %>&times;</th></tr>
+  <%- R('Profiel', e.systeem) %>
+  <%- R('Indeling', e.indeling) %>
+  <% if (Array.isArray(e.vakken)) { %><tr><td>Vakken</td><td><%- e.vakken.join('<br>') %></td></tr><% } %>
+  <% if (e.uitvoering) { %><%- R('Uitvoering', e.uitvoering) %><% } %>
+  <%- R('Kleur', e.kleur) %>
+  <%- R('Afdichting', e.afdichting) %>
+  <%- R('Kern', e.kern) %>
+  <%- R('Glas (standaard)', e.glas) %>
+  <%- R('Glaslat', e.glaslat) %>
+  <%- R('Warme rand', e.warmeRand) %>
+  <%- R('Kruk', e.kruk) %>
+  <%- R('Met sleutel', e.sleutel) %>
+  <%- R('Inbraakwerend RC2', e.rc2) %>
+  <%- R('Scharnieren', e.scharnieren) %>
+  <%- R('Deurbeslag', e.deurBeslag) %>
+  <%- R('Dorpel', e.dorpel) %>
+  <%- R('Roedes', e.roedes) %>
+  <%- R('Ventilatie', e.ventilatie) %>
+  <%- R("Extra's", e.extras) %>
+  <tr><td>Afmetingen (b&times;h)</td><td><strong><%= e.afmetingen || ((e.breedte||'?')+' × '+(e.hoogte||'?')+' mm') %></strong></td></tr>
+  <%- R('Inmeten', e.meet) %>
+  <%- R('Montage', e.montage) %>
+</table>
