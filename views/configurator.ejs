@@ -8,9 +8,6 @@
   </section>
 
   <div class="wrap toolbar">
-    <% if (typeof assistantEnabled !== 'undefined' && assistantEnabled) { %>
-      <button class="ai-btn" onclick="openAssist()" title="Laat de AI je kozijn samenstellen of help bij inmeten"><span class="ai-ic">&#129302;</span> AI-hulp</button>
-    <% } %>
     <button class="cart-btn" onclick="openCart()">Mijn aanvraag <span class="cart-count" id="cartCount">0</span></button>
   </div>
 
@@ -281,12 +278,9 @@
             <div><label>Diagonalen (haaksheid)</label><div class="trio"><input id="md1" type="number" placeholder="diag 1"><input id="md2" type="number" placeholder="diag 2"></div></div>
             <div><label>Muurdikte / inbouwdiepte</label><div class="trio"><input id="mmuur" type="number" placeholder="mm"></div></div>
           </div>
-          <div class="assistant" style="margin-top:16px">
-            <script>window.__assistantOn = <%= (typeof assistantEnabled !== 'undefined' && assistantEnabled) ? 'true' : 'false' %>;</script>
-            <div class="a-head"><span class="pulse"></span> AI-hulp &middot; samenstellen &amp; inmeten</div>
-            <div class="a-body" id="chatBody"></div>
-            <div class="a-input"><input id="chatInput" placeholder="Stel je vraag&hellip;" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Stuur</button></div>
-          </div>
+          <% if (typeof assistantEnabled !== 'undefined' && assistantEnabled) { %>
+          <p class="meet-tip" style="margin-top:12px">Niet zeker over de maten of je samenstelling? <a href="javascript:void(0)" onclick="openAssist()" style="color:var(--accent-ink);font-weight:700">Open de AI-hulp</a> &mdash; die helpt je stap voor stap en vult de configurator meteen in.</p>
+          <% } %>
         </details>
       </div>
 
@@ -322,6 +316,22 @@
       <button class="btn btn-primary" style="width:100%" id="submitBtn" onclick="submitAanvraag()">Aanvraag versturen</button>
     </div>
   </div>
+
+  <!-- AI-HULP (zwevende knop + paneel, op elke stap beschikbaar) -->
+  <% if (typeof assistantEnabled !== 'undefined' && assistantEnabled) { %>
+    <button class="ai-fab" id="aiFab" onclick="openAssist()" title="Laat de AI je kozijn samenstellen of help bij inmeten"><span class="ai-ic">&#129302;</span> AI-hulp</button>
+    <aside class="ai-drawer" id="aiDrawer" aria-hidden="true">
+      <div class="ai-d-head">
+        <span class="t"><span class="pulse"></span> AI-hulp &middot; samenstellen &amp; inmeten</span>
+        <button class="x" onclick="closeAssist()" aria-label="Sluiten">&times;</button>
+      </div>
+      <div class="a-body" id="chatBody"></div>
+      <div class="a-input"><input id="chatInput" placeholder="Beschrijf je kozijn of vraag&hellip;" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Stuur</button></div>
+    </aside>
+    <script>window.__assistantOn = true;</script>
+  <% } else { %>
+    <script>window.__assistantOn = false;</script>
+  <% } %>
 
   <div class="toast" id="toast"></div>
 </div>

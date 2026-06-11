@@ -955,8 +955,11 @@ function applyAiUpdates(u){
   if(applied.length) toast('Aangepast: '+applied.slice(0,4).join(' · ')+(applied.length>4?' …':''));
   return applied;
 }
-// Open de AI-hulp vanaf elke stap (preview blijft links zichtbaar).
-function openAssist(){ jumpStep(6); setTimeout(()=>{ const i=$('chatInput'); if(i){ i.focus(); i.scrollIntoView({behavior:'smooth',block:'center'}); } },80); }
+// AI-hulp als zwevend zijpaneel — beschikbaar op ELKE stap, zonder de stap te
+// wijzigen en zonder de preview te verbergen (geen verduistering).
+function openAssist(){ const d=$('aiDrawer'); if(!d) return; d.classList.add('open'); d.setAttribute('aria-hidden','false'); setTimeout(()=>{ const i=$('chatInput'); if(i) i.focus(); },180); }
+function closeAssist(){ const d=$('aiDrawer'); if(!d) return; d.classList.remove('open'); d.setAttribute('aria-hidden','true'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAssist(); });
 
 /* ============ init ============ */
 function setQty(d){ state.aantal=Math.max(1,state.aantal+d); $('qtyInput').value=state.aantal; }
