@@ -209,10 +209,18 @@ const curH=()=>state.aanzicht==='buiten'?(state.gelijkeMaat?state.hoogte:state.h
 function shade(hex,p){ const n=parseInt(hex.slice(1),16); let r=Math.max(0,Math.min(255,(n>>16)+p)),g=Math.max(0,Math.min(255,((n>>8)&255)+p)),b=Math.max(0,Math.min(255,(n&255)+p)); return '#'+((r<<16)|(g<<8)|b).toString(16).padStart(6,'0'); }
 const isDark=hex=>['#363B3E','#17191C','#2F4034','#23303B','#5C3D22','#6E3326','#4A3526'].includes(hex);
 let GID='g0';
-function defs(frameC){ const lo=shade(frameC,20),hi=shade(frameC,-22);
+let FFILL='';                         // huidige kozijn-vulling (kleur/hout/aluminium)
+const WOODIDX=[7,8,9,10];             // KLEUREN-indexen die een houtlook zijn
+function defs(frameC){
+  const lo=shade(frameC,20),hi=shade(frameC,-22);
+  const mDk=shade(frameC,-28),mMid=shade(frameC,12),mHi=shade(frameC,46);   // aluminium
+  const wHi=shade(frameC,16),wMd=shade(frameC,-8),wDk=shade(frameC,-22);    // hout
   return `<defs>
   <linearGradient id="gl${GID}" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#d9e7ed"/><stop offset=".5" stop-color="#eff5f6"/><stop offset="1" stop-color="#cfdfe3"/></linearGradient>
   <linearGradient id="fr${GID}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${lo}"/><stop offset=".55" stop-color="${frameC}"/><stop offset="1" stop-color="${hi}"/></linearGradient>
+  <linearGradient id="metal${GID}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${mDk}"/><stop offset=".32" stop-color="${mMid}"/><stop offset=".5" stop-color="${mHi}"/><stop offset=".68" stop-color="${mMid}"/><stop offset="1" stop-color="${mDk}"/></linearGradient>
+  <linearGradient id="wbase${GID}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${wHi}"/><stop offset=".5" stop-color="${frameC}"/><stop offset="1" stop-color="${wDk}"/></linearGradient>
+  <pattern id="wood${GID}" patternUnits="userSpaceOnUse" width="11" height="230"><rect width="11" height="230" fill="url(#wbase${GID})"/><g stroke="${wDk}" stroke-width=".7" fill="none" opacity=".22"><path d="M2.5 0 Q4.5 58 2.5 116 T2.5 230"/><path d="M7 0 Q5 70 7 140 T7 230"/></g><line x1="10.4" y1="0" x2="10.4" y2="230" stroke="${wMd}" stroke-width=".55" opacity=".28"/><line x1=".6" y1="0" x2=".6" y2="230" stroke="${wHi}" stroke-width=".5" opacity=".25"/></pattern>
   <filter id="blur${GID}" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="6"/></filter></defs>`; }
 function paneSym(sym,x,y,w,h,c){
   const d=`stroke="${c}" stroke-width="1.3" stroke-dasharray="4 3" fill="none"`; let s=''; const ay=y+h/2;
@@ -244,11 +252,11 @@ function glassPane(x,y,w,h,stroke){
 }
 function paneFixed(x,y,w,h,frameC,stroke){
   const bd=Math.max(2,Math.min(w,h)*0.03);
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#fr${GID})"/>`+glassPane(x+bd,y+bd,w-2*bd,h-2*bd,stroke);
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${FFILL}"/>`+glassPane(x+bd,y+bd,w-2*bd,h-2*bd,stroke);
 }
 function paneSash(x,y,w,h,frameC,stroke,thin){
   const sd=Math.max(3,Math.min(w,h)*(thin?0.04:0.06));
-  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#fr${GID})" stroke="${stroke}"/>`;
+  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${FFILL}" stroke="${stroke}"/>`;
   s+=`<rect x="${x+0.8}" y="${y+0.8}" width="${w-1.6}" height="${h-1.6}" fill="none" stroke="rgba(255,255,255,.14)"/>`;
   const gx=x+sd,gy=y+sd,gw=w-2*sd,gh=h-2*sd;
   s+=`<rect x="${gx-1.5}" y="${gy-1.5}" width="${gw+3}" height="${gh+3}" fill="#000" opacity=".06"/>`;
@@ -288,7 +296,9 @@ function drawWindow(){
   const curLijn=(lijnenFor(state.materiaal).find(l=>l.id===state.lijn))||{}, aanslag=!!curLijn.aanslag;
   const frame=Math.max(7,Math.min(dw,dh)*0.045),gap=frame*0.7,div=frame*0.8;
   GID='g'+Date.now();
-  let g=`<rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" rx="4" fill="url(#fr${GID})" stroke="${stroke}"/>`;
+  const _wood=WOODIDX.includes(state.aanzicht==='buiten'?state.kleurBuiten:state.kleurBinnen);
+  FFILL = state.materiaal==='aluminium' ? `url(#metal${GID})` : _wood ? `url(#wood${GID})` : `url(#fr${GID})`;
+  let g=`<rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" rx="4" fill="${FFILL}" stroke="${stroke}"/>`;
   g+=`<path d="M${ox+1} ${oy+dh-1} L${ox+1} ${oy+1} L${ox+dw-1} ${oy+1}" fill="none" stroke="rgba(255,255,255,${dark?'.10':'.22'})" stroke-width="1.3" stroke-linecap="round"/>`;
   g+=`<path d="M${ox+1} ${oy+dh-1} L${ox+dw-1} ${oy+dh-1} L${ox+dw-1} ${oy+1}" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.3" stroke-linecap="round"/>`;
   g+=`<rect x="${ox+frame}" y="${oy+frame}" width="${dw-frame*2}" height="${dh-frame*2}" fill="none" stroke="rgba(0,0,0,.10)"/>`;
@@ -334,10 +344,10 @@ function drawWindow(){
   $('previewLabel').textContent=`${state.lijn.toUpperCase()} · ${N} ${eenheid} · ${state.aanzicht==='buiten'?'BUITEN':'BINNEN'}`;
   $('previewSpec').innerHTML=`${KLEUREN[state.kleurBuiten].label}${state.gelijkeKleur?'':' / binnen '+KLEUREN[state.kleurBinnen].label} · ${GLAZEN[state.glas]}${state.rc2?' · RC2':''}${state.montage?' · incl. montage':''}`;
 }
-function panelSVG(model, door){
+function panelSVG(model, door, wood){
   const code=model||'ST-01';
   const t=[...code].reduce((a,c)=>a+c.charCodeAt(0),0)%6;
-  const W=100,H=215, gid='pg'+t;
+  const W=100,H=215, gid='pg'+t+(wood?'w':'');
   const inox='#c4c9cb', inoxD='#a4aaac', edge='rgba(0,0,0,.12)', hl='rgba(255,255,255,.10)';
   const glass=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" fill="url(#${gid})" stroke="rgba(0,0,0,.10)" stroke-width="1"/>`;
   const bar=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" fill="${inox}"/><rect x="${x}" y="${y+h-1.4}" width="${w}" height="1.4" fill="${inoxD}"/>`;
@@ -351,14 +361,21 @@ function panelSVG(model, door){
     const panel=(y,h)=>`<rect x="18" y="${y}" width="64" height="${h}" rx="2" fill="${shade(door,-7)}" stroke="${shade(door,-16)}" stroke-width="1.4"/><rect x="23" y="${y+5}" width="54" height="${h-10}" rx="1.5" fill="none" stroke="${hl}" stroke-width="1.2"/>`;
     inner=panel(18,86)+panel(112,86);
   }
+  const woodDefs = wood
+    ? `<linearGradient id="wb${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(door,14)}"/><stop offset=".5" stop-color="${door}"/><stop offset="1" stop-color="${shade(door,-20)}"/></linearGradient>`
+      +`<pattern id="wg${gid}" patternUnits="userSpaceOnUse" width="9" height="${H}"><rect width="9" height="${H}" fill="url(#wb${gid})"/><g stroke="${shade(door,-20)}" stroke-width=".6" fill="none" opacity=".2"><path d="M2 0 Q4 ${Math.round(H*0.25)} 2 ${Math.round(H*0.5)} T2 ${H}"/><path d="M6.5 0 Q4.5 ${Math.round(H*0.3)} 6.5 ${Math.round(H*0.6)} T6.5 ${H}"/></g></pattern>`
+    : '';
+  const baseFill = wood ? `url(#wg${gid})` : door;
   return `<svg class="dp-img" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
-    +`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8f0f2"/><stop offset=".5" stop-color="#d3e1e5"/><stop offset="1" stop-color="#e8f0f2"/></linearGradient></defs>`
-    +`<rect width="${W}" height="${H}" fill="${door}"/><rect x="3" y="3" width="${W-6}" height="${H-6}" rx="2" fill="none" stroke="${edge}" stroke-width="1.2"/>${inner}</svg>`;
+    +`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8f0f2"/><stop offset=".5" stop-color="#d3e1e5"/><stop offset="1" stop-color="#e8f0f2"/></linearGradient>`
+    +`<linearGradient id="sh${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".16"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity=".13"/></linearGradient>${woodDefs}</defs>`
+    +`<rect width="${W}" height="${H}" fill="${baseFill}"/><rect width="${W}" height="${H}" fill="url(#sh${gid})"/><rect x="3" y="3" width="${W-6}" height="${H-6}" rx="2" fill="none" stroke="${edge}" stroke-width="1.2"/>${inner}</svg>`;
 }
 function drawDoor(){
   const frameC=KLEUREN[state.aanzicht==='buiten'?state.kleurBuiten:state.kleurBinnen].hex;
+  const woodLook=WOODIDX.includes(state.aanzicht==='buiten'?state.kleurBuiten:state.kleurBinnen);
   if(state.paneelOnly){
-    const code=`${state.collectie} ${state.model||'—'}`, pnl=panelSVG(state.model, frameC);
+    const code=`${state.collectie} ${state.model||'—'}`, pnl=panelSVG(state.model, frameC, woodLook);
     const Wt=curW(), Ht=curH(), scale=300/Math.max(300,Ht);
     const pw=Math.round(Math.max(90,Math.min(300, Wt*scale))), ph=Math.round(Math.max(150,Math.min(320, Ht*scale)));
     let h=`<div class="dp-wrap${state.aanzicht==='buiten'?' dp-mirror':''}" style="--fc:${frameC}">`;
@@ -374,7 +391,7 @@ function drawDoor(){
     return;
   }
   const slL=state.zijlicht===1||state.zijlicht===3, slR=state.zijlicht===2||state.zijlicht===3, dz=state.zijlichtDubbel, dubbel=state.deurType===1;
-  const grRight=state.scharnier===0, code=`${state.collectie} ${state.model||'—'}`, pnl=panelSVG(state.model, frameC);
+  const grRight=state.scharnier===0, code=`${state.collectie} ${state.model||'—'}`, pnl=panelSVG(state.model, frameC, woodLook);
   const Wt=curW(), Ht=curH(), cols=(slL?1:0)+(slR?1:0);
   const doorWmm=Math.max(300, Wt-cols*state.zijlichtB);
   const doorHmm=Math.max(300, Ht-(state.bovenlichtDeur?state.bovenlichtDeurH:0));

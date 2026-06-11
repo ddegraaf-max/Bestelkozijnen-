@@ -6,10 +6,15 @@
 .cfg .cfg-head h1 em{font-style:normal;color:var(--accent)}
 .cfg .cfg-head p{color:var(--muted);max-width:560px;margin-top:12px;font-size:16px}
 
-.cfg .toolbar{display:flex;justify-content:flex-end;margin:8px 0 14px}
+.cfg .toolbar{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin:8px 0 14px}
 .cfg .cart-btn{display:inline-flex;align-items:center;gap:9px;font-family:var(--font-mono);font-weight:500;font-size:13px;background:var(--ink);color:var(--paper);border:none;padding:10px 16px;border-radius:10px;cursor:pointer;transition:.15s}
 .cfg .cart-btn:hover{transform:translateY(-1px)}
 .cfg .cart-count{background:var(--accent);color:#fff;border-radius:20px;min-width:20px;height:20px;display:inline-flex;align-items:center;justify-content:center;font-size:11px;padding:0 5px}
+/* AI-hulp: opvallende, vriendelijke knop naast 'Mijn aanvraag' */
+.cfg .ai-btn{display:inline-flex;align-items:center;gap:8px;font-family:var(--font-display);font-weight:700;font-size:13.5px;letter-spacing:-.01em;background:var(--accent-soft);color:var(--accent-ink);border:1.5px solid var(--accent);padding:9px 16px;border-radius:10px;cursor:pointer;transition:.15s;white-space:nowrap}
+.cfg .ai-btn:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(200,80,45,.28)}
+.cfg .ai-btn .ai-ic{font-size:15px;line-height:1}
+@media(max-width:520px){.cfg .toolbar{flex-wrap:wrap}.cfg .ai-btn,.cfg .cart-btn{flex:1;justify-content:center}}
 
 .cfg .grid{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:26px;padding-bottom:70px;align-items:start}
 @media(max-width:960px){.cfg .grid{grid-template-columns:1fr}}
