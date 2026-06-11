@@ -50,29 +50,35 @@ module.exports = function (company, mailer) {
     res.redirect('/beheer/aanvraag/' + req.params.id);
   });
 
-  // Prijs (met optionele notitie) vastleggen — zichtbaar voor de klant in het
-  // portaal en per e-mail aan de klant gemeld.
-  router.post('/aanvraag/:id/prijs', async (req, res) => {
+  // Offerte samenstellen: prijs + notitie + (optioneel) PDF.
+  // - "concept": alles alleen opslaan, GEEN e-mail naar de klant.
+  // - "versturen": opslaan én in één keer naar de klant mailen (prijs + notitie
+  //   + PDF als bijlage) en de status op 'offerte klaar' zetten.
+  router.post('/aanvraag/:id/offerte', upload.single('offerte'), async (req, res) => {
+    const id = req.params.id;
     const raw = String(req.body.prijs || '').replace(',', '.').trim();
     const num = parseFloat(raw);
     const prijs = (raw === '' || !Number.isFinite(num) || num < 0) ? null : Math.round(num * 100) / 100;
     const notitie = String(req.body.notitie || '').trim().slice(0, 500) || null;
-    const r = await db.setPrijs(req.params.id, prijs, notitie);
-    if (r && mailer) {
-      mailer.notifyStatusUpdate({
-        to: r.klant.email, ref: r.ref, statusLabel: STATUS_LABELS[r.status],
-        prijs: r.prijs, notitie: r.prijsNotitie
-      }).catch(() => {});
-    }
-    res.redirect('/beheer/aanvraag/' + req.params.id);
-  });
 
-  router.post('/aanvraag/:id/offerte', upload.single('offerte'), async (req, res) => {
-    if (req.file) {
-      const r = await db.setOffertePdf(req.params.id, req.file.filename);
-      if (r && mailer) mailer.notifyOfferteReady({ to: r.klant.email, ref: r.ref }).catch(() => {});
+    await db.setPrijs(id, prijs, notitie);
+    if (req.file) await db.setOffertePdf(id, req.file.filename);
+
+    if (req.body.actie === 'versturen') {
+      let r = await db.getRequest(id);
+      // Status bijwerken naar 'offerte klaar' (zonder aparte status-mail).
+      if (r && (r.status === 'ontvangen' || r.status === 'in_behandeling')) {
+        r = await db.setStatus(id, 'offerte_klaar');
+      }
+      if (r && mailer) {
+        const pdfPath = r.offertePdf ? path.join(db.UPLOAD_DIR, r.offertePdf) : null;
+        mailer.sendOfferteNaarKlant({
+          to: r.klant.email, ref: r.ref, naam: r.klant.naam,
+          prijs: r.prijs, notitie: r.prijsNotitie, pdfPath
+        }).catch(() => {});
+      }
     }
-    res.redirect('/beheer/aanvraag/' + req.params.id);
+    res.redirect('/beheer/aanvraag/' + id);
   });
 
   return router;

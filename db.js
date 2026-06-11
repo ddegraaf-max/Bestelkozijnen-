@@ -193,16 +193,9 @@ function postgresStore() {
       return mapRequest(rows[0]);
     },
     async setOffertePdf(rid, filename) {
-      const r = await this.getRequest(rid);
-      if (!r) return null;
-      let status = r.status, history = r.statusHistory;
-      if (status === 'ontvangen' || status === 'in_behandeling') {
-        status = 'offerte_klaar';
-        history = [...history, { status: 'offerte_klaar', at: Date.now() }];
-      }
       const { rows } = await pool.query(
-        `UPDATE requests SET offerte_pdf=$1, status=$2, status_history=$3 WHERE id=$4 RETURNING *`,
-        [filename, status, JSON.stringify(history), rid]);
+        `UPDATE requests SET offerte_pdf=$1 WHERE id=$2 RETURNING *`,
+        [filename, rid]);
       return mapRequest(rows[0]);
     }
   };
@@ -267,11 +260,7 @@ function jsonStore() {
     },
     setOffertePdf(rid, filename) {
       const r = this.getRequest(rid); if (!r) return null;
-      r.offertePdf = filename;
-      if (r.status === 'ontvangen' || r.status === 'in_behandeling') {
-        r.status = 'offerte_klaar'; r.statusHistory.push({ status: 'offerte_klaar', at: Date.now() });
-      }
-      save(db); return r;
+      r.offertePdf = filename; save(db); return r;
     }
   };
 }

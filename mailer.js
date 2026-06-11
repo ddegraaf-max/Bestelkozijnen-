@@ -50,12 +50,28 @@ module.exports = function (company) {
           <p>Met vriendelijke groet,<br>${esc(company.name)}</p>`
       });
     },
-    async notifyOfferteReady({ to, ref }) {
+    // De offerte in één keer naar de klant: prijs + notitie + (optioneel) de
+    // PDF als bijlage. Wordt alleen verstuurd als de beheerder op "versturen"
+    // klikt.
+    async sendOfferteNaarKlant({ to, ref, naam, prijs, notitie, pdfPath }) {
+      const attachments = [];
+      if (pdfPath) {
+        try { attachments.push({ filename: `offerte-${ref}.pdf`, content: fs.readFileSync(pdfPath).toString('base64') }); }
+        catch (e) { console.warn('[MAIL] offerte-PDF kon niet worden bijgevoegd:', e.message); }
+      }
+      const prijsBlok = (prijs != null) ? `
+          <p style="font-size:20px;margin:14px 0 4px"><strong>Prijs: € ${esc(formatPrijs(prijs))}</strong></p>
+          ${notitie ? `<p style="color:#555;margin:0">${esc(notitie)}</p>` : ''}` : '';
       await send({
         to,
-        subject: `Je offerte ${ref} staat klaar`,
-        html: `<p>Goed nieuws — je offerte <strong>${esc(ref)}</strong> staat klaar in je portaal.</p>
-          <p>Log in op <a href="https://bestelkozijnenopmaat.nl/portaal">je portaal</a> om de offerte te bekijken en te downloaden.</p>`
+        subject: `Je offerte ${ref}`,
+        attachments: attachments.length ? attachments : undefined,
+        html: `<p>Hallo ${esc(naam || '')},</p>
+          <p>Je offerte voor aanvraag <strong>${esc(ref)}</strong> staat klaar.</p>
+          ${prijsBlok}
+          ${attachments.length ? '<p>De volledige offerte vind je in de bijlage (PDF).</p>' : ''}
+          <p style="margin-top:16px">Je vindt alles ook terug in <a href="https://bestelkozijnenopmaat.nl/portaal">je portaal</a>.</p>
+          <p>Met vriendelijke groet,<br>${esc(company.name)}</p>`
       });
     },
     // Statusupdate (en/of prijs) naar de klant — verstuurd bij elke wijziging
