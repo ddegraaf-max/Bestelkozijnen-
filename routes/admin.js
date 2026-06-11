@@ -35,7 +35,35 @@ module.exports = function (company, mailer) {
   });
 
   router.post('/aanvraag/:id/status', async (req, res) => {
-    await db.setStatus(req.params.id, req.body.status);
+    const nieuw = req.body.status;
+    const before = await db.getRequest(req.params.id);
+    // Alleen wijzigen (en mailen) als de status echt verandert.
+    if (before && STATUS_LABELS[nieuw] && before.status !== nieuw) {
+      const r = await db.setStatus(req.params.id, nieuw);
+      if (r && mailer) {
+        mailer.notifyStatusUpdate({
+          to: r.klant.email, ref: r.ref, statusLabel: STATUS_LABELS[r.status],
+          prijs: r.prijs, notitie: r.prijsNotitie
+        }).catch(() => {});
+      }
+    }
+    res.redirect('/beheer/aanvraag/' + req.params.id);
+  });
+
+  // Prijs (met optionele notitie) vastleggen — zichtbaar voor de klant in het
+  // portaal en per e-mail aan de klant gemeld.
+  router.post('/aanvraag/:id/prijs', async (req, res) => {
+    const raw = String(req.body.prijs || '').replace(',', '.').trim();
+    const num = parseFloat(raw);
+    const prijs = (raw === '' || !Number.isFinite(num) || num < 0) ? null : Math.round(num * 100) / 100;
+    const notitie = String(req.body.notitie || '').trim().slice(0, 500) || null;
+    const r = await db.setPrijs(req.params.id, prijs, notitie);
+    if (r && mailer) {
+      mailer.notifyStatusUpdate({
+        to: r.klant.email, ref: r.ref, statusLabel: STATUS_LABELS[r.status],
+        prijs: r.prijs, notitie: r.prijsNotitie
+      }).catch(() => {});
+    }
     res.redirect('/beheer/aanvraag/' + req.params.id);
   });
 

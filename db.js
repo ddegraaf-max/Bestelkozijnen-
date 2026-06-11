@@ -57,6 +57,8 @@ function postgresStore() {
     id: r.id, ref: r.ref, userId: r.user_id,
     elementen: r.elementen, klant: r.klant, status: r.status,
     statusHistory: r.status_history, offertePdf: r.offerte_pdf,
+    prijs: r.prijs == null ? null : Number(r.prijs),
+    prijsNotitie: r.prijs_notitie,
     createdAt: Number(r.created_at)
   } : undefined;
 
@@ -95,8 +97,13 @@ function postgresStore() {
           status TEXT NOT NULL DEFAULT 'ontvangen',
           status_history JSONB NOT NULL DEFAULT '[]',
           offerte_pdf TEXT,
+          prijs NUMERIC(10,2),
+          prijs_notitie TEXT,
           created_at BIGINT NOT NULL
         );`);
+      // Veilig voor bestaande databases die nog geen prijs-kolommen hadden:
+      await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS prijs NUMERIC(10,2);`);
+      await pool.query(`ALTER TABLE requests ADD COLUMN IF NOT EXISTS prijs_notitie TEXT;`);
       await pool.query(`CREATE INDEX IF NOT EXISTS requests_user ON requests (user_id);`);
       await pool.query(`
         CREATE TABLE IF NOT EXISTS counters (
@@ -150,13 +157,19 @@ function postgresStore() {
       const r = {
         id: id(), ref, userId, elementen, klant,
         status: 'ontvangen', statusHistory: [{ status: 'ontvangen', at: Date.now() }],
-        offertePdf: null, createdAt: Date.now()
+        offertePdf: null, prijs: null, prijsNotitie: null, createdAt: Date.now()
       };
       await pool.query(
         `INSERT INTO requests (id, ref, user_id, elementen, klant, status, status_history, offerte_pdf, created_at)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
         [r.id, r.ref, r.userId, JSON.stringify(r.elementen), JSON.stringify(r.klant), r.status, JSON.stringify(r.statusHistory), r.offertePdf, r.createdAt]);
       return r;
+    },
+    async setPrijs(rid, prijs, notitie) {
+      const { rows } = await pool.query(
+        `UPDATE requests SET prijs=$1, prijs_notitie=$2 WHERE id=$3 RETURNING *`,
+        [prijs, notitie, rid]);
+      return mapRequest(rows[0]);
     },
     async getRequest(rid) {
       const { rows } = await pool.query('SELECT * FROM requests WHERE id=$1 LIMIT 1', [rid]);
@@ -235,9 +248,13 @@ function jsonStore() {
         id: id(), ref, userId, elementen, klant,
         status: 'ontvangen',
         statusHistory: [{ status: 'ontvangen', at: Date.now() }],
-        offertePdf: null, createdAt: Date.now()
+        offertePdf: null, prijs: null, prijsNotitie: null, createdAt: Date.now()
       };
       db.requests.push(req); save(db); return req;
+    },
+    setPrijs(rid, prijs, notitie) {
+      const r = this.getRequest(rid); if (!r) return null;
+      r.prijs = prijs; r.prijsNotitie = notitie; save(db); return r;
     },
     getRequest(rid) { return db.requests.find(r => r.id === rid); },
     getRequestsByUser(uid) {

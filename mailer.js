@@ -58,6 +58,22 @@ module.exports = function (company) {
           <p>Log in op <a href="https://bestelkozijnenopmaat.nl/portaal">je portaal</a> om de offerte te bekijken en te downloaden.</p>`
       });
     },
+    // Statusupdate (en/of prijs) naar de klant — verstuurd bij elke wijziging
+    // vanuit het beheerpaneel.
+    async notifyStatusUpdate({ to, ref, statusLabel, prijs, notitie }) {
+      const prijsBlok = (prijs != null) ? `
+          <p style="font-size:18px;margin:14px 0 4px"><strong>Prijs: € ${esc(formatPrijs(prijs))}</strong></p>
+          ${notitie ? `<p style="color:#555;margin:0">${esc(notitie)}</p>` : ''}` : '';
+      await send({
+        to,
+        subject: `Update over je aanvraag ${ref}`,
+        html: `<p>Er is een update over je aanvraag <strong>${esc(ref)}</strong>.</p>
+          <p>Nieuwe status: <strong>${esc(statusLabel || '')}</strong></p>
+          ${prijsBlok}
+          <p style="margin-top:16px">Bekijk de details in <a href="https://bestelkozijnenopmaat.nl/portaal">je portaal</a>.</p>
+          <p>Met vriendelijke groet,<br>${esc(company.name)}</p>`
+      });
+    },
     // Wachtwoord vergeten: stuur een eenmalige herstellink (1 uur geldig).
     async sendPasswordReset({ to, naam, url }) {
       await send({
@@ -77,3 +93,4 @@ module.exports = function (company) {
   };
 };
 function esc(s = '') { return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function formatPrijs(n) { return Number(n).toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
