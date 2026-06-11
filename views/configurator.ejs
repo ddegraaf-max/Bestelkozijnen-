@@ -7,9 +7,6 @@
     <p>Doorloop de stappen: indeling, profiel, kleur, glas, beslag, opties en inmeten. Je aanvraag komt 1-op-1 overeen met onze bestelspecificatie.</p>
   </section>
 
-  <div class="wrap toolbar">
-    <button class="cart-btn" onclick="openCart()">Mijn aanvraag <span class="cart-count" id="cartCount">0</span></button>
-  </div>
 
   <div class="wrap grid">
     <!-- PREVIEW -->
@@ -317,9 +314,14 @@
     </div>
   </div>
 
-  <!-- AI-HULP (zwevende knop + paneel, op elke stap beschikbaar) -->
+  <!-- Zwevende acties: AI-hulp (optioneel) + Mijn aanvraag, op elke stap -->
+  <div class="cfg-fabs">
+    <% if (typeof assistantEnabled !== 'undefined' && assistantEnabled) { %>
+      <button class="fab fab-ai" id="aiFab" onclick="openAssist()" title="Laat de AI je kozijn samenstellen of help bij inmeten"><span class="ai-ic">&#129302;</span> AI-hulp</button>
+    <% } %>
+    <button class="fab fab-cart" onclick="openCart()">Mijn aanvraag <span class="cart-count" id="cartCount">0</span></button>
+  </div>
   <% if (typeof assistantEnabled !== 'undefined' && assistantEnabled) { %>
-    <button class="ai-fab" id="aiFab" onclick="openAssist()" title="Laat de AI je kozijn samenstellen of help bij inmeten"><span class="ai-ic">&#129302;</span> AI-hulp</button>
     <aside class="ai-drawer" id="aiDrawer" aria-hidden="true">
       <div class="ai-d-head">
         <div class="ai-d-id">
