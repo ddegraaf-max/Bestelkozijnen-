@@ -65,7 +65,7 @@ Houd antwoorden kort (max ~4 zinnen) en stel telkens één duidelijke vervolgvra
           'anthropic-version': '2023-06-01'
         },
         body: JSON.stringify({
-          model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+          model: process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5',
           max_tokens: 600,
           system,
           messages: messages.slice(-12).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '').slice(0, 2000) }))
