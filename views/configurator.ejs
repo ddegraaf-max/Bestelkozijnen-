@@ -8,6 +8,9 @@
   </section>
 
   <div class="wrap toolbar">
+    <% if (typeof assistantEnabled !== 'undefined' && assistantEnabled) { %>
+      <button class="cart-btn" onclick="openAssist()" title="Laat de AI je kozijn samenstellen of help bij inmeten">&#129302; Laat AI je helpen</button>
+    <% } %>
     <button class="cart-btn" onclick="openCart()">Mijn aanvraag <span class="cart-count" id="cartCount">0</span></button>
   </div>
 
@@ -280,7 +283,7 @@
           </div>
           <div class="assistant" style="margin-top:16px">
             <script>window.__assistantOn = <%= (typeof assistantEnabled !== 'undefined' && assistantEnabled) ? 'true' : 'false' %>;</script>
-            <div class="a-head"><span class="pulse"></span> Inmeet-assistent</div>
+            <div class="a-head"><span class="pulse"></span> AI-hulp &middot; samenstellen &amp; inmeten</div>
             <div class="a-body" id="chatBody"></div>
             <div class="a-input"><input id="chatInput" placeholder="Stel je vraag&hellip;" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Stuur</button></div>
           </div>

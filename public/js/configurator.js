@@ -799,8 +799,8 @@ async function submitAanvraag(){
 /* ============ assistent ============ */
 const ASSIST_ON = (typeof window!=='undefined' && window.__assistantOn === true);
 const chatMsgs = ASSIST_ON
-  ? [{role:'assistant',content:'Hoi! Ik help je inmeten. Gaat het om een raam, een schuifpui of een voordeur — en is het een nieuwe opening (dagmaat) of vervanging?'}]
-  : [{role:'assistant',content:'De inmeet-assistent is nog niet geactiveerd (er ontbreekt een API-sleutel). Meet ondertussen de breedte op drie hoogtes (boven, midden, onder) en de hoogte op drie breedtes (links, midden, rechts), en noteer telkens de kleinste maat. De volledige uitleg vind je op de Werkwijze-pagina.'}];
+  ? [{role:'assistant',content:'Hoi! Ik help je je kozijn samenstellen én inmeten. Vertel gewoon wat je zoekt — bijvoorbeeld "een antraciet schuifpui van 3 meter met triple glas" of "een witte voordeur" — dan vul ik de configurator meteen voor je in. Je ziet het live in de preview en kunt alles daarna zelf nog aanpassen. Gaat het om een raam, schuifpui of voordeur?'}]
+  : [{role:'assistant',content:'De assistent is nog niet geactiveerd (er ontbreekt een API-sleutel). Meet ondertussen de breedte op drie hoogtes (boven, midden, onder) en de hoogte op drie breedtes (links, midden, rechts), en noteer telkens de kleinste maat. De volledige uitleg vind je op de Werkwijze-pagina.'}];
 function initAssistant(){
   renderChat();
   if(!ASSIST_ON){
@@ -813,10 +813,133 @@ async function sendChat(){
   if(!ASSIST_ON) return;
   const inp=$('chatInput'),txt=inp.value.trim(); if(!txt)return;
   chatMsgs.push({role:'user',content:txt}); inp.value=''; chatMsgs.push({role:'assistant',content:'…'}); renderChat();
-  try{ const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMsgs.filter(m=>m.content!=='…')})}); const d=await r.json(); chatMsgs.pop(); chatMsgs.push({role:'assistant',content:d.ok?d.reply:(d.error||'Sorry, dat lukte niet.')}); }
+  try{ const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMsgs.filter(m=>m.content!=='…')})}); const d=await r.json(); chatMsgs.pop(); chatMsgs.push({role:'assistant',content:d.ok?d.reply:(d.error||'Sorry, dat lukte niet.')}); if(d.ok&&d.updates){ try{ applyAiUpdates(d.updates); }catch(err){ console.error('AI-update fout',err); } } }
   catch(e){ chatMsgs.pop(); chatMsgs.push({role:'assistant',content:'De assistent is even niet bereikbaar.'}); }
   renderChat();
 }
+
+/* ============ AI-aansturing van de configurator ============ */
+// De assistent levert gestructureerde `updates`; hier mappen we die veilig op
+// de state, herbouwen we alle bedieningselementen en tekenen we de preview
+// opnieuw — exact dezelfde codepaden als bij handmatig kiezen.
+const _norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[()]/g,' ').replace(/\s+/g,' ').trim();
+function _matchList(list,val,labelFn){
+  const v=_norm(val); if(!v) return -1; labelFn=labelFn||(x=>x);
+  for(let i=0;i<list.length;i++){ const l=_norm(labelFn(list[i])); if(l===v||l.includes(v)||v.includes(l.split(' ')[0])) return i; }
+  return -1;
+}
+function _matchKleur(val){
+  const v=_norm(val); if(!v) return -1;
+  const ral=(v.match(/\b(\d{4})\b/)||[])[1];
+  if(ral){ for(let i=0;i<KLEUREN.length;i++) if(_norm(KLEUREN[i].label).includes(ral)) return i; }
+  return _matchList(KLEUREN,val,k=>k.label.replace(/\(.*\)/,''));
+}
+function _matchGlas(val){
+  const v=_norm(val);
+  const al=[['triple',1],['hr+++',1],['dubbel',0],['hr++',0],['geluid',2],['veilig',3],['gelaagd',3],['zon',4],['antisol',4],['ornament',5],['gezandstraald',6],['zandstraal',6],['melk',7],['badkamer',7],['mat',7]];
+  for(const a of al) if(v.includes(a[0])) return a[1];
+  return _matchList(GLAZEN,val);
+}
+function _fnFromText(txt,schuif){
+  const t=_norm(txt);
+  let base = /kiep/.test(t)?'draaikiep' : /draai/.test(t)?'draai' : /schuif/.test(t)?'schuif' : 'vast';
+  if(base==='vast') return 'vast';
+  if(schuif && base!=='schuif') base='schuif';
+  if(!schuif && base==='schuif') base='draaikiep';
+  const side = /link/.test(t)?'l' : 'r';
+  const f=base+'-'+side;
+  return functiesFor().indexOf(f)>=0 ? f : 'vast';
+}
+const _clampDim=(v,a,b)=>Math.max(a,Math.min(b,Math.round(v)));
+function _setVakken(n,kind){
+  const cur=state.vakken, arr=[];
+  for(let i=0;i<n;i++){ const def=kind==='schuif'?(i===0?'schuif-r':'vast'):(i===0?'draaikiep-r':'vast');
+    const keep=cur[i]&&functiesFor().indexOf(cur[i].functie)>=0?cur[i].functie:def;
+    arr.push({functie:keep,glas:cur[i]?cur[i].glas:null}); }
+  state.vakken=arr;
+}
+function syncControlsFromState(){
+  const set=(id,prop,val)=>{ const el=$(id); if(el) el[prop]=val; };
+  set('inPositie','value',state.positie||'');
+  set('gelijkeKleurToggle','checked',state.gelijkeKleur);
+  const kbw=$('kleurBinnenWrap'); if(kbw) kbw.hidden=state.gelijkeKleur;
+  const kbl=$('kleurBuitenLbl'); if(kbl) kbl.textContent=state.gelijkeKleur?'Kleur (buiten & binnen)':'Kleur buiten';
+  set('warmeRandToggle','checked',state.warmeRand); set('sleutelToggle','checked',state.sleutel);
+  set('rc2Toggle','checked',state.rc2); set('scharnierToggle','checked',state.scharnieren);
+  set('rolluikToggle','checked',state.rolluik); set('horToggle','checked',state.hor); set('screenToggle','checked',state.screen);
+  set('smartToggle','checked',state.smartHome);
+  set('brievenbusToggle','checked',state.brievenbus); set('spionToggle','checked',state.spion); set('huisnummerToggle','checked',state.huisnummer);
+  set('paneelOnlyToggle','checked',state.paneelOnly); set('laagGlasToggle','checked',state.laagGlas);
+  set('montageToggle','checked',state.montage); set('gelijkeMaatToggle','checked',state.gelijkeMaat);
+  const bmw=$('buitenMaatWrap'); if(bmw) bmw.hidden=state.gelijkeMaat;
+  set('inW','value',state.breedte); set('inH','value',state.hoogte);
+  set('inWb','value',state.breedteBuiten); set('inHb','value',state.hoogteBuiten);
+  set('qtyInput','value',state.aantal);
+  const ro=$('roedeOpties'); if(ro) ro.hidden=(state.roedeType===0);
+}
+function rebuildAll(){
+  buildProfiel();
+  swatches('kleurBuiten',state.kleurBuiten,i=>{state.kleurBuiten=i; if(state.gelijkeKleur)state.kleurBinnen=i; draw();});
+  swatches('kleurBinnen',state.kleurBinnen,i=>{state.kleurBinnen=i;draw();});
+  buildAfdichting();
+  chips('kernChips',KERN,state.kern,i=>state.kern=i);
+  chips('glasChips',GLAZEN,state.glas,i=>{state.glas=i;draw();});
+  chips('glaslatChips',GLASLAT,state.glaslat,i=>state.glaslat=i);
+  chips('krukChips',KRUKKEN,state.kruk,i=>{state.kruk=i;draw();});
+  buildBeslagChips();
+  chips('roedeTypeChips',ROEDETYPES,state.roedeType,i=>{state.roedeType=i;$('roedeOpties').hidden=(i===0);draw();});
+  chips('roedePatroonChips',ROEDEPATRONEN,state.roedePatroon,i=>{state.roedePatroon=i;draw();});
+  chips('ventilatieChips',VENTILATIE,state.ventilatie,i=>state.ventilatie=i);
+  buildDeurIndeling(); buildDeurGlas(); buildIndeling();
+  syncControlsFromState();
+  if(step===STEPS.length-1) buildOverzicht();
+  draw();
+}
+function applyAiUpdates(u){
+  if(!u||typeof u!=='object') return [];
+  const applied=[]; let productChanged=false;
+  if(u.materiaal && ['kunststof','hout','aluminium'].includes(_norm(u.materiaal))){ state.materiaal=_norm(u.materiaal); productChanged=true; }
+  if(u.product){ const p=_norm(u.product);
+    state.product = p.includes('deur')?'voordeur' : p.includes('schuif')?'schuif' : 'raam'; productChanged=true; }
+  if(state.product==='voordeur' && state.materiaal!=='kunststof') state.materiaal='kunststof';
+  if(productChanged){
+    if(state.product!=='voordeur') state.lijn=lijnenFor(state.materiaal)[0].id;
+    applyProductDefaults();
+    applied.push(state.product==='voordeur'?'voordeur':state.product==='schuif'?'schuifpui':'raam', state.materiaal);
+  }
+  if(u.kleur){ const i=_matchKleur(u.kleur); if(i>=0){ state.kleurBuiten=i; if(state.gelijkeKleur)state.kleurBinnen=i; applied.push('kleur '+KLEUREN[i].label); } }
+  if(u.kleurBinnen){ const i=_matchKleur(u.kleurBinnen); if(i>=0){ state.gelijkeKleur=false; state.kleurBinnen=i; applied.push('binnen '+KLEUREN[i].label); } }
+  if(u.glas && !isVoordeur()){ const i=_matchGlas(u.glas); if(i>=0){ state.glas=i; applied.push(GLAZEN[i]); } }
+  if(Number.isFinite(u.breedte_mm)){ state.breedte=_clampDim(u.breedte_mm,400,6000); if(state.gelijkeMaat)state.breedteBuiten=state.breedte; applied.push('breedte '+state.breedte+' mm'); }
+  if(Number.isFinite(u.hoogte_mm)){ state.hoogte=_clampDim(u.hoogte_mm,300,3000); if(state.gelijkeMaat)state.hoogteBuiten=state.hoogte; applied.push('hoogte '+state.hoogte+' mm'); }
+  if(Array.isArray(u.vleugelFuncties) && u.vleugelFuncties.length && !isVoordeur()){
+    const schuif=isSchuif();
+    let arr=u.vleugelFuncties.slice(0,4).map(t=>({functie:_fnFromText(t,schuif),glas:null}));
+    while(arr.length<minVak()) arr.push({functie:schuif?'vast':'vast',glas:null});
+    state.vakken=arr; applied.push(arr.length+(schuif?' delen':' vleugels'));
+  } else if(Number.isFinite(u.aantalVleugels) && isRaam()){
+    const n=Math.max(1,Math.min(4,u.aantalVleugels)); _setVakken(n,'raam'); applied.push(n+' vleugel'+(n>1?'s':''));
+  } else if(Number.isFinite(u.schuifDelen) && isSchuif()){
+    const n=Math.max(2,Math.min(4,u.schuifDelen)); _setVakken(n,'schuif'); applied.push(n+' delen');
+  }
+  if(typeof u.montage==='boolean'){ state.montage=u.montage; applied.push(u.montage?'incl. montage':'excl. montage'); }
+  if(typeof u.rc2==='boolean'){ state.rc2=u.rc2; if(u.rc2)applied.push('RC2'); }
+  if(typeof u.roede==='boolean'){ state.roedeType=u.roede?1:0; if(u.roede)applied.push('roedes'); }
+  if(typeof u.ventilatie==='boolean'){ state.ventilatie=u.ventilatie?1:0; if(u.ventilatie)applied.push('ventilatie'); }
+  ['rolluik','hor','screen'].forEach(k=>{ if(typeof u[k]==='boolean'){ state[k]=u[k]; if(u[k])applied.push(k); } });
+  if(u.positie){ state.positie=String(u.positie).slice(0,80); applied.push(state.positie); }
+  if(Number.isFinite(u.aantal)){ state.aantal=Math.max(1,Math.min(99,Math.round(u.aantal))); applied.push(state.aantal+'×'); }
+  if(isVoordeur()){
+    if(u.deurCollectie && DEUR_COLLECTIES.indexOf(u.deurCollectie)>=0){ state.collectie=u.deurCollectie; if((DEUR_MODELLEN[state.collectie]||[]).indexOf(state.model)<0) state.model=DEUR_MODELLEN[state.collectie][0]||''; applied.push('collectie '+state.collectie); }
+    if(u.deurModel){ state.model=String(u.deurModel).slice(0,20); applied.push('model '+state.model); }
+    if(typeof u.dubbeleDeur==='boolean'){ state.deurType=u.dubbeleDeur?1:0; applied.push(u.dubbeleDeur?'dubbele deur':'enkele deur'); }
+  }
+  rebuildAll();
+  if(applied.length) toast('Aangepast: '+applied.slice(0,4).join(' · ')+(applied.length>4?' …':''));
+  return applied;
+}
+// Open de AI-hulp vanaf elke stap (preview blijft links zichtbaar).
+function openAssist(){ jumpStep(6); setTimeout(()=>{ const i=$('chatInput'); if(i){ i.focus(); i.scrollIntoView({behavior:'smooth',block:'center'}); } },80); }
 
 /* ============ init ============ */
 function setQty(d){ state.aantal=Math.max(1,state.aantal+d); $('qtyInput').value=state.aantal; }
