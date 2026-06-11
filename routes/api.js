@@ -74,7 +74,7 @@ module.exports = function (company, mailer) {
 
   const SYS = `Je bent de configuratie- en inmeet-assistent van ${company.name} (kozijnen, schuifpuien, voordeuren op maat). Help particuliere klanten in het Nederlands hun kozijn samen te stellen en correct op te meten. Kort, warm, concreet: max ~4 zinnen, telkens één vervolgvraag. Geef nooit prijzen.
 
-Roep de functie update_configuratie aan zodra de klant een concrete keuze noemt (kleur, maat, product, glas, indeling, optie). Liever een kleine update dan wachten. Vul alleen wat de klant duidelijk maakt; verzin niets. Zet afmetingen pas als de klant ze noemt.
+Roep de functie update_configuratie ALLEEN aan als de klant een concrete keuze noemt (kleur, maat, product, glas, indeling, optie). Bij een begroeting, bedankje of vraag zonder concrete keuze roep je de functie NIET aan — antwoord dan gewoon vriendelijk en stel een vervolgvraag. Vul alleen wat de klant duidelijk maakt; verzin niets. Zet afmetingen pas als de klant ze noemt.
 
 Inmeten: breedte op 3 hoogtes, hoogte op 3 breedtes, noteer steeds de kleinste maat (in mm). Vraag of het de dagmaat of de buitenmaat is; bij vervanging ook de muurdikte. Waarschuw bij verschillen > ~10 mm.`;
 
@@ -95,22 +95,20 @@ Inmeten: breedte op 3 hoogtes, hoogte op 3 breedtes, noteer steeds de kleinste m
       // OpenAI-compatibele endpoint. Standaard OpenAI; wijs OPENAI_BASE_URL naar
       // Groq of Gemini (gratis) zonder verdere codewijziging.
       const apiBase = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
-      const r = await fetch(`${apiBase}/chat/completions`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-        },
-        body: JSON.stringify({
-          model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
-          messages: [{ role: 'system', content: SYS }, ...convo],
-          tools: [CONFIG_FN],
-          tool_choice: 'auto',
-          temperature: 0.3,
-          max_tokens: 500
-        })
-      });
-      const data = await r.json();
+      const MODEL = process.env.OPENAI_MODEL || 'gpt-4o-mini';
+      async function chat(msgs, withTools) {
+        const body = { model: MODEL, messages: msgs, temperature: 0.3, max_tokens: 500 };
+        if (withTools) { body.tools = [CONFIG_FN]; body.tool_choice = 'auto'; }
+        const rr = await fetch(`${apiBase}/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${process.env.OPENAI_API_KEY}` },
+          body: JSON.stringify(body)
+        });
+        return rr.json();
+      }
+
+      const baseMessages = [{ role: 'system', content: SYS }, ...convo];
+      const data = await chat(baseMessages, true);
       if (data.error) { console.error('Assistant API-fout:', data.error); return res.status(500).json({ ok: false, error: 'De assistent is even niet bereikbaar.' }); }
 
       const msg = (data.choices && data.choices[0] && data.choices[0].message) || {};
@@ -120,7 +118,22 @@ Inmeten: breedte op 3 hoogtes, hoogte op 3 breedtes, noteer steeds de kleinste m
         if (args) { try { Object.assign(updates, JSON.parse(args)); } catch (e) { /* negeer ongeldige JSON */ } }
       }
       let reply = (msg.content || '').trim();
-      if (!reply) reply = Object.keys(updates).length ? 'Top, ik heb het aangepast in de configurator.' : 'Waarmee kan ik je verder helpen?';
+
+      // Heeft het model de configurator aangepast? Dan is content vaak leeg —
+      // doe één extra call met het functieresultaat zodat het model een echt,
+      // natuurlijk antwoord schrijft (geen standaardzin).
+      if (msg.tool_calls && msg.tool_calls.length) {
+        try {
+          const follow = baseMessages.concat([msg], msg.tool_calls.map(tc => ({
+            role: 'tool', tool_call_id: tc.id, content: 'Toegepast in de configurator.'
+          })));
+          const data2 = await chat(follow, false);
+          const reply2 = ((data2.choices && data2.choices[0] && data2.choices[0].message && data2.choices[0].message.content) || '').trim();
+          if (reply2) reply = reply2;
+        } catch (e) { console.warn('Assistant vervolg-call mislukt:', e.message); }
+      }
+
+      if (!reply) reply = Object.keys(updates).length ? 'Ik heb het aangepast in de configurator. Wil je nog iets wijzigen?' : 'Waarmee kan ik je helpen?';
       res.json({ ok: true, reply, updates: Object.keys(updates).length ? updates : null });
     } catch (e) {
       console.error('Assistant-fout:', e);
