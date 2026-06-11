@@ -825,7 +825,13 @@ function initAssistant(){
     const b=document.querySelector('.assistant .a-input button'); if(b) b.disabled=true;
   }
 }
-function renderChat(){ const b=$('chatBody'); if(!b)return; b.innerHTML=chatMsgs.map(m=>`<div class="msg ${m.role==='assistant'?'bot':'user'}">${m.content.replace(/</g,'&lt;')}</div>`).join(''); b.scrollTop=b.scrollHeight; }
+function renderChat(){ const b=$('chatBody'); if(!b)return;
+  b.innerHTML=chatMsgs.map(m=>{
+    if(m.content==='…') return '<div class="msg bot typing"><span></span><span></span><span></span></div>';
+    return `<div class="msg ${m.role==='assistant'?'bot':'user'}">${m.content.replace(/</g,'&lt;')}</div>`;
+  }).join('');
+  b.scrollTop=b.scrollHeight;
+}
 async function sendChat(){
   if(!ASSIST_ON) return;
   const inp=$('chatInput'),txt=inp.value.trim(); if(!txt)return;

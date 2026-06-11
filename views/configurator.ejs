@@ -322,11 +322,18 @@
     <button class="ai-fab" id="aiFab" onclick="openAssist()" title="Laat de AI je kozijn samenstellen of help bij inmeten"><span class="ai-ic">&#129302;</span> AI-hulp</button>
     <aside class="ai-drawer" id="aiDrawer" aria-hidden="true">
       <div class="ai-d-head">
-        <span class="t"><span class="pulse"></span> AI-hulp &middot; samenstellen &amp; inmeten</span>
+        <div class="ai-d-id">
+          <span class="ai-av">&#129302;</span>
+          <span class="ai-d-tt"><b>AI-hulp</b><small>Samenstellen &amp; inmeten</small></span>
+          <span class="ai-on" title="Online"></span>
+        </div>
         <button class="x" onclick="closeAssist()" aria-label="Sluiten">&times;</button>
       </div>
       <div class="a-body" id="chatBody"></div>
-      <div class="a-input"><input id="chatInput" placeholder="Beschrijf je kozijn of vraag&hellip;" onkeydown="if(event.key==='Enter')sendChat()"><button onclick="sendChat()">Stuur</button></div>
+      <div class="a-input">
+        <input id="chatInput" placeholder="Beschrijf je kozijn of vraag&hellip;" onkeydown="if(event.key==='Enter')sendChat()">
+        <button onclick="sendChat()" aria-label="Versturen">&#8593;</button>
+      </div>
     </aside>
     <script>window.__assistantOn = true;</script>
   <% } else { %>
