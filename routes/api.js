@@ -92,7 +92,10 @@ Inmeten: breedte op 3 hoogtes, hoogte op 3 breedtes, noteer steeds de kleinste m
     if (!convo.length) return res.json({ ok: true, reply: 'Waarmee kan ik je helpen?', updates: null });
 
     try {
-      const r = await fetch('https://api.openai.com/v1/chat/completions', {
+      // OpenAI-compatibele endpoint. Standaard OpenAI; wijs OPENAI_BASE_URL naar
+      // Groq of Gemini (gratis) zonder verdere codewijziging.
+      const apiBase = (process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
+      const r = await fetch(`${apiBase}/chat/completions`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
