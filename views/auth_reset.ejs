@@ -1,0 +1,22 @@
+<%- include('partials/header') %>
+<section class="wrap block narrow" style="padding-top:48px">
+  <div class="auth-card">
+    <h1>Nieuw wachtwoord instellen</h1>
+    <% if (done) { %>
+      <p class="sub">Je wachtwoord is opnieuw ingesteld. Je kunt nu inloggen met je nieuwe wachtwoord.</p>
+      <p class="muted-link" style="margin-top:16px"><a href="/inloggen">Naar inloggen</a></p>
+    <% } else if (!valid) { %>
+      <div class="alert">Deze herstellink is ongeldig of verlopen. Vraag een nieuwe link aan.</div>
+      <p class="muted-link" style="margin-top:16px"><a href="/wachtwoord-vergeten">Nieuwe herstellink aanvragen</a></p>
+    <% } else { %>
+      <p class="sub">Kies een nieuw wachtwoord voor je account.</p>
+      <% if (error) { %><div class="alert"><%= error %></div><% } %>
+      <form method="POST" action="/wachtwoord-herstellen/<%= token %>">
+        <div class="fld"><label>Nieuw wachtwoord</label><input name="wachtwoord" type="password" placeholder="Minstens 6 tekens"></div>
+        <div class="fld"><label>Herhaal wachtwoord</label><input name="wachtwoord2" type="password" placeholder="Nogmaals"></div>
+        <button class="btn btn-primary" style="width:100%">Wachtwoord opslaan</button>
+      </form>
+    <% } %>
+  </div>
+</section>
+<%- include('partials/footer') %>

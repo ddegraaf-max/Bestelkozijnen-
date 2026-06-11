@@ -57,6 +57,22 @@ module.exports = function (company) {
         html: `<p>Goed nieuws — je offerte <strong>${esc(ref)}</strong> staat klaar in je portaal.</p>
           <p>Log in op <a href="https://bestelkozijnenopmaat.nl/portaal">je portaal</a> om de offerte te bekijken en te downloaden.</p>`
       });
+    },
+    // Wachtwoord vergeten: stuur een eenmalige herstellink (1 uur geldig).
+    async sendPasswordReset({ to, naam, url }) {
+      await send({
+        to,
+        subject: 'Je wachtwoord opnieuw instellen',
+        html: `<p>Hallo ${esc(naam || '')},</p>
+          <p>Je hebt gevraagd om je wachtwoord opnieuw in te stellen. Klik op onderstaande knop. Deze link is <strong>1 uur</strong> geldig en kan maar één keer worden gebruikt.</p>
+          <p style="margin:24px 0">
+            <a href="${esc(url)}" style="background:#1f6feb;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;display:inline-block">Nieuw wachtwoord instellen</a>
+          </p>
+          <p>Werkt de knop niet? Kopieer dan deze link in je browser:<br>
+            <a href="${esc(url)}">${esc(url)}</a></p>
+          <p>Heb je dit niet aangevraagd? Dan kun je deze e-mail negeren; je wachtwoord blijft ongewijzigd.</p>
+          <p>Met vriendelijke groet,<br>${esc(company.name)}</p>`
+      });
     }
   };
 };

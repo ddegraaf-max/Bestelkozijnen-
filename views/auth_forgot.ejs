@@ -1,0 +1,19 @@
+<%- include('partials/header') %>
+<section class="wrap block narrow" style="padding-top:48px">
+  <div class="auth-card">
+    <h1>Wachtwoord vergeten</h1>
+    <% if (sent) { %>
+      <p class="sub">Als er een account bij dit e-mailadres hoort, hebben we een e-mail met een herstellink gestuurd. Controleer ook je spam-map. De link is 1 uur geldig.</p>
+      <p class="muted-link" style="margin-top:16px"><a href="/inloggen">Terug naar inloggen</a></p>
+    <% } else { %>
+      <p class="sub">Vul je e-mailadres in. We sturen je een link om een nieuw wachtwoord in te stellen.</p>
+      <% if (error) { %><div class="alert"><%= error %></div><% } %>
+      <form method="POST" action="/wachtwoord-vergeten">
+        <div class="fld"><label>E-mail</label><input name="email" type="email" placeholder="jij@voorbeeld.nl"></div>
+        <button class="btn btn-primary" style="width:100%">Herstellink versturen</button>
+      </form>
+      <p class="muted-link" style="margin-top:16px"><a href="/inloggen">Terug naar inloggen</a></p>
+    <% } %>
+  </div>
+</section>
+<%- include('partials/footer') %>

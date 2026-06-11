@@ -24,24 +24,24 @@ module.exports = function (company, mailer) {
     fileFilter: (req, file, cb) => cb(null, file.mimetype === 'application/pdf')
   });
 
-  router.get('/', (req, res) => {
-    res.render('admin_dashboard', { company, active: '', title: 'Beheer', user: req.user, requests: db.allRequests(), STATUS_LABELS });
+  router.get('/', async (req, res) => {
+    res.render('admin_dashboard', { company, active: '', title: 'Beheer', user: req.user, requests: await db.allRequests(), STATUS_LABELS });
   });
 
-  router.get('/aanvraag/:id', (req, res) => {
-    const r = db.getRequest(req.params.id);
+  router.get('/aanvraag/:id', async (req, res) => {
+    const r = await db.getRequest(req.params.id);
     if (!r) return res.status(404).render('404', { company, active: '', title: 'Niet gevonden' });
     res.render('admin_request', { company, active: '', title: 'Aanvraag ' + r.ref, user: req.user, r, STATUS_LABELS });
   });
 
-  router.post('/aanvraag/:id/status', (req, res) => {
-    db.setStatus(req.params.id, req.body.status);
+  router.post('/aanvraag/:id/status', async (req, res) => {
+    await db.setStatus(req.params.id, req.body.status);
     res.redirect('/beheer/aanvraag/' + req.params.id);
   });
 
-  router.post('/aanvraag/:id/offerte', upload.single('offerte'), (req, res) => {
+  router.post('/aanvraag/:id/offerte', upload.single('offerte'), async (req, res) => {
     if (req.file) {
-      const r = db.setOffertePdf(req.params.id, req.file.filename);
+      const r = await db.setOffertePdf(req.params.id, req.file.filename);
       if (r && mailer) mailer.notifyOfferteReady({ to: r.klant.email, ref: r.ref }).catch(() => {});
     }
     res.redirect('/beheer/aanvraag/' + req.params.id);

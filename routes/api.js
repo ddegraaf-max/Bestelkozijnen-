@@ -19,7 +19,7 @@ module.exports = function (company, mailer) {
     if (!Array.isArray(elementen) || elementen.length === 0)
       return res.status(400).json({ ok: false, error: 'Voeg minstens één element toe.' });
 
-    const request = db.createRequest({
+    const request = await db.createRequest({
       userId: req.user.id,
       elementen,
       klant: { naam: req.user.naam, email: req.user.email, telefoon: req.user.telefoon || '', opmerking: opmerking || '' }

@@ -1,0 +1,35 @@
+<%- include('partials/header') %>
+<section class="wrap block narrow" style="padding-top:48px">
+  <div class="auth-card">
+    <h1>Accountinstellingen</h1>
+    <p class="sub">Beheer hier de beveiliging van je account.</p>
+
+    <% if (typeof melding !== 'undefined' && melding === '2fa-uit') { %>
+      <div class="alert" style="background:#e9f7ef;border-color:#bfe6cf;color:#1e6b3f">Tweestapsverificatie is uitgeschakeld.</div>
+    <% } %>
+    <% if (typeof error !== 'undefined' && error) { %><div class="alert"><%= error %></div><% } %>
+
+    <div class="card" style="padding:18px;margin-top:14px">
+      <h2 style="margin:0 0 6px;font-size:18px">Tweestapsverificatie</h2>
+      <% if (user.totpEnabled) { %>
+        <p class="muted" style="font-size:14px;margin:0 0 14px">Status: <strong style="color:#1e6b3f">ingeschakeld</strong>. Je hebt bij het inloggen een code uit je authenticator-app nodig.</p>
+        <a href="/2fa/instellen" class="btn btn-ghost" style="margin-bottom:18px">Opnieuw instellen (nieuwe QR)</a>
+
+        <details style="margin-top:8px">
+          <summary style="cursor:pointer;color:var(--muted);font-size:14px">Tweestapsverificatie uitschakelen</summary>
+          <form method="POST" action="/portaal/account/2fa-uit" style="margin-top:12px">
+            <p class="muted" style="font-size:13px;margin:0 0 10px">Vul ter bevestiging de huidige 6-cijferige code uit je app in.</p>
+            <div class="fld"><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" placeholder="123 456" style="letter-spacing:.3em;font-family:var(--font-mono);text-align:center"></div>
+            <button class="btn btn-ghost" style="width:100%">Uitschakelen</button>
+          </form>
+        </details>
+      <% } else { %>
+        <p class="muted" style="font-size:14px;margin:0 0 14px">Status: <strong>uitgeschakeld</strong>. Voeg een extra beveiligingslaag toe met een authenticator-app.</p>
+        <a href="/2fa/instellen" class="btn btn-primary" style="width:100%">Tweestapsverificatie inschakelen</a>
+      <% } %>
+    </div>
+
+    <p class="muted-link" style="margin-top:16px"><a href="/portaal">&larr; Terug naar mijn portaal</a></p>
+  </div>
+</section>
+<%- include('partials/footer') %>
