@@ -8,10 +8,6 @@ const { company, materials } = require('./data.js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Achter de Railway-proxy: vertrouw X-Forwarded-* zodat req.protocol 'https' is
-// (nodig voor correcte herstellinks in e-mails).
-app.set('trust proxy', 1);
-
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
@@ -27,15 +23,24 @@ app.use(cookieSession({
 
 
 // ---- huidige gebruiker beschikbaar maken ----
-app.use(async (req, res, next) => {
-  try { req.user = req.session.uid ? await db.findUserById(req.session.uid) : null; }
-  catch (e) { console.error('[auth] gebruiker laden mislukt:', e.message); req.user = null; }
+app.use((req, res, next) => {
+  req.user = req.session.uid ? db.findUserById(req.session.uid) : null;
   res.locals.currentUser = req.user;
   res.locals.company = company;
   res.locals.materials = materials;
   res.locals.active = '';
   next();
 });
+
+// ---- Beheerder aanmaken bij start (zet ADMIN_EMAIL + ADMIN_PASSWORD in env) ----
+(function seedAdmin(){
+  const email = process.env.ADMIN_EMAIL, pw = process.env.ADMIN_PASSWORD;
+  if (email && pw && !db.findUserByEmail(email)) {
+    const bcrypt = require('bcryptjs');
+    db.createUser({ naam: 'Beheerder', email, passwordHash: bcrypt.hashSync(pw, 10), role: 'beheer' });
+    console.log('Beheerder aangemaakt:', email);
+  }
+})();
 
 const mailer = require('./mailer')(company);
 
@@ -73,9 +78,12 @@ app.post('/api/contact', async (req, res) => {
 });
 
 // ================= AUTH / PORTAAL / BEHEER / API =================
-app.use('/', require('./routes/auth')(company, mailer));
-// Tweestapsverificatie is optioneel: gebruikers kunnen het zelf aan- of
-// uitzetten in hun accountinstellingen (/portaal/account).
+app.use('/', require('./routes/auth')(company));
+// Ingelogd maar 2FA nog niet ingesteld? -> eerst verplicht instellen.
+app.use(['/portaal', '/beheer'], (req, res, next) => {
+  if (req.user && !req.user.totpEnabled) return res.redirect('/2fa/instellen');
+  next();
+});
 app.use('/portaal', require('./routes/portal')(company));
 app.use('/beheer', require('./routes/admin')(company, mailer));
 app.use('/api', require('./routes/api')(company, mailer));
@@ -83,18 +91,4 @@ app.use('/api', require('./routes/api')(company, mailer));
 // ---- 404 ----
 app.use((req, res) => res.status(404).render('404', { active: '', title: 'Niet gevonden' }));
 
-// ---- Opstarten: database klaarzetten, beheerder seeden, dan luisteren ----
-async function start() {
-  await db.init();
-
-  // Beheerder aanmaken bij start (zet ADMIN_EMAIL + ADMIN_PASSWORD in env)
-  const email = process.env.ADMIN_EMAIL, pw = process.env.ADMIN_PASSWORD;
-  if (email && pw && !(await db.findUserByEmail(email))) {
-    const bcrypt = require('bcryptjs');
-    await db.createUser({ naam: 'Beheerder', email, passwordHash: bcrypt.hashSync(pw, 10), role: 'beheer' });
-    console.log('Beheerder aangemaakt:', email);
-  }
-
-  app.listen(PORT, () => console.log(`bestelkozijnenopmaat draait op poort ${PORT}`));
-}
-start().catch((e) => { console.error('Opstarten mislukt:', e); process.exit(1); });
+app.listen(PORT, () => console.log(`bestelkozijnenopmaat draait op poort ${PORT}`));

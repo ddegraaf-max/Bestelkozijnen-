@@ -19,7 +19,7 @@ module.exports = function (company, mailer) {
     if (!Array.isArray(elementen) || elementen.length === 0)
       return res.status(400).json({ ok: false, error: 'Voeg minstens één element toe.' });
 
-    const request = await db.createRequest({
+    const request = db.createRequest({
       userId: req.user.id,
       elementen,
       klant: { naam: req.user.naam, email: req.user.email, telefoon: req.user.telefoon || '', opmerking: opmerking || '' }
@@ -35,102 +35,45 @@ module.exports = function (company, mailer) {
     res.json({ ok: true, ref: request.ref, id: request.id });
   });
 
-  // ---- AI-configuratie- & inmeet-assistent (Claude Haiku, tool use) ----
-  // De assistent praat met de klant én vult de configurator in: het model roept
-  // `update_configuratie` aan met concrete keuzes, die de browser toepast op de
-  // live preview. Zuinig met tokens: één API-call per bericht; alleen ná een
-  // tool-aanroep volgt nog één call voor een natuurlijk antwoord. Korte prompt,
-  // korte historie (8 berichten), max_tokens 500.
-  const CONFIG_TOOL = {
-    name: 'update_configuratie',
-    description: 'Pas de online configurator van de klant aan zodra de klant een concrete keuze maakt (product, materiaal, kleur, glas, afmetingen, indeling of opties). Geef alleen velden mee die nu duidelijk zijn; laat de rest weg. De klant ziet de wijziging meteen in de live preview.',
-    input_schema: {
-      type: 'object',
-      properties: {
-        product: { type: 'string', enum: ['raam', 'schuifpui', 'voordeur'], description: 'Soort product.' },
-        materiaal: { type: 'string', enum: ['kunststof', 'hout', 'aluminium'], description: 'Profielmateriaal. Voordeur kan alleen bij kunststof.' },
-        kleur: { type: 'string', description: 'Kleur buiten (en binnen indien gelijk). Bijv. wit, antraciet (RAL 7016), zwart, crème, grijs, dennengroen, staalblauw, gouden eiken, donker eiken, mahonie, noten.' },
-        kleurBinnen: { type: 'string', description: 'Alleen als de binnenkleur afwijkt van buiten.' },
-        glas: { type: 'string', description: 'Glassoort. Bijv. HR++ dubbel, Triple HR+++, geluidwerend, veiligheid/gelaagd, zonwerend, ornament, gezandstraald, melkglas.' },
-        breedte_mm: { type: 'integer', description: 'Breedte in mm (400–6000).' },
-        hoogte_mm: { type: 'integer', description: 'Hoogte in mm (300–3000).' },
-        aantalVleugels: { type: 'integer', description: 'Aantal vleugels bij een raam (1–4).' },
-        vleugelFuncties: { type: 'array', items: { type: 'string' }, description: 'Functie per vleugel op volgorde. Opties: vast, draaikiep links/rechts, draai links/rechts.' },
-        schuifDelen: { type: 'integer', description: 'Aantal delen bij een schuifpui (2–4).' },
-        montage: { type: 'boolean', description: 'Inclusief montage?' },
-        rc2: { type: 'boolean', description: 'Inbraakwerend RC2?' },
-        roede: { type: 'boolean' }, ventilatie: { type: 'boolean' },
-        rolluik: { type: 'boolean' }, hor: { type: 'boolean' }, screen: { type: 'boolean' },
-        positie: { type: 'string', description: 'Plek/ruimte, bijv. woonkamer voorzijde.' },
-        aantal: { type: 'integer', description: 'Aantal identieke kozijnen.' },
-        deurCollectie: { type: 'string', enum: ['Standard', 'Modern', 'Deco', 'Econo', 'Glass'] },
-        deurModel: { type: 'string', description: 'Voordeur: modelcode, bijv. ST-01.' },
-        dubbeleDeur: { type: 'boolean' }
-      }
-    }
-  };
-
-  const SYS = `Je bent de configuratie- en inmeet-assistent van ${company.name} (kozijnen, schuifpuien, voordeuren op maat). Help particuliere klanten in het Nederlands hun kozijn samen te stellen en correct op te meten. Kort, warm, concreet: max ~4 zinnen, telkens één vervolgvraag. Geef nooit prijzen.
-
-Roep de tool update_configuratie ALLEEN aan als de klant een concrete keuze noemt (kleur, maat, product, glas, indeling, optie). Bij een begroeting, bedankje of vraag zonder concrete keuze roep je de tool NIET aan — antwoord dan gewoon vriendelijk en stel een vervolgvraag. Vul alleen wat de klant duidelijk maakt; verzin niets. Zet afmetingen pas als de klant ze noemt.
-
-Inmeten: breedte op 3 hoogtes, hoogte op 3 breedtes, noteer steeds de kleinste maat (in mm). Vraag of het de dagmaat of de buitenmaat is; bij vervanging ook de muurdikte. Waarschuw bij verschillen > ~10 mm.`;
-
+  // ---- AI inmeet-assistent ----
   router.post('/assistant', async (req, res) => {
     const { messages } = req.body;
     if (!Array.isArray(messages)) return res.status(400).json({ ok: false, error: 'Ongeldige vraag.' });
 
     if (!process.env.ANTHROPIC_API_KEY) {
-      return res.json({ ok: true, reply: 'De assistent is nog niet geactiveerd (er ontbreekt een API-sleutel). Meet ondertussen de breedte op drie hoogtes en de hoogte op drie breedtes, en noteer telkens de kleinste maat.', updates: null });
+      return res.json({ ok: true, reply: 'De inmeet-assistent is nog niet geactiveerd (er ontbreekt een API-sleutel). Meet ondertussen de breedte op drie hoogtes (boven, midden, onder) en de hoogte op drie breedtes (links, midden, rechts), en noteer telkens de kleinste maat. De volledige uitleg vind je op de Werkwijze-pagina.' });
     }
 
-    // Laatste 8 berichten; Anthropic vereist dat het eerste bericht van de
-    // gebruiker is, dus laat leidende assistent-berichten (de begroeting) weg.
-    const convo = messages.slice(-8)
-      .map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '').slice(0, 1500) }));
-    while (convo.length && convo[0].role === 'assistant') convo.shift();
-    if (!convo.length) return res.json({ ok: true, reply: 'Waarmee kan ik je helpen?', updates: null });
+    const system = `Je bent de inmeet-assistent van ${company.name} (kozijnen op maat). Je helpt particuliere klanten in begrijpelijk Nederlands om hun kozijn, deur of schuifpui zelf correct op te meten. Wees kort, vriendelijk en concreet.
+
+Regels voor goed inmeten die je uitlegt en uitvraagt:
+- Breedte: meet op 3 hoogtes (boven, midden, onder). Hoogte: meet op 3 breedtes (links, midden, rechts). Noteer steeds de KLEINSTE maat.
+- Meet in millimeters.
+- Controleer haaksheid: meet beide diagonalen; gelijk = haaks.
+- Vraag of het om de dagmaat (binnenmaat van de muuropening) of de buitenmaat van een bestaand kozijn gaat.
+- Vraag bij vervanging ook naar de muurdikte/inbouwdiepte.
+- Waarschuw als de 3 metingen meer dan ~10 mm verschillen (scheve opening) of als maten onwaarschijnlijk lijken.
+- Geef nooit prijzen; daarvoor volgt een offerte op maat.
+Houd antwoorden kort (max ~4 zinnen) en stel telkens één duidelijke vervolgvraag.`;
 
     try {
-      const MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
-      async function claude(msgs) {
-        const rr = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': process.env.ANTHROPIC_API_KEY,
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify({ model: MODEL, max_tokens: 500, system: SYS, tools: [CONFIG_TOOL], messages: msgs })
-        });
-        return rr.json();
-      }
-
-      const data = await claude(convo);
-      if (data.error) { console.error('Assistant API-fout:', data.error); return res.status(500).json({ ok: false, error: 'De assistent is even niet bereikbaar.' }); }
-
-      const blocks = data.content || [];
-      const toolUses = blocks.filter(b => b.type === 'tool_use');
-      const updates = {};
-      for (const t of toolUses) if (t.input && typeof t.input === 'object') Object.assign(updates, t.input);
-      let reply = blocks.filter(b => b.type === 'text').map(b => b.text).join('\n').trim();
-
-      // Alleen ná een tool-aanroep nog één call: het model schrijft dan een
-      // natuurlijk antwoord op basis van het toegepaste resultaat.
-      if (toolUses.length) {
-        try {
-          const follow = convo.concat([
-            { role: 'assistant', content: blocks },
-            { role: 'user', content: toolUses.map(t => ({ type: 'tool_result', tool_use_id: t.id, content: 'Toegepast in de configurator.' })) }
-          ]);
-          const data2 = await claude(follow);
-          const reply2 = ((data2.content || []).filter(b => b.type === 'text').map(b => b.text).join('\n')).trim();
-          if (reply2) reply = reply2;
-        } catch (e) { console.warn('Assistant vervolg-call mislukt:', e.message); }
-      }
-
-      if (!reply) reply = Object.keys(updates).length ? 'Ik heb het aangepast in de configurator. Wil je nog iets wijzigen?' : 'Waarmee kan ik je helpen?';
-      res.json({ ok: true, reply, updates: Object.keys(updates).length ? updates : null });
+      const r = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': process.env.ANTHROPIC_API_KEY,
+          'anthropic-version': '2023-06-01'
+        },
+        body: JSON.stringify({
+          model: process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514',
+          max_tokens: 600,
+          system,
+          messages: messages.slice(-12).map(m => ({ role: m.role === 'assistant' ? 'assistant' : 'user', content: String(m.content || '').slice(0, 2000) }))
+        })
+      });
+      const data = await r.json();
+      const reply = (data.content || []).map(c => c.text || '').join('\n').trim() || 'Sorry, ik kon even geen antwoord geven. Probeer het opnieuw.';
+      res.json({ ok: true, reply });
     } catch (e) {
       console.error('Assistant-fout:', e);
       res.status(500).json({ ok: false, error: 'De assistent is even niet bereikbaar.' });

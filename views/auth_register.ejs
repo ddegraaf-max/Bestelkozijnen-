@@ -9,14 +9,9 @@
       <div class="fld"><label>E-mail *</label><input name="email" type="email" value="<%= vals.email||'' %>" placeholder="jij@voorbeeld.nl"></div>
       <div class="fld"><label>Telefoon</label><input name="telefoon" value="<%= vals.telefoon||'' %>" placeholder="06 ..."></div>
       <div class="fld"><label>Wachtwoord *</label><input name="wachtwoord" type="password" placeholder="Minstens 6 tekens"></div>
-      <label style="display:flex;align-items:flex-start;gap:10px;margin:6px 0 16px;cursor:pointer;font-size:14px">
-        <input type="checkbox" name="tweefa" value="1" style="margin-top:3px">
-        <span>Mijn account direct beveiligen met tweestapsverificatie <span class="muted">(aanbevolen — je kunt dit ook later in je accountinstellingen doen)</span></span>
-      </label>
       <button class="btn btn-primary" style="width:100%">Account aanmaken</button>
     </form>
     <p class="muted-link" style="margin-top:16px">Al een account? <a href="/inloggen">Inloggen</a></p>
-    <p class="muted-link" style="margin-top:4px"><a href="/wachtwoord-vergeten">Wachtwoord vergeten?</a></p>
   </div>
 </section>
 <%- include('partials/footer') %>
