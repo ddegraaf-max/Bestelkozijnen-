@@ -257,6 +257,7 @@ function paneSash(x,y,w,h,frameC,stroke,thin){
 }
 function beslagMarks(sym,x,y,w,h){
   if(!/^(kiep|draai|deur)/.test(sym)) return '';
+  if(state.aanzicht==='buiten') return ''; // hendel/scharnieren alleen bij binnenaanzicht
   const handleLeft=sym.endsWith('L'), hcol=KRUKKLEUR[state.kruk]; let o='';
   // hendel aan de openingszijde (zijde van het draai/kiep-symbool)
   const hh=Math.max(16,h*0.13), hx=handleLeft?x+4:x+w-7, hy=y+h*0.5-hh/2, hs='stroke="rgba(0,0,0,.28)" stroke-width="0.6"';
@@ -389,7 +390,9 @@ function drawDoor(){
     const hingeSide=side==='r'?'l':'r';                 // scharnier tegenover de hendel
     const baseX=hingeSide==='l'?8:92, apexX=hingeSide==='l'?92:8;
     const swing=`<svg class="dp-swing" viewBox="0 0 100 240" preserveAspectRatio="none" aria-hidden="true"><path d="M${baseX} 16 L${apexX} 120 L${baseX} 224" fill="none" stroke="rgba(28,28,25,.5)" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/></svg>`;
-    const hinges=`<span class="dp-hinge ${hingeSide}" style="top:14%"></span><span class="dp-hinge ${hingeSide}" style="top:86%"></span>`;
+    // scharnieren alleen zichtbaar aan de kant waar de deur naartoe opendraait
+    const showHinges=(state.opendraai===0)===(state.aanzicht==='binnen'); // naar binnen→binnen, naar buiten→buiten
+    const hinges=showHinges?`<span class="dp-hinge ${hingeSide}" style="top:14%"></span><span class="dp-hinge ${hingeSide}" style="top:86%"></span>`:'';
     return `<div class="dp-leaf${m?' dp-leaf-m':''}" data-code="${code}" style="background:${frameC}">${pnl}${swing}${hinges}<span class="dp-handle ${side}"></span></div>`;
   };
   let h=`<div class="dp-wrap${state.aanzicht==='buiten'?' dp-mirror':''}" style="--fc:${frameC}">`;
@@ -600,7 +603,7 @@ function buildDeurIndeling(){
   chips('collectieChips', DEUR_COLLECTIES, DEUR_COLLECTIES.indexOf(state.collectie), i=>{ state.collectie=DEUR_COLLECTIES[i]; state.model=(DEUR_MODELLEN[state.collectie][0]||''); buildModelSelect(); draw(); });
   buildModelSelect();
   chips('scharnierChips', SCHARNIER, state.scharnier, i=>{state.scharnier=i;draw();});
-  chips('opendraaiChips', OPENDRAAI, state.opendraai, i=>state.opendraai=i);
+  chips('opendraaiChips', OPENDRAAI, state.opendraai, i=>{state.opendraai=i;draw();});
   chips('zijlichtGlasChips', ZIJLICHT_GLAS, state.zijlichtGlas, i=>{state.zijlichtGlas=i;draw();});
   buildDeurSchema();
   const bh=$('bovenlichtDeurH'), zb=$('zijlichtB');
