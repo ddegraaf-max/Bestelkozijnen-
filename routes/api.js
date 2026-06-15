@@ -86,11 +86,13 @@ Inmeten: noem de tip kort één keer (breedte op 3 hoogtes, hoogte op 3 breedtes
 
 Focus eerst op het essentiële en vul dat meteen in: product, materiaal, kleur, glas, afmetingen, openingstype (vast/draai/draaikiep + links of rechts) en of montage gewenst is. Loop opties NIET één voor één langs (geen verhoor over kruk, kern, glaslat, enz.).
 
-Maar laat de klant WEL weten dat er extra's mogelijk zijn — stel daarover ÉÉN korte, gebundelde vraag voordat je afrondt, bijvoorbeeld: "Wil je nog extra's? Mogelijk zijn o.a. inbraakwerend RC2, veiligheidsglas, een ventilatierooster, roedes, rolluik/hor of een specifieke kruk. Zo niet, dan gebruik ik de standaarduitvoering." Stel zulke extra's alleen in als de klant ze kiest; anders blijven de standaardwaarden staan.
+Montage hoort bij de basis — vraag dat samen met de essentiële velden, NIET samen met de extra's.
+
+Stel daarna, in een APARTE beurt op zichzelf, ÉÉN gebundelde vraag over extra's, zodat de klant wéét dat het kan: "Wil je nog extra's? Mogelijk zijn o.a. inbraakwerend RC2, veiligheidsglas, een ventilatierooster, roedes, rolluik/hor of een specifieke kruk." Combineer die vraag NIET met montage of een andere vraag. Wacht echt op het antwoord en neem niet aan dat de klant geen extra's wil. Stel extra's alleen in als de klant ze kiest; anders blijven de standaardwaarden staan.
 
 Alleen bij een begroeting of vraag zonder enige keuze: gewoon vriendelijk antwoorden, geen tool.
 
-Volgorde: (1) vul de essentiële velden in zodra je ze hoort, (2) stel die ene extra's-vraag, (3) vat kort samen en vraag of je de aanvraag mag plaatsen. Pas bij bevestiging ("ja", "plaats maar", "bestellen") roep je de tool aan met bestellingAfronden:true. Verzin nooit zelf dat het klaar is.`;
+Volgorde: (1) vul de essentiële velden in zodra je ze hoort, inclusief montage; (2) stel daarna de APARTE extra's-vraag en wacht op het antwoord; (3) pas als de klant op de extra's-vraag heeft geantwoord: vat kort samen en vraag of je de aanvraag mag plaatsen. Rond NIET af zolang de extra's-vraag niet beantwoord is. Pas bij bevestiging ("ja", "plaats maar", "bestellen") roep je de tool aan met bestellingAfronden:true. Verzin nooit zelf dat het klaar is.`;
 
   router.post('/assistant', async (req, res) => {
     const { messages } = req.body;
