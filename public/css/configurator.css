@@ -75,10 +75,13 @@
   .cfg .stage svg .cfg-slide-r{animation:cfgSlideR 3.8s ease-in-out infinite}
   .cfg .stage svg .cfg-slide-l{animation:cfgSlideL 3.8s ease-in-out infinite}
 }
-@keyframes cfgTurnR{0%,24%,100%{transform:scaleX(1)}62%{transform:scaleX(.72)}}
-@keyframes cfgTurnL{0%,24%,100%{transform:scaleX(1)}62%{transform:scaleX(.72)}}
-@keyframes cfgTTR{0%,8%,100%{transform:scaleX(1) scaleY(1)}26%{transform:scaleX(.74) scaleY(1)}44%{transform:scaleX(1) scaleY(1)}66%{transform:scaleX(1) scaleY(.8)}84%{transform:scaleX(1) scaleY(1)}}
-@keyframes cfgTTL{0%,8%,100%{transform:scaleX(1) scaleY(1)}26%{transform:scaleX(.74) scaleY(1)}44%{transform:scaleX(1) scaleY(1)}66%{transform:scaleX(1) scaleY(.8)}84%{transform:scaleX(1) scaleY(1)}}
+/* draaien (obrót wokół zawiasu) — kierunek wg gekozen kant */
+@keyframes cfgTurnR{0%,22%,100%{transform:perspective(820px) rotateY(0deg)}60%{transform:perspective(820px) rotateY(-40deg)}}
+@keyframes cfgTurnL{0%,22%,100%{transform:perspective(820px) rotateY(0deg)}60%{transform:perspective(820px) rotateY(40deg)}}
+/* draaikiep — eerst draaien (kant), dan kiepen (boven naar binnen) */
+@keyframes cfgTTR{0%,6%,100%{transform:perspective(820px) rotateY(0deg) rotateX(0deg)}30%{transform:perspective(820px) rotateY(-36deg) rotateX(0deg)}50%{transform:perspective(820px) rotateY(0deg) rotateX(0deg)}74%{transform:perspective(820px) rotateY(0deg) rotateX(-22deg)}90%{transform:perspective(820px) rotateY(0deg) rotateX(0deg)}}
+@keyframes cfgTTL{0%,6%,100%{transform:perspective(820px) rotateY(0deg) rotateX(0deg)}30%{transform:perspective(820px) rotateY(36deg) rotateX(0deg)}50%{transform:perspective(820px) rotateY(0deg) rotateX(0deg)}74%{transform:perspective(820px) rotateY(0deg) rotateX(-22deg)}90%{transform:perspective(820px) rotateY(0deg) rotateX(0deg)}}
+/* schuiven — verschuift naar de gekozen kant */
 @keyframes cfgSlideR{0%,24%,100%{transform:translateX(0)}62%{transform:translateX(13%)}}
 @keyframes cfgSlideL{0%,24%,100%{transform:translateX(0)}62%{transform:translateX(-13%)}}
 
