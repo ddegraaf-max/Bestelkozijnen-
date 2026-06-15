@@ -966,6 +966,12 @@ function applyAiUpdates(u){
   }
   rebuildAll();
   if(applied.length) toast('Aangepast: '+applied.slice(0,4).join(' · ')+(applied.length>4?' …':''));
+  // De klant heeft bevestigd: voeg de samenstelling toe en plaats de aanvraag.
+  // submitAanvraag() regelt zelf het verschil: ingelogd → direct verstuurd;
+  // niet ingelogd → aanvraag klaargezet + inlog/registratie-prompt.
+  if(u.bestellingAfronden===true){
+    setTimeout(()=>{ try{ closeAssist(); addElement(); submitAanvraag(); }catch(e){ console.error('Afronden mislukt',e); } }, 80);
+  }
   return applied;
 }
 // AI-hulp als zwevend zijpaneel — beschikbaar op ELKE stap, zonder de stap te

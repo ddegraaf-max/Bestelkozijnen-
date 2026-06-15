@@ -68,7 +68,8 @@ module.exports = function (company, mailer) {
         aantal: { type: 'integer', description: 'Aantal identieke kozijnen.' },
         deurCollectie: { type: 'string', description: 'Voordeur-paneelcollectie, één van: Standard, Modern, Deco, Econo, Glass.' },
         deurModel: { type: 'string', description: 'Voordeur: modelcode, bijv. ST-01.' },
-        dubbeleDeur: { type: 'boolean' }
+        dubbeleDeur: { type: 'boolean' },
+        bestellingAfronden: { type: 'boolean', description: 'Zet op true ALLEEN als de klant uitdrukkelijk bevestigt dat de samenstelling klaar is en de aanvraag/bestelling geplaatst mag worden. Dan wordt de huidige configuratie in de aanvraag gezet en verstuurd (of, als de klant niet is ingelogd, klaargezet zodat hij een account kan aanmaken).' }
       }
     }
   };
@@ -77,7 +78,9 @@ module.exports = function (company, mailer) {
 
 Roep de tool update_configuratie ALLEEN aan als de klant een concrete keuze noemt (kleur, maat, product, glas, indeling, optie). Bij een begroeting, bedankje of vraag zonder concrete keuze roep je de tool NIET aan — antwoord dan gewoon vriendelijk en stel een vervolgvraag. Vul alleen wat de klant duidelijk maakt; verzin niets. Zet afmetingen pas als de klant ze noemt.
 
-Inmeten: breedte op 3 hoogtes, hoogte op 3 breedtes, noteer steeds de kleinste maat (in mm). Vraag of het de dagmaat of de buitenmaat is; bij vervanging ook de muurdikte. Waarschuw bij verschillen > ~10 mm.`;
+Inmeten: breedte op 3 hoogtes, hoogte op 3 breedtes, noteer steeds de kleinste maat (in mm). Vraag of het de dagmaat of de buitenmaat is; bij vervanging ook de muurdikte. Waarschuw bij verschillen > ~10 mm.
+
+Werk samen met de klant naar een COMPLETE samenstelling toe (product, materiaal, kleur, glas, indeling, afmetingen, eventuele opties). Als alles duidelijk is: vat het kort samen en vraag of je de aanvraag mag plaatsen. Pas wanneer de klant dat bevestigt (bijv. "ja", "plaats maar", "bestellen"), roep je update_configuratie aan met bestellingAfronden:true (samen met eventuele laatste velden). Verzin nooit zelf dat het klaar is.`;
 
   router.post('/assistant', async (req, res) => {
     const { messages } = req.body;
@@ -96,6 +99,10 @@ Inmeten: breedte op 3 hoogtes, hoogte op 3 breedtes, noteer steeds de kleinste m
 
     try {
       const MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5';
+      const ingelogd = !!req.user;
+      const system = SYS + (ingelogd
+        ? '\n\nDe klant is INGELOGD. Bij bestellingAfronden wordt de aanvraag meteen geplaatst; bevestig dat kort en vriendelijk.'
+        : '\n\nDe klant is NIET ingelogd. Bij bestellingAfronden wordt de samenstelling klaargezet, maar de klant moet eerst een gratis account aanmaken of inloggen om de aanvraag te versturen — leg dat vriendelijk uit.');
       async function claude(msgs) {
         const rr = await fetch('https://api.anthropic.com/v1/messages', {
           method: 'POST',
@@ -104,7 +111,7 @@ Inmeten: breedte op 3 hoogtes, hoogte op 3 breedtes, noteer steeds de kleinste m
             'x-api-key': process.env.ANTHROPIC_API_KEY,
             'anthropic-version': '2023-06-01'
           },
-          body: JSON.stringify({ model: MODEL, max_tokens: 500, system: SYS, tools: [CONFIG_TOOL], messages: msgs })
+          body: JSON.stringify({ model: MODEL, max_tokens: 500, system, tools: [CONFIG_TOOL], messages: msgs })
         });
         return rr.json();
       }
