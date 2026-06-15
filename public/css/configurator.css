@@ -90,9 +90,9 @@
 @keyframes cfgTurnLOut{0%,24%,100%{transform:perspective(900px) rotateY(0deg)}62%{transform:perspective(900px) rotateY(-38deg)}}
 @keyframes cfgTTROut{0%,8%,100%{transform:perspective(900px) rotateY(0deg) rotateX(0deg)}32%{transform:perspective(900px) rotateY(34deg) rotateX(0deg)}52%{transform:perspective(900px) rotateY(0deg) rotateX(0deg)}76%{transform:perspective(900px) rotateY(0deg) rotateX(20deg)}92%{transform:perspective(900px) rotateY(0deg) rotateX(0deg)}}
 @keyframes cfgTTLOut{0%,8%,100%{transform:perspective(900px) rotateY(0deg) rotateX(0deg)}32%{transform:perspective(900px) rotateY(-34deg) rotateX(0deg)}52%{transform:perspective(900px) rotateY(0deg) rotateX(0deg)}76%{transform:perspective(900px) rotateY(0deg) rotateX(20deg)}92%{transform:perspective(900px) rotateY(0deg) rotateX(0deg)}}
-/* hef-schuif: tilt eerst even op (hef = van het slot loskomen), schuift dan ruim opzij naar de gekozen kant, schuift weer terug en zakt aan het eind weer in het slot. translateX wordt bij buitenaanzicht automatisch gespiegeld door de scale(-1,1)-wrapper, dus richting klopt in beide views. */
-@keyframes cfgSlideR{0%,12%{transform:translate(0,0)}22%{transform:translate(0,-3%)}50%,60%{transform:translate(46%,-3%)}86%{transform:translate(0,-3%)}94%,100%{transform:translate(0,0)}}
-@keyframes cfgSlideL{0%,12%{transform:translate(0,0)}22%{transform:translate(0,-3%)}50%,60%{transform:translate(-46%,-3%)}86%{transform:translate(0,-3%)}94%,100%{transform:translate(0,0)}}
+/* schuif: schuift gewoon opzij naar de gekozen kant en weer terug — geen optillen (hef). translateX wordt bij buitenaanzicht automatisch gespiegeld door de scale(-1,1)-wrapper, dus richting klopt in beide views. */
+@keyframes cfgSlideR{0%,14%{transform:translateX(0)}54%,64%{transform:translateX(46%)}100%{transform:translateX(0)}}
+@keyframes cfgSlideL{0%,14%{transform:translateX(0)}54%,64%{transform:translateX(-46%)}100%{transform:translateX(0)}}
 
 .cfg .price-card{margin-top:18px;background:var(--ink);color:var(--paper);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
 .cfg .price-row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:13px;color:#bdb9af;padding:4px 0}
