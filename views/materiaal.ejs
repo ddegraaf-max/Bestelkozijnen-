@@ -24,9 +24,9 @@
         <p>We leveren meerdere profiellijnen, zodat je kunt kiezen tussen een scherpe standaard en topisolatie. De exacte keuze bepalen we samen op basis van je wensen en budget.</p>
         <div class="table-scroll">
         <table class="spec-table">
-          <tr><th>Lijn</th><th><%= m.kolom2 || 'Kamers' %></th><th>Diepte</th><th>Uw vanaf</th><th>Geluid (dB)</th><th>Standaard glas</th></tr>
+          <tr class="thead"><th>Lijn</th><th><%= m.kolom2 || 'Kamers' %></th><th>Diepte</th><th>Uw vanaf</th><th>Geluid (dB)</th><th>Standaard glas</th></tr>
           <% m.systemen.forEach(function(s){ %>
-          <tr><td style="color:var(--ink);font-weight:600"><%= s.naam %></td><td><%= s.kamers %></td><td><%= s.diepte %></td><td><%= s.uw %></td><td><%= s.db %></td><td><%= s.glas %></td></tr>
+          <tr><td data-label="Lijn" style="color:var(--ink);font-weight:600"><%= s.naam %></td><td data-label="<%= m.kolom2 || 'Kamers' %>"><%= s.kamers %></td><td data-label="Diepte"><%= s.diepte %></td><td data-label="Uw vanaf"><%= s.uw %></td><td data-label="Geluid (dB)"><%= s.db %></td><td data-label="Standaard glas"><%= s.glas %></td></tr>
           <% }) %>
         </table>
         </div>

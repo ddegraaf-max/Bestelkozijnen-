@@ -293,8 +293,15 @@ img,svg,video,table,pre{max-width:100%}
   .spec-table{font-size:13px}
   .spec-table td,.spec-table th{padding:9px 11px}
   .spec-table td:first-child{width:40%}
-  /* brede tabellen die niet mogen afbreken: laat ze scrollen i.p.v. uitsteken */
-  .table-scroll{max-width:100%}
+  /* brede materiaal-tabel -> kaartjes (geen horizontaal scrollen op telefoon) */
+  .table-scroll{max-width:100%;overflow-x:visible}
+  .table-scroll .spec-table{min-width:0;border:none;background:transparent;table-layout:auto}
+  .table-scroll .spec-table tr.thead{display:none}
+  .table-scroll .spec-table tr{display:block;background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-bottom:10px;overflow:hidden}
+  .table-scroll .spec-table td{display:flex;justify-content:space-between;align-items:baseline;gap:14px;width:auto;padding:9px 13px;border-top:1px solid var(--line);text-align:right}
+  .table-scroll .spec-table td::before{content:attr(data-label);color:var(--muted);font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;text-align:left;flex:none}
+  .table-scroll .spec-table td:first-child{border-top:none;background:var(--panel-2);font-size:15px;justify-content:flex-start}
+  .table-scroll .spec-table td:first-child::before{display:none}
   .cta-band{padding:30px 20px}
   .hero .lead,.section-head p{font-size:16px}
 }
