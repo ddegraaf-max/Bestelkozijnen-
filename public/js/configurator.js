@@ -331,12 +331,12 @@ function drawWindow(){
       const gw=cw*0.7,gh=midH*0.42,gx=x+(cw-gw)/2,gy=midY+midH*0.12;
       inner+=`<rect x="${gx-2}" y="${gy-2}" width="${gw+4}" height="${gh+4}" fill="${shade(frameC,-10)}"/>`+glassPane(gx,gy,gw,gh,stroke);
       inner+=`<rect x="${x+3}" y="${midY+midH-7}" width="${cw-6}" height="7" rx="1.5" fill="${shade(frameC,-22)}"/>`+beslagMarks(f.sym,x,midY,cw,midH);
-      g+=`<g class="cfg-sash ${sashAnimClass(f.sym)}">${inner}</g>`+paneSym(f.sym,x,midY,cw,midH,symC);
+      g+=`<g class="cfg-sash ${sashAnimClass(f.sym)}${state.aanzicht==='buiten'?' cfg-out':''}">${inner}</g>`+paneSym(f.sym,x,midY,cw,midH,symC);
     } else {
       const opening=(f.sym!=='vast');
       if(opening){
         const inner=paneSash(x,midY,cw,midH,frameC,stroke,!!f.schuif)+beslagMarks(f.sym,x,midY,cw,midH);
-        g+=`<g class="cfg-sash ${sashAnimClass(f.sym)}">${inner}</g>`;
+        g+=`<g class="cfg-sash ${sashAnimClass(f.sym)}${state.aanzicht==='buiten'?' cfg-out':''}">${inner}</g>`;
         if(f.schuif) g+=`<rect x="${x+(f.sym==='schuifL'?cw-6:3)}" y="${midY+3}" width="3.5" height="${midH-6}" rx="1.5" fill="${shade(frameC,-20)}"/>`;
         g+=paneSym(f.sym,x,midY,cw,midH,symC);
       } else {
