@@ -2,6 +2,12 @@
 // verwacht: e (element), i (index). Toont alleen aanwezige velden.
 function R(k, v){ return (v===undefined||v===null||v==='') ? '' : '<tr><td>'+k+'</td><td>'+v+'</td></tr>'; }
 %>
+<% if (e.previewSvg) { %>
+  <div class="el-preview">
+    <div class="cap">Visuele weergave — zoals samengesteld</div>
+    <div class="cfg"><div class="stage"><%- e.previewSvg %></div></div>
+  </div>
+<% } %>
 <table class="spec-table" style="margin-bottom:14px">
   <tr><th colspan="2">Kozijn <%= String(i+1).padStart(3,'0') %><%= e.positie && e.positie!=='—' ? ' · '+e.positie : '' %> &middot; <%= e.aantal || 1 %>&times;</th></tr>
   <%- R('Profiel', e.systeem) %>

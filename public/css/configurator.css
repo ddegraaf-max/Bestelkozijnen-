@@ -94,6 +94,15 @@
 @keyframes cfgSlideR{0%,14%{transform:translateX(0)}54%,64%{transform:translateX(46%)}100%{transform:translateX(0)}}
 @keyframes cfgSlideL{0%,14%{transform:translateX(0)}54%,64%{transform:translateX(-46%)}100%{transform:translateX(0)}}
 
+/* ---- Bestelde configuratie als (geanimeerde) afbeelding boven het rapport ----
+   Gebruikt op de aanvraagpagina (klant) én in het beheerpaneel. Die pagina's laden
+   deze configurator.css en wikkelen de opgeslagen preview in .cfg > .stage, zodat
+   ramen (SVG + open-animatie) en deuren (.dp-wrap) er identiek uitzien. */
+.el-preview{margin:0 0 16px}
+.el-preview .cap{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 7px}
+.el-preview .cfg .stage{min-height:auto;padding:18px 14px;border:1px solid var(--line);border-radius:14px}
+.el-preview .cfg .stage > svg{max-width:340px;margin:0 auto}
+
 .cfg .price-card{margin-top:18px;background:var(--ink);color:var(--paper);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
 .cfg .price-row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:13px;color:#bdb9af;padding:4px 0}
 .cfg .price-row span:last-child{color:var(--paper)}

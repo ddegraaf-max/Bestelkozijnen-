@@ -815,8 +815,15 @@ function buildOverzicht(){
 function addElement(){
   const s=spec();
   const lbl = isVoordeur() ? `${s.positie!=='—'?s.positie+' · ':''}Voordeur ${state.collectie} ${state.model||''}` : `${s.positie!=='—'?s.positie+' · ':''}${state.lijn} · ${state.breedte}×${state.hoogte}`;
-  cart.push({ ...s, label:lbl });
+  draw();                                  // verse preview van de huidige staat
+  cart.push({ ...s, label:lbl, previewSvg: capturePreview() });
   saveCart(); renderCart(); openCart(); toast('Toegevoegd aan je aanvraag');
+}
+// Legt de huidige preview (geanimeerde SVG voor ramen/schuif, of het deurpaneel-HTML)
+// vast, zodat we de bestelde configuratie later boven het rapport kunnen tonen.
+function capturePreview(){
+  try{ const st=$('stage'); if(!st) return ''; const h=st.innerHTML||''; return h.length>70000?'':h; }
+  catch(e){ return ''; }
 }
 function renderCart(){
   $('cartCount').textContent=cart.length;

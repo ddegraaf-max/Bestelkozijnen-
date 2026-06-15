@@ -31,7 +31,7 @@ module.exports = function (company, mailer) {
   router.get('/aanvraag/:id', async (req, res) => {
     const r = await db.getRequest(req.params.id);
     if (!r) return res.status(404).render('404', { company, active: '', title: 'Niet gevonden' });
-    res.render('admin_request', { company, active: '', title: 'Aanvraag ' + r.ref, user: req.user, r, STATUS_LABELS });
+    res.render('admin_request', { company, active: '', title: 'Aanvraag ' + r.ref, user: req.user, r, STATUS_LABELS, extraCss: '/css/configurator.css' });
   });
 
   router.post('/aanvraag/:id/status', async (req, res) => {

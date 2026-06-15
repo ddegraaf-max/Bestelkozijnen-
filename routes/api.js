@@ -9,6 +9,25 @@ const STATUS_LABELS = {
   afgewezen: 'Afgewezen'
 };
 
+// De preview-markup (geanimeerde SVG / deurpaneel-HTML) komt van de client en wordt
+// straks ongeëscaped in het portaal én het beheerpaneel getoond. Daarom hier strikt
+// schoonmaken: alleen onze eigen <svg>/<div>-opbouw toelaten en alle scriptvectoren
+// (script/iframe/event-handlers/javascript:-urls) verwijderen — defense-in-depth tegen
+// een opgevoerde payload die anders stored-XSS bij de beheerder zou kunnen geven.
+function sanitizePreview(s) {
+  if (typeof s !== 'string') return '';
+  const t = s.trim();
+  if (!t || t.length > 70000) return '';
+  if (!/^<(svg|div)[\s>]/i.test(t)) return '';
+  return t
+    .replace(/<\s*\/?\s*(script|foreignobject|iframe|object|embed|a|link|meta|base|style)\b[^>]*>/gi, '')
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, '')
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, '')
+    .replace(/\son\w+\s*=\s*[^\s>]+/gi, '')
+    .replace(/(href|xlink:href|src)\s*=\s*("|')\s*javascript:[^"']*\2/gi, '')
+    .replace(/javascript:/gi, '');
+}
+
 module.exports = function (company, mailer) {
   const router = express.Router();
 
@@ -19,9 +38,12 @@ module.exports = function (company, mailer) {
     if (!Array.isArray(elementen) || elementen.length === 0)
       return res.status(400).json({ ok: false, error: 'Voeg minstens één element toe.' });
 
+    const cleanElementen = elementen.map(e =>
+      (e && typeof e === 'object') ? { ...e, previewSvg: sanitizePreview(e.previewSvg) } : e);
+
     const request = await db.createRequest({
       userId: req.user.id,
-      elementen,
+      elementen: cleanElementen,
       klant: { naam: req.user.naam, email: req.user.email, telefoon: req.user.telefoon || '', opmerking: opmerking || '' }
     });
 

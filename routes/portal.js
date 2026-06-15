@@ -46,7 +46,7 @@ module.exports = function (company) {
   router.get('/aanvraag/:id', async (req, res) => {
     const r = await db.getRequest(req.params.id);
     if (!r || r.userId !== req.user.id) return res.status(404).render('404', { company, active: '', title: 'Niet gevonden' });
-    res.render('portal_request', { company, active: 'portaal', title: 'Aanvraag ' + r.ref, user: req.user, r, STATUS_LABELS });
+    res.render('portal_request', { company, active: 'portaal', title: 'Aanvraag ' + r.ref, user: req.user, r, STATUS_LABELS, extraCss: '/css/configurator.css' });
   });
 
   // beveiligde PDF-download (alleen eigenaar)
