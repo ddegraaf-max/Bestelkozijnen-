@@ -65,6 +65,23 @@
 .cfg .stage{min-width:0}
 .cfg .stage svg{width:100%;max-width:100%;height:auto;display:block}   /* width:100% nodig: iOS Safari laat een viewBox-SVG in flex anders tot 0 krimpen */
 
+/* ---- Mini-animaties: laat per vleugel zien hóé het opent ---- */
+.cfg .stage svg .cfg-sash{transform-box:fill-box;will-change:transform}
+@media (prefers-reduced-motion: no-preference){
+  .cfg .stage svg .cfg-turn-r{transform-origin:left center;animation:cfgTurnR 3.8s ease-in-out infinite}
+  .cfg .stage svg .cfg-turn-l{transform-origin:right center;animation:cfgTurnL 3.8s ease-in-out infinite}
+  .cfg .stage svg .cfg-tt-r{transform-origin:left bottom;animation:cfgTTR 4.8s ease-in-out infinite}
+  .cfg .stage svg .cfg-tt-l{transform-origin:right bottom;animation:cfgTTL 4.8s ease-in-out infinite}
+  .cfg .stage svg .cfg-slide-r{animation:cfgSlideR 3.8s ease-in-out infinite}
+  .cfg .stage svg .cfg-slide-l{animation:cfgSlideL 3.8s ease-in-out infinite}
+}
+@keyframes cfgTurnR{0%,24%,100%{transform:scaleX(1)}62%{transform:scaleX(.72)}}
+@keyframes cfgTurnL{0%,24%,100%{transform:scaleX(1)}62%{transform:scaleX(.72)}}
+@keyframes cfgTTR{0%,8%,100%{transform:scaleX(1) scaleY(1)}26%{transform:scaleX(.74) scaleY(1)}44%{transform:scaleX(1) scaleY(1)}66%{transform:scaleX(1) scaleY(.8)}84%{transform:scaleX(1) scaleY(1)}}
+@keyframes cfgTTL{0%,8%,100%{transform:scaleX(1) scaleY(1)}26%{transform:scaleX(.74) scaleY(1)}44%{transform:scaleX(1) scaleY(1)}66%{transform:scaleX(1) scaleY(.8)}84%{transform:scaleX(1) scaleY(1)}}
+@keyframes cfgSlideR{0%,24%,100%{transform:translateX(0)}62%{transform:translateX(13%)}}
+@keyframes cfgSlideL{0%,24%,100%{transform:translateX(0)}62%{transform:translateX(-13%)}}
+
 .cfg .price-card{margin-top:18px;background:var(--ink);color:var(--paper);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
 .cfg .price-row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:13px;color:#bdb9af;padding:4px 0}
 .cfg .price-row span:last-child{color:var(--paper)}

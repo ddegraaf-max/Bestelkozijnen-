@@ -289,6 +289,19 @@ function dims(ox,oy,dw,dh,W,H){
   const lx=ox-16; s+=`<line x1="${lx}" y1="${oy}" x2="${lx}" y2="${oy+dh}" stroke="${dc}"/><text x="${lx}" y="${oy+dh/2}" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#3a382f" text-anchor="middle" transform="rotate(-90 ${lx} ${oy+dh/2})">${H} mm</text>`;
   return s;
 }
+// Animatieklasse per vleugelfunctie: laat in de preview zien hóé het opent
+// (draaien, draaikiep = draaien + kiepen, schuiven). Vast = geen animatie.
+function sashAnimClass(sym){
+  switch(sym){
+    case 'draaiR': case 'deurR': return 'cfg-turn-r';
+    case 'draaiL': case 'deurL': return 'cfg-turn-l';
+    case 'kiepR': return 'cfg-tt-r';
+    case 'kiepL': return 'cfg-tt-l';
+    case 'schuifR': return 'cfg-slide-r';
+    case 'schuifL': return 'cfg-slide-l';
+    default: return '';
+  }
+}
 function drawWindow(){
   const W=curW(),H=curH(),maxBox=330,pad=46,oy=22;
   const ratio=Math.min(maxBox/W,maxBox/H),dw=W*ratio,dh=H*ratio,ox=pad,tW=dw+pad+30,tH=dh+oy+44;
@@ -314,15 +327,21 @@ function drawWindow(){
   state.vakken.forEach((v,k)=>{
     const x=ix+k*(cw+gap),f=FUNCTIES[v.functie];
     if(f.deur){
-      g+=paneSash(x,midY,cw,midH,frameC,stroke,true);
+      let inner=paneSash(x,midY,cw,midH,frameC,stroke,true);
       const gw=cw*0.7,gh=midH*0.42,gx=x+(cw-gw)/2,gy=midY+midH*0.12;
-      g+=`<rect x="${gx-2}" y="${gy-2}" width="${gw+4}" height="${gh+4}" fill="${shade(frameC,-10)}"/>`+glassPane(gx,gy,gw,gh,stroke);
-      g+=`<rect x="${x+3}" y="${midY+midH-7}" width="${cw-6}" height="7" rx="1.5" fill="${shade(frameC,-22)}"/>`+paneSym(f.sym,x,midY,cw,midH,symC)+beslagMarks(f.sym,x,midY,cw,midH);
+      inner+=`<rect x="${gx-2}" y="${gy-2}" width="${gw+4}" height="${gh+4}" fill="${shade(frameC,-10)}"/>`+glassPane(gx,gy,gw,gh,stroke);
+      inner+=`<rect x="${x+3}" y="${midY+midH-7}" width="${cw-6}" height="7" rx="1.5" fill="${shade(frameC,-22)}"/>`+beslagMarks(f.sym,x,midY,cw,midH);
+      g+=`<g class="cfg-sash ${sashAnimClass(f.sym)}">${inner}</g>`+paneSym(f.sym,x,midY,cw,midH,symC);
     } else {
       const opening=(f.sym!=='vast');
-      g+= opening ? paneSash(x,midY,cw,midH,frameC,stroke,!!f.schuif) : paneFixed(x,midY,cw,midH,frameC,stroke);
-      if(f.schuif) g+=`<rect x="${x+(f.sym==='schuifL'?cw-6:3)}" y="${midY+3}" width="3.5" height="${midH-6}" rx="1.5" fill="${shade(frameC,-20)}"/>`;
-      g+=paneSym(f.sym,x,midY,cw,midH,symC)+beslagMarks(f.sym,x,midY,cw,midH);
+      if(opening){
+        const inner=paneSash(x,midY,cw,midH,frameC,stroke,!!f.schuif)+beslagMarks(f.sym,x,midY,cw,midH);
+        g+=`<g class="cfg-sash ${sashAnimClass(f.sym)}">${inner}</g>`;
+        if(f.schuif) g+=`<rect x="${x+(f.sym==='schuifL'?cw-6:3)}" y="${midY+3}" width="3.5" height="${midH-6}" rx="1.5" fill="${shade(frameC,-20)}"/>`;
+        g+=paneSym(f.sym,x,midY,cw,midH,symC);
+      } else {
+        g+=paneFixed(x,midY,cw,midH,frameC,stroke)+paneSym(f.sym,x,midY,cw,midH,symC);
+      }
     }
   });
   if(botH) g+=rowSplit(ix, iy0+ih0-botH, iw, botH, botMode==='perVak'?N:1);
