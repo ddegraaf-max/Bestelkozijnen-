@@ -8,18 +8,21 @@ const db = require('../db');
 const ISSUER = 'bestelkozijnenopmaat.nl';
 const dest = (u) => (u && u.role === 'beheer' ? '/beheer' : '/portaal');
 const sha256 = (s) => crypto.createHash('sha256').update(String(s)).digest('hex');
+// Veilige terugkeer-URL: alleen interne paden (geen open redirect).
+const safeNext = (n) => (typeof n === 'string' && /^\/(?!\/)/.test(n)) ? n : '';
 
 module.exports = function (company, mailer) {
   const router = express.Router();
 
   // ---------- Registreren ----------
   router.get('/registreren', (req, res) =>
-    res.render('auth_register', { company, active: '', title: 'Account aanmaken', error: null, vals: {} }));
+    res.render('auth_register', { company, active: '', title: 'Account aanmaken', error: null, vals: {}, next: safeNext(req.query.next) }));
 
   router.post('/registreren', async (req, res) => {
     const { naam, email, telefoon, wachtwoord } = req.body;
     const vals = { naam, email, telefoon };
-    const err = (m) => res.render('auth_register', { company, active: '', title: 'Account aanmaken', error: m, vals });
+    const next = safeNext(req.body.next);
+    const err = (m) => res.render('auth_register', { company, active: '', title: 'Account aanmaken', error: m, vals, next });
     if (!naam || !email || !wachtwoord) return err('Vul naam, e-mail en wachtwoord in.');
     if (wachtwoord.length < 6) return err('Wachtwoord moet minstens 6 tekens zijn.');
     if (await db.findUserByEmail(email)) return err('Er bestaat al een account met dit e-mailadres.');
@@ -28,28 +31,30 @@ module.exports = function (company, mailer) {
     const user = await db.createUser({ naam, email, telefoon, passwordHash });
     req.session.uid = user.id;            // direct ingelogd
     // Tweestapsverificatie is optioneel: alleen naar de instelpagina als de
-    // gebruiker daar bij registratie zelf voor kiest, anders meteen het portaal in.
+    // gebruiker daar bij registratie zelf voor kiest, anders terug naar next of het portaal.
     if (req.body.tweefa) return res.redirect('/2fa/instellen');
-    res.redirect(dest(user));
+    res.redirect(next || dest(user));
   });
 
   // ---------- Inloggen (stap 1: wachtwoord) ----------
   router.get('/inloggen', (req, res) =>
-    res.render('auth_login', { company, active: '', title: 'Inloggen', error: null, vals: {} }));
+    res.render('auth_login', { company, active: '', title: 'Inloggen', error: null, vals: {}, next: safeNext(req.query.next) }));
 
   router.post('/inloggen', async (req, res) => {
     const { email, wachtwoord } = req.body;
+    const next = safeNext(req.body.next);
     const user = await db.findUserByEmail(email || '');
     if (!user || !bcrypt.compareSync(wachtwoord || '', user.passwordHash))
-      return res.render('auth_login', { company, active: '', title: 'Inloggen', error: 'Onjuist e-mailadres of wachtwoord.', vals: { email } });
+      return res.render('auth_login', { company, active: '', title: 'Inloggen', error: 'Onjuist e-mailadres of wachtwoord.', vals: { email }, next });
 
     if (user.totpEnabled) {                // stap 2 vereist
       req.session.uid = null;
       req.session.pending = user.id;
+      if (next) req.session.next = next;   // onthoud terugkeer-URL voor na 2FA
       return res.redirect('/2fa');
     }
     req.session.uid = user.id;             // geen 2FA -> direct inloggen
-    res.redirect(dest(user));
+    res.redirect(next || dest(user));
   });
 
   // ---------- Wachtwoord vergeten (stap 1: e-mail invoeren) ----------
@@ -112,7 +117,8 @@ module.exports = function (company, mailer) {
       return res.render('auth_2fa_verify', { company, active: '', title: 'Verificatiecode', error: 'Onjuiste of verlopen code. Probeer opnieuw.' });
     req.session.pending = null;
     req.session.uid = user.id;
-    res.redirect(dest(user));
+    const nxt = safeNext(req.session.next); req.session.next = null;
+    res.redirect(nxt || dest(user));
   });
 
   // ---------- 2FA instellen (QR scannen + bevestigen) ----------

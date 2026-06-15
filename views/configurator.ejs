@@ -309,7 +309,7 @@
     <div class="drawer-body" id="cartBody"></div>
     <div class="drawer-foot" id="cartFoot" style="display:none">
       <div class="fld" style="margin-bottom:12px"><label>Opmerking (optioneel)</label><textarea id="aanvraagOpm" style="min-height:64px" placeholder="Bijv. gewenste leverdatum"></textarea></div>
-      <div id="loginPrompt" style="display:none" class="alert">Maak een account of log in om je aanvraag te versturen. <a href="/inloggen" style="color:var(--accent-ink);font-weight:700">Inloggen</a> &middot; <a href="/registreren" style="color:var(--accent-ink);font-weight:700">Account aanmaken</a><br><span style="font-size:12px">Je aanvraag blijft bewaard tot je terugkomt.</span></div>
+      <div id="loginPrompt" style="display:none" class="alert">Maak een account of log in om je aanvraag te versturen. <a href="/inloggen?next=/configurator" style="color:var(--accent-ink);font-weight:700">Inloggen</a> &middot; <a href="/registreren?next=/configurator" style="color:var(--accent-ink);font-weight:700">Account aanmaken</a><br><span style="font-size:12px">Je aanvraag blijft bewaard — na het aanmaken van je account wordt hij automatisch verstuurd.</span></div>
       <button class="btn btn-primary" style="width:100%" id="submitBtn" onclick="submitAanvraag()">Aanvraag versturen</button>
     </div>
   </div>
@@ -341,6 +341,7 @@
   <% } else { %>
     <script>window.__assistantOn = false;</script>
   <% } %>
+  <script>window.__loggedIn = <%= currentUser ? 'true' : 'false' %>;</script>
 
   <div class="toast" id="toast"></div>
 </div>

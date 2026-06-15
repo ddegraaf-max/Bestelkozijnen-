@@ -5,12 +5,13 @@
     <p class="sub">Log in om je aanvragen en offertes te bekijken.</p>
     <% if (error) { %><div class="alert"><%= error %></div><% } %>
     <form method="POST" action="/inloggen">
+      <% if (typeof next !== 'undefined' && next) { %><input type="hidden" name="next" value="<%= next %>"><% } %>
       <div class="fld"><label>E-mail</label><input name="email" type="email" value="<%= vals.email||'' %>" placeholder="jij@voorbeeld.nl"></div>
       <div class="fld"><label>Wachtwoord</label><input name="wachtwoord" type="password" placeholder="Je wachtwoord"></div>
       <button class="btn btn-primary" style="width:100%">Inloggen</button>
     </form>
     <p class="muted-link" style="margin-top:12px"><a href="/wachtwoord-vergeten">Wachtwoord vergeten?</a></p>
-    <p class="muted-link" style="margin-top:4px">Nog geen account? <a href="/registreren">Account aanmaken</a></p>
+    <p class="muted-link" style="margin-top:4px">Nog geen account? <a href="/registreren<%= (typeof next!=='undefined'&&next)?('?next='+encodeURIComponent(next)):'' %>">Account aanmaken</a></p>
   </div>
 </section>
 <%- include('partials/footer') %>

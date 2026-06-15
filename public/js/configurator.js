@@ -811,7 +811,7 @@ async function submitAanvraag(){
   const btn=$('submitBtn'); btn.disabled=true; btn.textContent='Versturen…';
   try{
     const r=await fetch('/api/aanvraag',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({elementen:cart,opmerking:$('aanvraagOpm').value||''})});
-    if(r.status===401){ btn.disabled=false; btn.textContent='Aanvraag versturen'; $('loginPrompt').style.display='block'; return; }
+    if(r.status===401){ btn.disabled=false; btn.textContent='Aanvraag versturen'; $('loginPrompt').style.display='block'; try{localStorage.setItem('bko_resume','1');}catch(e){} return; }
     const d=await r.json();
     if(d.ok){ cart=[]; saveCart(); window.location.href='/portaal/aanvraag/'+d.id; }
     else { toast(d.error||'Versturen mislukt',false); btn.disabled=false; btn.textContent='Aanvraag versturen'; }
@@ -1019,5 +1019,12 @@ function init(){
   buildDeurIndeling(); buildDeurGlas();
   buildIndeling(); initAssistant(); renderCart();
   showStep(0); draw();
+  // Terug van inloggen/registreren met een wachtende aanvraag? Plaats hem nu.
+  try{
+    if(window.__loggedIn && cart.length && localStorage.getItem('bko_resume')){
+      localStorage.removeItem('bko_resume');
+      setTimeout(()=>{ openCart(); submitAanvraag(); }, 350);
+    }
+  }catch(e){}
 }
 init();
