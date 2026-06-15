@@ -72,8 +72,8 @@
   .cfg .stage svg .cfg-turn-l{transform-origin:right center;animation:cfgTurnL 5.6s ease-in-out infinite}
   .cfg .stage svg .cfg-tt-r{transform-origin:left bottom;animation:cfgTTR 7.8s ease-in-out infinite}
   .cfg .stage svg .cfg-tt-l{transform-origin:right bottom;animation:cfgTTL 7.8s ease-in-out infinite}
-  .cfg .stage svg .cfg-slide-r{animation:cfgSlideR 5.6s ease-in-out infinite}
-  .cfg .stage svg .cfg-slide-l{animation:cfgSlideL 5.6s ease-in-out infinite}
+  .cfg .stage svg .cfg-slide-r{animation:cfgSlideR 6.4s ease-in-out infinite}
+  .cfg .stage svg .cfg-slide-l{animation:cfgSlideL 6.4s ease-in-out infinite}
   /* Buitenaanzicht: een naar-binnen-openend raam opent van de kijker AF i.p.v. naar de kijker toe. */
   .cfg .stage svg .cfg-turn-r.cfg-out{animation-name:cfgTurnROut}
   .cfg .stage svg .cfg-turn-l.cfg-out{animation-name:cfgTurnLOut}
