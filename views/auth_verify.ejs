@@ -1,0 +1,18 @@
+<%- include('partials/header') %>
+<section class="wrap block narrow" style="padding-top:48px">
+  <div class="auth-card">
+    <h1>Bevestig je e-mailadres</h1>
+    <p class="sub">We hebben een 6-cijferige code gestuurd naar <strong><%= email %></strong>. Voer hem hieronder in om je account te activeren en in te loggen.</p>
+    <% if (typeof resent !== 'undefined' && resent) { %><div class="alert" style="background:#e9f7ef;border-color:#bfe6cf;color:#1e6b3f">Nieuwe code verstuurd — controleer je inbox (ook de spam-map).</div><% } %>
+    <% if (error) { %><div class="alert"><%= error %></div><% } %>
+    <form method="POST" action="/verifieren">
+      <div class="fld"><label>Bevestigingscode</label><input name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9 ]*" maxlength="7" placeholder="123 456" autofocus style="letter-spacing:.3em;font-family:var(--font-mono);font-size:18px;text-align:center"></div>
+      <button class="btn btn-primary" style="width:100%">Bevestigen &amp; inloggen</button>
+    </form>
+    <form method="POST" action="/verifieren/opnieuw" style="margin-top:10px">
+      <button class="btn btn-ghost" type="submit" style="width:100%">Geen code ontvangen? Stuur opnieuw</button>
+    </form>
+    <p class="muted-link" style="margin-top:14px">De code is 15 minuten geldig.</p>
+  </div>
+</section>
+<%- include('partials/footer') %>

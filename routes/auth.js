@@ -14,6 +14,14 @@ const safeNext = (n) => (typeof n === 'string' && /^\/(?!\/)/.test(n)) ? n : '';
 module.exports = function (company, mailer) {
   const router = express.Router();
 
+  // Genereer een 6-cijferige e-mailcode, sla hem (gehasht) op (15 min geldig) en mail hem.
+  async function startVerification(user, req) {
+    const code = String(Math.floor(100000 + Math.random() * 900000));
+    await db.updateUser(user.id, { verifyCodeHash: sha256(code), verifyCodeExp: Date.now() + 15 * 60 * 1000 });
+    if (mailer) mailer.sendVerifyCode({ to: user.email, naam: user.naam, code }).catch(() => {});
+    req.session.verifyUid = user.id;
+  }
+
   // ---------- Registreren ----------
   router.get('/registreren', (req, res) =>
     res.render('auth_register', { company, active: '', title: 'Account aanmaken', error: null, vals: {}, next: safeNext(req.query.next) }));
@@ -29,11 +37,45 @@ module.exports = function (company, mailer) {
 
     const passwordHash = bcrypt.hashSync(wachtwoord, 10);
     const user = await db.createUser({ naam, email, telefoon, passwordHash });
-    req.session.uid = user.id;            // direct ingelogd
-    // Tweestapsverificatie is optioneel: alleen naar de instelpagina als de
-    // gebruiker daar bij registratie zelf voor kiest, anders terug naar next of het portaal.
-    if (req.body.tweefa) return res.redirect('/2fa/instellen');
+    // E-mailverificatie: NIET meteen inloggen. Stuur een code en vraag die op.
+    await startVerification(user, req);
+    req.session.verifyNext = next || '';
+    req.session.verify2fa = !!req.body.tweefa;   // 2FA pas instellen ná verificatie
+    res.redirect('/verifieren');
+  });
+
+  // ---------- E-mailverificatie (code invoeren) ----------
+  router.get('/verifieren', async (req, res) => {
+    if (!req.session.verifyUid) return res.redirect('/registreren');
+    const user = await db.findUserById(req.session.verifyUid);
+    if (!user) { req.session.verifyUid = null; return res.redirect('/registreren'); }
+    res.render('auth_verify', { company, active: '', title: 'Bevestig je account', error: null, email: user.email, resent: false });
+  });
+
+  router.post('/verifieren', async (req, res) => {
+    const uid = req.session.verifyUid;
+    if (!uid) return res.redirect('/registreren');
+    const user = await db.findUserById(uid);
+    if (!user) { req.session.verifyUid = null; return res.redirect('/registreren'); }
+    const code = String(req.body.code || '').replace(/\s/g, '');
+    const ok = user.verifyCodeHash && (user.verifyCodeExp || 0) > Date.now() && sha256(code) === user.verifyCodeHash;
+    if (!ok) return res.render('auth_verify', { company, active: '', title: 'Bevestig je account', error: 'Onjuiste of verlopen code. Probeer opnieuw of vraag een nieuwe code aan.', email: user.email, resent: false });
+    await db.updateUser(uid, { verified: true, verifyCodeHash: null, verifyCodeExp: null });
+    req.session.verifyUid = null;
+    req.session.uid = user.id;            // nu pas ingelogd
+    const next = safeNext(req.session.verifyNext); req.session.verifyNext = null;
+    const want2fa = req.session.verify2fa; req.session.verify2fa = null;
+    if (want2fa) return res.redirect('/2fa/instellen');
     res.redirect(next || dest(user));
+  });
+
+  // Nieuwe code aanvragen
+  router.post('/verifieren/opnieuw', async (req, res) => {
+    const uid = req.session.verifyUid;
+    if (!uid) return res.redirect('/registreren');
+    const user = await db.findUserById(uid);
+    if (user) await startVerification(user, req);
+    res.render('auth_verify', { company, active: '', title: 'Bevestig je account', error: null, email: user ? user.email : '', resent: true });
   });
 
   // ---------- Inloggen (stap 1: wachtwoord) ----------

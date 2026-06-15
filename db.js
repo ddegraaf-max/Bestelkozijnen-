@@ -50,6 +50,9 @@ function postgresStore() {
     totpEnabled: r.totp_enabled,
     resetTokenHash: r.reset_token_hash,
     resetTokenExp: r.reset_token_exp == null ? null : Number(r.reset_token_exp),
+    verified: !!r.verified,
+    verifyCodeHash: r.verify_code_hash,
+    verifyCodeExp: r.verify_code_exp == null ? null : Number(r.verify_code_exp),
     createdAt: Number(r.created_at)
   } : undefined;
 
@@ -65,7 +68,8 @@ function postgresStore() {
   const USER_COLS = {
     naam: 'naam', email: 'email', passwordHash: 'password_hash', role: 'role',
     telefoon: 'telefoon', totpSecret: 'totp_secret', totpEnabled: 'totp_enabled',
-    resetTokenHash: 'reset_token_hash', resetTokenExp: 'reset_token_exp'
+    resetTokenHash: 'reset_token_hash', resetTokenExp: 'reset_token_exp',
+    verified: 'verified', verifyCodeHash: 'verify_code_hash', verifyCodeExp: 'verify_code_exp'
   };
 
   return {
@@ -84,9 +88,16 @@ function postgresStore() {
           totp_enabled BOOLEAN NOT NULL DEFAULT FALSE,
           reset_token_hash TEXT,
           reset_token_exp BIGINT,
+          verified BOOLEAN NOT NULL DEFAULT FALSE,
+          verify_code_hash TEXT,
+          verify_code_exp BIGINT,
           created_at BIGINT NOT NULL
         );`);
       await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_email_lower ON users (LOWER(email));`);
+      // Veilig voor bestaande databases zonder verificatie-kolommen:
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verified BOOLEAN NOT NULL DEFAULT FALSE;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verify_code_hash TEXT;`);
+      await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS verify_code_exp BIGINT;`);
       await pool.query(`
         CREATE TABLE IF NOT EXISTS requests (
           id TEXT PRIMARY KEY,
@@ -129,12 +140,12 @@ function postgresStore() {
         [tokenHash, Date.now()]);
       return mapUser(rows[0]);
     },
-    async createUser({ naam, email, passwordHash, role = 'klant', telefoon = '' }) {
-      const u = { id: id(), naam, email, passwordHash, role, telefoon, totpSecret: null, totpEnabled: false, createdAt: Date.now() };
+    async createUser({ naam, email, passwordHash, role = 'klant', telefoon = '', verified = false }) {
+      const u = { id: id(), naam, email, passwordHash, role, telefoon, totpSecret: null, totpEnabled: false, verified, verifyCodeHash: null, verifyCodeExp: null, createdAt: Date.now() };
       await pool.query(
-        `INSERT INTO users (id, naam, email, password_hash, role, telefoon, totp_secret, totp_enabled, created_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)`,
-        [u.id, u.naam, u.email, u.passwordHash, u.role, u.telefoon, u.totpSecret, u.totpEnabled, u.createdAt]);
+        `INSERT INTO users (id, naam, email, password_hash, role, telefoon, totp_secret, totp_enabled, verified, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
+        [u.id, u.naam, u.email, u.passwordHash, u.role, u.telefoon, u.totpSecret, u.totpEnabled, u.verified, u.createdAt]);
       return u;
     },
     async updateUser(uid, patch) {
@@ -231,8 +242,8 @@ function jsonStore() {
     findUserByResetToken(tokenHash) {
       return db.users.find(u => u.resetTokenHash === tokenHash && (u.resetTokenExp || 0) > Date.now());
     },
-    createUser({ naam, email, passwordHash, role = 'klant', telefoon = '' }) {
-      const user = { id: id(), naam, email, passwordHash, role, telefoon, totpSecret: null, totpEnabled: false, createdAt: Date.now() };
+    createUser({ naam, email, passwordHash, role = 'klant', telefoon = '', verified = false }) {
+      const user = { id: id(), naam, email, passwordHash, role, telefoon, totpSecret: null, totpEnabled: false, verified, verifyCodeHash: null, verifyCodeExp: null, createdAt: Date.now() };
       db.users.push(user); save(db); return user;
     },
     updateUser(uid, patch) {

@@ -95,7 +95,7 @@ async function start() {
   const email = process.env.ADMIN_EMAIL, pw = process.env.ADMIN_PASSWORD;
   if (email && pw && !(await db.findUserByEmail(email))) {
     const bcrypt = require('bcryptjs');
-    await db.createUser({ naam: 'Beheerder', email, passwordHash: bcrypt.hashSync(pw, 10), role: 'beheer' });
+    await db.createUser({ naam: 'Beheerder', email, passwordHash: bcrypt.hashSync(pw, 10), role: 'beheer', verified: true });
     console.log('Beheerder aangemaakt:', email);
   }
 

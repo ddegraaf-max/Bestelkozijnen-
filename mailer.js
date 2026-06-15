@@ -170,6 +170,20 @@ module.exports = function (company) {
         subject: 'Je wachtwoord opnieuw instellen',
         html: layout({ preheader: 'Stel je wachtwoord opnieuw in (link 1 uur geldig).', badge: 'Wachtwoord', heading: 'Wachtwoord opnieuw instellen', bodyHtml: body, button: { label: 'Nieuw wachtwoord instellen', url } })
       });
+    },
+
+    // E-mailverificatie bij registratie: 6-cijferige code (15 min geldig).
+    async sendVerifyCode({ to, naam, code }) {
+      const body = par(`Hallo ${esc(naam || '')},`)
+        + par('Gebruik deze code om je account te bevestigen:')
+        + `<div style="font-family:ui-monospace,Menlo,Consolas,monospace;font-size:34px;font-weight:800;letter-spacing:.32em;color:${C.ink};background:${C.panel2};border:1px solid ${C.line};border-radius:12px;padding:18px 12px;text-align:center;margin:6px 0 14px">${esc(code)}</div>`
+        + par('De code is <strong>15 minuten</strong> geldig. Heb je geen account aangemaakt? Negeer deze e-mail.')
+        + par('Met vriendelijke groet,<br>' + esc(company.name));
+      await send({
+        to,
+        subject: `Je bevestigingscode: ${code}`,
+        html: layout({ preheader: 'Je bevestigingscode (15 minuten geldig).', badge: 'Bevestig je account', heading: 'Bevestig je e-mailadres', bodyHtml: body })
+      });
     }
   };
 };
