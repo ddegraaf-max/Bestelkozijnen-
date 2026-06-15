@@ -35,8 +35,13 @@ npm start              # http://localhost:3000
 - `/registreren` · `/inloggen` · `/portaal` (klant) · `/beheer` (beheerder)
 
 ## Datalaag
-JSON-bestand onder `DATA_DIR` (`db.json` + `uploads/`). Bewust simpel en zonder externe database,
-later 1-op-1 te vervangen door Postgres (zie `db.js`).
+Twee backends (zie `db.js`), automatisch gekozen:
+- **PostgreSQL** wanneer `DATABASE_URL` is gezet (productie/Railway). Tabellen worden bij het
+  opstarten automatisch aangemaakt (`users`, `requests`, `counters`).
+- **JSON-bestand** onder `DATA_DIR` (`db.json`) wanneer `DATABASE_URL` leeg is (lokaal/dev).
+
+Geüploade PDF-offertes staan in beide gevallen op schijf onder `DATA_DIR/uploads/`
+(mount daarvoor een Railway-volume); de database bewaart alleen de bestandsnaam.
 
 ## Nog in te vullen (PLAATSHOUDER in de teksten)
 Montagetarieven/werkgebied, levertijden, garantie, FAQ-antwoorden, algemene voorwaarden en privacybeleid.

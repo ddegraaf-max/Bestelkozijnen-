@@ -6,6 +6,14 @@
     <span class="status <%= r.status %>"><%= STATUS_LABELS[r.status] %></span>
   </div>
 
+  <% if (r.prijs != null) { %>
+    <div class="card" style="margin-bottom:18px;border:1.5px solid var(--accent)">
+      <h3 style="font-size:18px">Jouw prijs</h3>
+      <p style="font-size:28px;font-weight:700;margin:6px 0 2px">&euro; <%= r.prijs.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) %></p>
+      <% if (r.prijsNotitie) { %><p style="color:var(--muted);font-size:14px;margin:0"><%= r.prijsNotitie %></p><% } %>
+    </div>
+  <% } %>
+
   <% if (r.offertePdf) { %>
     <div class="card" style="display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px">
       <div><h3 style="font-size:18px">Je offerte staat klaar</h3><p style="color:var(--muted);font-size:14px;margin-top:4px">Bekijk en download je offerte op maat.</p></div>

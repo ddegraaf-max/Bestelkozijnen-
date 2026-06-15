@@ -209,10 +209,18 @@ const curH=()=>state.aanzicht==='buiten'?(state.gelijkeMaat?state.hoogte:state.h
 function shade(hex,p){ const n=parseInt(hex.slice(1),16); let r=Math.max(0,Math.min(255,(n>>16)+p)),g=Math.max(0,Math.min(255,((n>>8)&255)+p)),b=Math.max(0,Math.min(255,(n&255)+p)); return '#'+((r<<16)|(g<<8)|b).toString(16).padStart(6,'0'); }
 const isDark=hex=>['#363B3E','#17191C','#2F4034','#23303B','#5C3D22','#6E3326','#4A3526'].includes(hex);
 let GID='g0';
-function defs(frameC){ const lo=shade(frameC,20),hi=shade(frameC,-22);
+let FFILL='';                         // huidige kozijn-vulling (kleur/hout/aluminium)
+const WOODIDX=[7,8,9,10];             // KLEUREN-indexen die een houtlook zijn
+function defs(frameC){
+  const lo=shade(frameC,20),hi=shade(frameC,-22);
+  const mDk=shade(frameC,-28),mMid=shade(frameC,12),mHi=shade(frameC,46);   // aluminium
+  const wHi=shade(frameC,16),wMd=shade(frameC,-8),wDk=shade(frameC,-22);    // hout
   return `<defs>
   <linearGradient id="gl${GID}" x1="0" y1="0" x2=".3" y2="1"><stop offset="0" stop-color="#d9e7ed"/><stop offset=".5" stop-color="#eff5f6"/><stop offset="1" stop-color="#cfdfe3"/></linearGradient>
   <linearGradient id="fr${GID}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${lo}"/><stop offset=".55" stop-color="${frameC}"/><stop offset="1" stop-color="${hi}"/></linearGradient>
+  <linearGradient id="metal${GID}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${mDk}"/><stop offset=".32" stop-color="${mMid}"/><stop offset=".5" stop-color="${mHi}"/><stop offset=".68" stop-color="${mMid}"/><stop offset="1" stop-color="${mDk}"/></linearGradient>
+  <linearGradient id="wbase${GID}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${wHi}"/><stop offset=".5" stop-color="${frameC}"/><stop offset="1" stop-color="${wDk}"/></linearGradient>
+  <pattern id="wood${GID}" patternUnits="userSpaceOnUse" width="11" height="230"><rect width="11" height="230" fill="url(#wbase${GID})"/><g stroke="${wDk}" stroke-width=".7" fill="none" opacity=".22"><path d="M2.5 0 Q4.5 58 2.5 116 T2.5 230"/><path d="M7 0 Q5 70 7 140 T7 230"/></g><line x1="10.4" y1="0" x2="10.4" y2="230" stroke="${wMd}" stroke-width=".55" opacity=".28"/><line x1=".6" y1="0" x2=".6" y2="230" stroke="${wHi}" stroke-width=".5" opacity=".25"/></pattern>
   <filter id="blur${GID}" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="6"/></filter></defs>`; }
 function paneSym(sym,x,y,w,h,c){
   const d=`stroke="${c}" stroke-width="1.3" stroke-dasharray="4 3" fill="none"`; let s=''; const ay=y+h/2;
@@ -244,11 +252,11 @@ function glassPane(x,y,w,h,stroke){
 }
 function paneFixed(x,y,w,h,frameC,stroke){
   const bd=Math.max(2,Math.min(w,h)*0.03);
-  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#fr${GID})"/>`+glassPane(x+bd,y+bd,w-2*bd,h-2*bd,stroke);
+  return `<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${FFILL}"/>`+glassPane(x+bd,y+bd,w-2*bd,h-2*bd,stroke);
 }
 function paneSash(x,y,w,h,frameC,stroke,thin){
   const sd=Math.max(3,Math.min(w,h)*(thin?0.04:0.06));
-  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="url(#fr${GID})" stroke="${stroke}"/>`;
+  let s=`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${FFILL}" stroke="${stroke}"/>`;
   s+=`<rect x="${x+0.8}" y="${y+0.8}" width="${w-1.6}" height="${h-1.6}" fill="none" stroke="rgba(255,255,255,.14)"/>`;
   const gx=x+sd,gy=y+sd,gw=w-2*sd,gh=h-2*sd;
   s+=`<rect x="${gx-1.5}" y="${gy-1.5}" width="${gw+3}" height="${gh+3}" fill="#000" opacity=".06"/>`;
@@ -256,8 +264,8 @@ function paneSash(x,y,w,h,frameC,stroke,thin){
   return s;
 }
 function beslagMarks(sym,x,y,w,h){
+  if(state.aanzicht==='buiten') return '';   // hendel + scharnieren zijn binnenbeslag — niet tonen bij buitenaanzicht
   if(!/^(kiep|draai|deur)/.test(sym)) return '';
-  if(state.aanzicht==='buiten') return ''; // hendel/scharnieren alleen bij binnenaanzicht
   const handleLeft=sym.endsWith('L'), hcol=KRUKKLEUR[state.kruk]; let o='';
   // hendel aan de openingszijde (zijde van het draai/kiep-symbool)
   const hh=Math.max(16,h*0.13), hx=handleLeft?x+4:x+w-7, hy=y+h*0.5-hh/2, hs='stroke="rgba(0,0,0,.28)" stroke-width="0.6"';
@@ -289,7 +297,9 @@ function drawWindow(){
   const curLijn=(lijnenFor(state.materiaal).find(l=>l.id===state.lijn))||{}, aanslag=!!curLijn.aanslag;
   const frame=Math.max(7,Math.min(dw,dh)*0.045),gap=frame*0.7,div=frame*0.8;
   GID='g'+Date.now();
-  let g=`<rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" rx="4" fill="url(#fr${GID})" stroke="${stroke}"/>`;
+  const _wood=WOODIDX.includes(state.aanzicht==='buiten'?state.kleurBuiten:state.kleurBinnen);
+  FFILL = state.materiaal==='aluminium' ? `url(#metal${GID})` : _wood ? `url(#wood${GID})` : `url(#fr${GID})`;
+  let g=`<rect x="${ox}" y="${oy}" width="${dw}" height="${dh}" rx="4" fill="${FFILL}" stroke="${stroke}"/>`;
   g+=`<path d="M${ox+1} ${oy+dh-1} L${ox+1} ${oy+1} L${ox+dw-1} ${oy+1}" fill="none" stroke="rgba(255,255,255,${dark?'.10':'.22'})" stroke-width="1.3" stroke-linecap="round"/>`;
   g+=`<path d="M${ox+1} ${oy+dh-1} L${ox+dw-1} ${oy+dh-1} L${ox+dw-1} ${oy+1}" fill="none" stroke="rgba(0,0,0,.22)" stroke-width="1.3" stroke-linecap="round"/>`;
   g+=`<rect x="${ox+frame}" y="${oy+frame}" width="${dw-frame*2}" height="${dh-frame*2}" fill="none" stroke="rgba(0,0,0,.10)"/>`;
@@ -335,10 +345,10 @@ function drawWindow(){
   $('previewLabel').textContent=`${state.lijn.toUpperCase()} · ${N} ${eenheid} · ${state.aanzicht==='buiten'?'BUITEN':'BINNEN'}`;
   $('previewSpec').innerHTML=`${KLEUREN[state.kleurBuiten].label}${state.gelijkeKleur?'':' / binnen '+KLEUREN[state.kleurBinnen].label} · ${GLAZEN[state.glas]}${state.rc2?' · RC2':''}${state.montage?' · incl. montage':''}`;
 }
-function panelSVG(model, door){
+function panelSVG(model, door, wood){
   const code=model||'ST-01';
   const t=[...code].reduce((a,c)=>a+c.charCodeAt(0),0)%6;
-  const W=100,H=215, gid='pg'+t;
+  const W=100,H=215, gid='pg'+t+(wood?'w':'');
   const inox='#c4c9cb', inoxD='#a4aaac', edge='rgba(0,0,0,.12)', hl='rgba(255,255,255,.10)';
   const glass=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" fill="url(#${gid})" stroke="rgba(0,0,0,.10)" stroke-width="1"/>`;
   const bar=(x,y,w,h)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1" fill="${inox}"/><rect x="${x}" y="${y+h-1.4}" width="${w}" height="1.4" fill="${inoxD}"/>`;
@@ -352,14 +362,21 @@ function panelSVG(model, door){
     const panel=(y,h)=>`<rect x="18" y="${y}" width="64" height="${h}" rx="2" fill="${shade(door,-7)}" stroke="${shade(door,-16)}" stroke-width="1.4"/><rect x="23" y="${y+5}" width="54" height="${h-10}" rx="1.5" fill="none" stroke="${hl}" stroke-width="1.2"/>`;
     inner=panel(18,86)+panel(112,86);
   }
+  const woodDefs = wood
+    ? `<linearGradient id="wb${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${shade(door,14)}"/><stop offset=".5" stop-color="${door}"/><stop offset="1" stop-color="${shade(door,-20)}"/></linearGradient>`
+      +`<pattern id="wg${gid}" patternUnits="userSpaceOnUse" width="9" height="${H}"><rect width="9" height="${H}" fill="url(#wb${gid})"/><g stroke="${shade(door,-20)}" stroke-width=".6" fill="none" opacity=".2"><path d="M2 0 Q4 ${Math.round(H*0.25)} 2 ${Math.round(H*0.5)} T2 ${H}"/><path d="M6.5 0 Q4.5 ${Math.round(H*0.3)} 6.5 ${Math.round(H*0.6)} T6.5 ${H}"/></g></pattern>`
+    : '';
+  const baseFill = wood ? `url(#wg${gid})` : door;
   return `<svg class="dp-img" viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`
-    +`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8f0f2"/><stop offset=".5" stop-color="#d3e1e5"/><stop offset="1" stop-color="#e8f0f2"/></linearGradient></defs>`
-    +`<rect width="${W}" height="${H}" fill="${door}"/><rect x="3" y="3" width="${W-6}" height="${H-6}" rx="2" fill="none" stroke="${edge}" stroke-width="1.2"/>${inner}</svg>`;
+    +`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e8f0f2"/><stop offset=".5" stop-color="#d3e1e5"/><stop offset="1" stop-color="#e8f0f2"/></linearGradient>`
+    +`<linearGradient id="sh${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffffff" stop-opacity=".16"/><stop offset=".5" stop-color="#ffffff" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity=".13"/></linearGradient>${woodDefs}</defs>`
+    +`<rect width="${W}" height="${H}" fill="${baseFill}"/><rect width="${W}" height="${H}" fill="url(#sh${gid})"/><rect x="3" y="3" width="${W-6}" height="${H-6}" rx="2" fill="none" stroke="${edge}" stroke-width="1.2"/>${inner}</svg>`;
 }
 function drawDoor(){
   const frameC=KLEUREN[state.aanzicht==='buiten'?state.kleurBuiten:state.kleurBinnen].hex;
+  const woodLook=WOODIDX.includes(state.aanzicht==='buiten'?state.kleurBuiten:state.kleurBinnen);
   if(state.paneelOnly){
-    const code=`${state.collectie} ${state.model||'—'}`, pnl=panelSVG(state.model, frameC);
+    const code=`${state.collectie} ${state.model||'—'}`, pnl=panelSVG(state.model, frameC, woodLook);
     const Wt=curW(), Ht=curH(), scale=300/Math.max(300,Ht);
     const pw=Math.round(Math.max(90,Math.min(300, Wt*scale))), ph=Math.round(Math.max(150,Math.min(320, Ht*scale)));
     let h=`<div class="dp-wrap${state.aanzicht==='buiten'?' dp-mirror':''}" style="--fc:${frameC}">`;
@@ -375,7 +392,7 @@ function drawDoor(){
     return;
   }
   const slL=state.zijlicht===1||state.zijlicht===3, slR=state.zijlicht===2||state.zijlicht===3, dz=state.zijlichtDubbel, dubbel=state.deurType===1;
-  const grRight=state.scharnier===0, code=`${state.collectie} ${state.model||'—'}`, pnl=panelSVG(state.model, frameC);
+  const grRight=state.scharnier===0, code=`${state.collectie} ${state.model||'—'}`, pnl=panelSVG(state.model, frameC, woodLook);
   const Wt=curW(), Ht=curH(), cols=(slL?1:0)+(slR?1:0);
   const doorWmm=Math.max(300, Wt-cols*state.zijlichtB);
   const doorHmm=Math.max(300, Ht-(state.bovenlichtDeur?state.bovenlichtDeurH:0));
@@ -390,9 +407,11 @@ function drawDoor(){
     const hingeSide=side==='r'?'l':'r';                 // scharnier tegenover de hendel
     const baseX=hingeSide==='l'?8:92, apexX=hingeSide==='l'?92:8;
     const swing=`<svg class="dp-swing" viewBox="0 0 100 240" preserveAspectRatio="none" aria-hidden="true"><path d="M${baseX} 16 L${apexX} 120 L${baseX} 224" fill="none" stroke="rgba(28,28,25,.5)" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/></svg>`;
-    // scharnieren alleen zichtbaar aan de kant waar de deur naartoe opendraait
-    const showHinges=(state.opendraai===0)===(state.aanzicht==='binnen'); // naar binnen→binnen, naar buiten→buiten
-    const hinges=showHinges?`<span class="dp-hinge ${hingeSide}" style="top:14%"></span><span class="dp-hinge ${hingeSide}" style="top:86%"></span>`:'';
+    // Scharnieren volgen de draairichting: naar binnen draaiend → alleen bij
+    // binnenaanzicht, naar buiten draaiend → alleen bij buitenaanzicht.
+    // (state.opendraai: 0 = naar binnen, 1 = naar buiten). De kruk blijft beide kanten.
+    const toonScharnier = (state.opendraai === 0 && state.aanzicht === 'binnen') || (state.opendraai === 1 && state.aanzicht === 'buiten');
+    const hinges = toonScharnier ? `<span class="dp-hinge ${hingeSide}" style="top:14%"></span><span class="dp-hinge ${hingeSide}" style="top:86%"></span>` : '';
     return `<div class="dp-leaf${m?' dp-leaf-m':''}" data-code="${code}" style="background:${frameC}">${pnl}${swing}${hinges}<span class="dp-handle ${side}"></span></div>`;
   };
   let h=`<div class="dp-wrap${state.aanzicht==='buiten'?' dp-mirror':''}" style="--fc:${frameC}">`;
@@ -802,8 +821,8 @@ async function submitAanvraag(){
 /* ============ assistent ============ */
 const ASSIST_ON = (typeof window!=='undefined' && window.__assistantOn === true);
 const chatMsgs = ASSIST_ON
-  ? [{role:'assistant',content:'Hoi! Ik help je inmeten. Gaat het om een raam, een schuifpui of een voordeur — en is het een nieuwe opening (dagmaat) of vervanging?'}]
-  : [{role:'assistant',content:'De inmeet-assistent is nog niet geactiveerd (er ontbreekt een API-sleutel). Meet ondertussen de breedte op drie hoogtes (boven, midden, onder) en de hoogte op drie breedtes (links, midden, rechts), en noteer telkens de kleinste maat. De volledige uitleg vind je op de Werkwijze-pagina.'}];
+  ? [{role:'assistant',content:'Hoi! Ik help je je kozijn samenstellen én inmeten. Vertel gewoon wat je zoekt — bijvoorbeeld "een antraciet schuifpui van 3 meter met triple glas" of "een witte voordeur" — dan vul ik de configurator meteen voor je in. Je ziet het live in de preview en kunt alles daarna zelf nog aanpassen. Gaat het om een raam, schuifpui of voordeur?'}]
+  : [{role:'assistant',content:'De assistent is nog niet geactiveerd (er ontbreekt een API-sleutel). Meet ondertussen de breedte op drie hoogtes (boven, midden, onder) en de hoogte op drie breedtes (links, midden, rechts), en noteer telkens de kleinste maat. De volledige uitleg vind je op de Werkwijze-pagina.'}];
 function initAssistant(){
   renderChat();
   if(!ASSIST_ON){
@@ -811,15 +830,149 @@ function initAssistant(){
     const b=document.querySelector('.assistant .a-input button'); if(b) b.disabled=true;
   }
 }
-function renderChat(){ const b=$('chatBody'); if(!b)return; b.innerHTML=chatMsgs.map(m=>`<div class="msg ${m.role==='assistant'?'bot':'user'}">${m.content.replace(/</g,'&lt;')}</div>`).join(''); b.scrollTop=b.scrollHeight; }
+function renderChat(){ const b=$('chatBody'); if(!b)return;
+  b.innerHTML=chatMsgs.map(m=>{
+    if(m.content==='…') return '<div class="msg bot typing"><span></span><span></span><span></span></div>';
+    return `<div class="msg ${m.role==='assistant'?'bot':'user'}">${m.content.replace(/</g,'&lt;')}</div>`;
+  }).join('');
+  b.scrollTop=b.scrollHeight;
+}
 async function sendChat(){
   if(!ASSIST_ON) return;
   const inp=$('chatInput'),txt=inp.value.trim(); if(!txt)return;
   chatMsgs.push({role:'user',content:txt}); inp.value=''; chatMsgs.push({role:'assistant',content:'…'}); renderChat();
-  try{ const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMsgs.filter(m=>m.content!=='…')})}); const d=await r.json(); chatMsgs.pop(); chatMsgs.push({role:'assistant',content:d.ok?d.reply:(d.error||'Sorry, dat lukte niet.')}); }
+  try{ const r=await fetch('/api/assistant',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatMsgs.filter(m=>m.content!=='…')})}); const d=await r.json(); chatMsgs.pop(); chatMsgs.push({role:'assistant',content:d.ok?d.reply:(d.error||'Sorry, dat lukte niet.')}); if(d.ok&&d.updates){ try{ applyAiUpdates(d.updates); }catch(err){ console.error('AI-update fout',err); } } }
   catch(e){ chatMsgs.pop(); chatMsgs.push({role:'assistant',content:'De assistent is even niet bereikbaar.'}); }
   renderChat();
 }
+
+/* ============ AI-aansturing van de configurator ============ */
+// De assistent levert gestructureerde `updates`; hier mappen we die veilig op
+// de state, herbouwen we alle bedieningselementen en tekenen we de preview
+// opnieuw — exact dezelfde codepaden als bij handmatig kiezen.
+const _norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[()]/g,' ').replace(/\s+/g,' ').trim();
+function _matchList(list,val,labelFn){
+  const v=_norm(val); if(!v) return -1; labelFn=labelFn||(x=>x);
+  for(let i=0;i<list.length;i++){ const l=_norm(labelFn(list[i])); if(l===v||l.includes(v)||v.includes(l.split(' ')[0])) return i; }
+  return -1;
+}
+function _matchKleur(val){
+  const v=_norm(val); if(!v) return -1;
+  const ral=(v.match(/\b(\d{4})\b/)||[])[1];
+  if(ral){ for(let i=0;i<KLEUREN.length;i++) if(_norm(KLEUREN[i].label).includes(ral)) return i; }
+  return _matchList(KLEUREN,val,k=>k.label.replace(/\(.*\)/,''));
+}
+function _matchGlas(val){
+  const v=_norm(val);
+  const al=[['triple',1],['hr+++',1],['dubbel',0],['hr++',0],['geluid',2],['veilig',3],['gelaagd',3],['zon',4],['antisol',4],['ornament',5],['gezandstraald',6],['zandstraal',6],['melk',7],['badkamer',7],['mat',7]];
+  for(const a of al) if(v.includes(a[0])) return a[1];
+  return _matchList(GLAZEN,val);
+}
+function _fnFromText(txt,schuif){
+  const t=_norm(txt);
+  let base = /kiep/.test(t)?'draaikiep' : /draai/.test(t)?'draai' : /schuif/.test(t)?'schuif' : 'vast';
+  if(base==='vast') return 'vast';
+  if(schuif && base!=='schuif') base='schuif';
+  if(!schuif && base==='schuif') base='draaikiep';
+  const side = /link/.test(t)?'l' : 'r';
+  const f=base+'-'+side;
+  return functiesFor().indexOf(f)>=0 ? f : 'vast';
+}
+const _clampDim=(v,a,b)=>Math.max(a,Math.min(b,Math.round(v)));
+function _setVakken(n,kind){
+  const cur=state.vakken, arr=[];
+  for(let i=0;i<n;i++){ const def=kind==='schuif'?(i===0?'schuif-r':'vast'):(i===0?'draaikiep-r':'vast');
+    const keep=cur[i]&&functiesFor().indexOf(cur[i].functie)>=0?cur[i].functie:def;
+    arr.push({functie:keep,glas:cur[i]?cur[i].glas:null}); }
+  state.vakken=arr;
+}
+function syncControlsFromState(){
+  const set=(id,prop,val)=>{ const el=$(id); if(el) el[prop]=val; };
+  set('inPositie','value',state.positie||'');
+  set('gelijkeKleurToggle','checked',state.gelijkeKleur);
+  const kbw=$('kleurBinnenWrap'); if(kbw) kbw.hidden=state.gelijkeKleur;
+  const kbl=$('kleurBuitenLbl'); if(kbl) kbl.textContent=state.gelijkeKleur?'Kleur (buiten & binnen)':'Kleur buiten';
+  set('warmeRandToggle','checked',state.warmeRand); set('sleutelToggle','checked',state.sleutel);
+  set('rc2Toggle','checked',state.rc2); set('scharnierToggle','checked',state.scharnieren);
+  set('rolluikToggle','checked',state.rolluik); set('horToggle','checked',state.hor); set('screenToggle','checked',state.screen);
+  set('smartToggle','checked',state.smartHome);
+  set('brievenbusToggle','checked',state.brievenbus); set('spionToggle','checked',state.spion); set('huisnummerToggle','checked',state.huisnummer);
+  set('paneelOnlyToggle','checked',state.paneelOnly); set('laagGlasToggle','checked',state.laagGlas);
+  set('montageToggle','checked',state.montage); set('gelijkeMaatToggle','checked',state.gelijkeMaat);
+  const bmw=$('buitenMaatWrap'); if(bmw) bmw.hidden=state.gelijkeMaat;
+  set('inW','value',state.breedte); set('inH','value',state.hoogte);
+  set('inWb','value',state.breedteBuiten); set('inHb','value',state.hoogteBuiten);
+  set('qtyInput','value',state.aantal);
+  const ro=$('roedeOpties'); if(ro) ro.hidden=(state.roedeType===0);
+}
+function rebuildAll(){
+  buildProfiel();
+  swatches('kleurBuiten',state.kleurBuiten,i=>{state.kleurBuiten=i; if(state.gelijkeKleur)state.kleurBinnen=i; draw();});
+  swatches('kleurBinnen',state.kleurBinnen,i=>{state.kleurBinnen=i;draw();});
+  buildAfdichting();
+  chips('kernChips',KERN,state.kern,i=>state.kern=i);
+  chips('glasChips',GLAZEN,state.glas,i=>{state.glas=i;draw();});
+  chips('glaslatChips',GLASLAT,state.glaslat,i=>state.glaslat=i);
+  chips('krukChips',KRUKKEN,state.kruk,i=>{state.kruk=i;draw();});
+  buildBeslagChips();
+  chips('roedeTypeChips',ROEDETYPES,state.roedeType,i=>{state.roedeType=i;$('roedeOpties').hidden=(i===0);draw();});
+  chips('roedePatroonChips',ROEDEPATRONEN,state.roedePatroon,i=>{state.roedePatroon=i;draw();});
+  chips('ventilatieChips',VENTILATIE,state.ventilatie,i=>state.ventilatie=i);
+  buildDeurIndeling(); buildDeurGlas(); buildIndeling();
+  syncControlsFromState();
+  if(step===STEPS.length-1) buildOverzicht();
+  draw();
+}
+function applyAiUpdates(u){
+  if(!u||typeof u!=='object') return [];
+  const applied=[]; let productChanged=false;
+  if(u.materiaal){ const mn=_norm(u.materiaal);
+    const mat = /alumin|\balu\b/.test(mn)?'aluminium' : /hout|houten|wood|drewn/.test(mn)?'hout' : /kunststof|plastic|pvc|tworzyw/.test(mn)?'kunststof' : (['kunststof','hout','aluminium'].includes(mn)?mn:null);
+    if(mat){ state.materiaal=mat; productChanged=true; } }
+  if(u.product){ const p=_norm(u.product);
+    state.product = p.includes('deur')?'voordeur' : p.includes('schuif')?'schuif' : 'raam'; productChanged=true; }
+  if(state.product==='voordeur' && state.materiaal!=='kunststof') state.materiaal='kunststof';
+  if(productChanged){
+    if(state.product!=='voordeur') state.lijn=lijnenFor(state.materiaal)[0].id;
+    applyProductDefaults();
+    applied.push(state.product==='voordeur'?'voordeur':state.product==='schuif'?'schuifpui':'raam', state.materiaal);
+  }
+  if(u.kleur){ const i=_matchKleur(u.kleur); if(i>=0){ state.kleurBuiten=i; if(state.gelijkeKleur)state.kleurBinnen=i; applied.push('kleur '+KLEUREN[i].label); } }
+  if(u.kleurBinnen){ const i=_matchKleur(u.kleurBinnen); if(i>=0){ state.gelijkeKleur=false; state.kleurBinnen=i; applied.push('binnen '+KLEUREN[i].label); } }
+  if(u.glas && !isVoordeur()){ const i=_matchGlas(u.glas); if(i>=0){ state.glas=i; applied.push(GLAZEN[i]); } }
+  if(Number.isFinite(u.breedte_mm)){ state.breedte=_clampDim(u.breedte_mm,400,6000); if(state.gelijkeMaat)state.breedteBuiten=state.breedte; applied.push('breedte '+state.breedte+' mm'); }
+  if(Number.isFinite(u.hoogte_mm)){ state.hoogte=_clampDim(u.hoogte_mm,300,3000); if(state.gelijkeMaat)state.hoogteBuiten=state.hoogte; applied.push('hoogte '+state.hoogte+' mm'); }
+  if(Array.isArray(u.vleugelFuncties) && u.vleugelFuncties.length && !isVoordeur()){
+    const schuif=isSchuif();
+    let arr=u.vleugelFuncties.slice(0,4).map(t=>({functie:_fnFromText(t,schuif),glas:null}));
+    while(arr.length<minVak()) arr.push({functie:schuif?'vast':'vast',glas:null});
+    state.vakken=arr; applied.push(arr.length+(schuif?' delen':' vleugels'));
+  } else if(Number.isFinite(u.aantalVleugels) && isRaam()){
+    const n=Math.max(1,Math.min(4,u.aantalVleugels)); _setVakken(n,'raam'); applied.push(n+' vleugel'+(n>1?'s':''));
+  } else if(Number.isFinite(u.schuifDelen) && isSchuif()){
+    const n=Math.max(2,Math.min(4,u.schuifDelen)); _setVakken(n,'schuif'); applied.push(n+' delen');
+  }
+  if(typeof u.montage==='boolean'){ state.montage=u.montage; applied.push(u.montage?'incl. montage':'excl. montage'); }
+  if(typeof u.rc2==='boolean'){ state.rc2=u.rc2; if(u.rc2)applied.push('RC2'); }
+  if(typeof u.roede==='boolean'){ state.roedeType=u.roede?1:0; if(u.roede)applied.push('roedes'); }
+  if(typeof u.ventilatie==='boolean'){ state.ventilatie=u.ventilatie?1:0; if(u.ventilatie)applied.push('ventilatie'); }
+  ['rolluik','hor','screen'].forEach(k=>{ if(typeof u[k]==='boolean'){ state[k]=u[k]; if(u[k])applied.push(k); } });
+  if(u.positie){ state.positie=String(u.positie).slice(0,80); applied.push(state.positie); }
+  if(Number.isFinite(u.aantal)){ state.aantal=Math.max(1,Math.min(99,Math.round(u.aantal))); applied.push(state.aantal+'×'); }
+  if(isVoordeur()){
+    if(u.deurCollectie && DEUR_COLLECTIES.indexOf(u.deurCollectie)>=0){ state.collectie=u.deurCollectie; if((DEUR_MODELLEN[state.collectie]||[]).indexOf(state.model)<0) state.model=DEUR_MODELLEN[state.collectie][0]||''; applied.push('collectie '+state.collectie); }
+    if(u.deurModel){ state.model=String(u.deurModel).slice(0,20); applied.push('model '+state.model); }
+    if(typeof u.dubbeleDeur==='boolean'){ state.deurType=u.dubbeleDeur?1:0; applied.push(u.dubbeleDeur?'dubbele deur':'enkele deur'); }
+  }
+  rebuildAll();
+  if(applied.length) toast('Aangepast: '+applied.slice(0,4).join(' · ')+(applied.length>4?' …':''));
+  return applied;
+}
+// AI-hulp als zwevend zijpaneel — beschikbaar op ELKE stap, zonder de stap te
+// wijzigen en zonder de preview te verbergen (geen verduistering).
+function openAssist(){ const d=$('aiDrawer'); if(!d) return; d.classList.add('open'); d.setAttribute('aria-hidden','false'); setTimeout(()=>{ const i=$('chatInput'); if(i) i.focus(); },180); }
+function closeAssist(){ const d=$('aiDrawer'); if(!d) return; d.classList.remove('open'); d.setAttribute('aria-hidden','true'); }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeAssist(); });
 
 /* ============ init ============ */
 function setQty(d){ state.aantal=Math.max(1,state.aantal+d); $('qtyInput').value=state.aantal; }
