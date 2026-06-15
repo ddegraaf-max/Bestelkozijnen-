@@ -62,7 +62,8 @@
 .cfg .canvas-head .dot{display:inline-flex;gap:5px}
 .cfg .canvas-head .dot i{width:8px;height:8px;border-radius:50%;background:var(--line-strong);display:block}
 .cfg .stage{padding:26px 22px;display:flex;align-items:center;justify-content:center;min-height:330px;background:repeating-linear-gradient(45deg,transparent,transparent 11px,rgba(199,194,181,.13) 11px,rgba(199,194,181,.13) 12px)}
-.cfg .stage svg{max-width:100%;height:auto;display:block}
+.cfg .stage{min-width:0}
+.cfg .stage svg{width:100%;max-width:100%;height:auto;display:block}   /* width:100% nodig: iOS Safari laat een viewBox-SVG in flex anders tot 0 krimpen */
 
 .cfg .price-card{margin-top:18px;background:var(--ink);color:var(--paper);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
 .cfg .price-row{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--font-mono);font-size:13px;color:#bdb9af;padding:4px 0}
