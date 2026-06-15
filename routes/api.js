@@ -69,7 +69,7 @@ module.exports = function (company, mailer) {
         deurCollectie: { type: 'string', description: 'Voordeur-paneelcollectie, één van: Standard, Modern, Deco, Econo, Glass.' },
         deurModel: { type: 'string', description: 'Voordeur: modelcode, bijv. ST-01.' },
         dubbeleDeur: { type: 'boolean' },
-        bestellingAfronden: { type: 'boolean', description: 'Zet op true ALLEEN als de klant uitdrukkelijk bevestigt dat de samenstelling klaar is en de aanvraag/bestelling geplaatst mag worden. Dan wordt de huidige configuratie in de aanvraag gezet en verstuurd (of, als de klant niet is ingelogd, klaargezet zodat hij een account kan aanmaken).' }
+        bestellingAfronden: { type: 'boolean', description: 'Zet op true zodra de samenstelling compleet is (essentiële velden bekend én de extra'+"'"+'s-vraag beantwoord). Dit plaatst NIET de bestelling, maar toont de klant het volledige overzicht van alle stappen zodat hij alles kan controleren en eventueel nog aanpassen. De klant plaatst de bestelling daarna zelf met de knop.' }
       }
     }
   };
@@ -92,7 +92,9 @@ Stel daarna, in een APARTE beurt op zichzelf, ÉÉN gebundelde vraag over extra'
 
 Alleen bij een begroeting of vraag zonder enige keuze: gewoon vriendelijk antwoorden, geen tool.
 
-Volgorde: (1) vul de essentiële velden in zodra je ze hoort, inclusief montage; (2) stel daarna de APARTE extra's-vraag en wacht op het antwoord; (3) pas als de klant op de extra's-vraag heeft geantwoord: vat kort samen en vraag of je de aanvraag mag plaatsen. Rond NIET af zolang de extra's-vraag niet beantwoord is. Pas bij bevestiging ("ja", "plaats maar", "bestellen") roep je de tool aan met bestellingAfronden:true. Verzin nooit zelf dat het klaar is.`;
+Volgorde: (1) vul de essentiële velden in zodra je ze hoort, inclusief montage; (2) stel daarna de APARTE extra's-vraag en wacht op het antwoord; (3) pas NA dat antwoord roep je de tool aan met bestellingAfronden:true.
+
+bestellingAfronden plaatst de bestelling NIET — het toont de klant het volledige overzicht van alle stappen. Schrijf er dan een korte, vriendelijke samenvatting bij van wat je hebt gekozen en zeg: "Bekijk gerust alle stappen in het overzicht — je kunt nog van alles aanpassen en ziet het live in de preview. Klik op 'Voeg toe aan aanvraag' en daarna 'Aanvraag versturen' om te bestellen." Plaats de bestelling NOOIT zelf en zeg nooit dat er al besteld is.`;
 
   router.post('/assistant', async (req, res) => {
     const { messages } = req.body;

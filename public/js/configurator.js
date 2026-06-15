@@ -974,11 +974,13 @@ function applyAiUpdates(u){
   }
   rebuildAll();
   if(applied.length) toast('Aangepast: '+applied.slice(0,4).join(' · ')+(applied.length>4?' …':''));
-  // De klant heeft bevestigd: voeg de samenstelling toe en plaats de aanvraag.
-  // submitAanvraag() regelt zelf het verschil: ingelogd → direct verstuurd;
-  // niet ingelogd → aanvraag klaargezet + inlog/registratie-prompt.
+  // Samenstelling klaar: NIET meteen versturen. Toon het volledige overzicht
+  // (alle stappen, ook standaardwaarden) zodat de klant alles kan controleren en
+  // desgewenst nog aanpassen — met de live preview ernaast. Pas als de klant
+  // zelf op "Voeg toe aan aanvraag" + "Aanvraag versturen" klikt, wordt besteld
+  // (ingelogd → direct; niet ingelogd → koszyk + inlogprompt).
   if(u.bestellingAfronden===true){
-    setTimeout(()=>{ try{ closeAssist(); addElement(); submitAanvraag(); }catch(e){ console.error('Afronden mislukt',e); } }, 80);
+    setTimeout(()=>{ try{ closeAssist(); showStep(STEPS.length-1); window.scrollTo({top:0,behavior:'smooth'}); toast('Controleer je samenstelling en klik op “Voeg toe aan aanvraag”'); }catch(e){ console.error('Overzicht tonen mislukt',e); } }, 100);
   }
   return applied;
 }
