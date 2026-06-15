@@ -850,31 +850,34 @@ async function sendChat(){
 // De assistent levert gestructureerde `updates`; hier mappen we die veilig op
 // de state, herbouwen we alle bedieningselementen en tekenen we de preview
 // opnieuw — exact dezelfde codepaden als bij handmatig kiezen.
-const _norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[()]/g,' ').replace(/\s+/g,' ').trim();
+const _norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/ł/g,'l').replace(/[()]/g,' ').replace(/\s+/g,' ').trim();
 function _matchList(list,val,labelFn){
   const v=_norm(val); if(!v) return -1; labelFn=labelFn||(x=>x);
   for(let i=0;i<list.length;i++){ const l=_norm(labelFn(list[i])); if(l===v||l.includes(v)||v.includes(l.split(' ')[0])) return i; }
   return -1;
 }
 function _matchKleur(val){
-  const v=_norm(val); if(!v) return -1;
+  let v=_norm(val); if(!v) return -1;
+  // Poolse kleurnamen -> Nederlands
+  const PL=[['czarn','zwart'],['bial','wit'],['szar','grijs'],['antracyt','antraciet'],['zielon','dennengroen'],['granat','staalblauw'],['orzech','noten'],['mahon','mahonie'],['brazow','noten'],['braz','noten'],['debow','eiken'],['dab','eiken'],['krem','creme']];
+  for(const [k,nl] of PL){ if(v.includes(k)){ v=nl; break; } }
   const ral=(v.match(/\b(\d{4})\b/)||[])[1];
   if(ral){ for(let i=0;i<KLEUREN.length;i++) if(_norm(KLEUREN[i].label).includes(ral)) return i; }
-  return _matchList(KLEUREN,val,k=>k.label.replace(/\(.*\)/,''));
+  return _matchList(KLEUREN,v,k=>k.label.replace(/\(.*\)/,''));
 }
 function _matchGlas(val){
   const v=_norm(val);
-  const al=[['triple',1],['hr+++',1],['dubbel',0],['hr++',0],['geluid',2],['veilig',3],['gelaagd',3],['zon',4],['antisol',4],['ornament',5],['gezandstraald',6],['zandstraal',6],['melk',7],['badkamer',7],['mat',7]];
+  const al=[['triple',1],['hr+++',1],['potrojn',1],['3 szyb',1],['trojszyb',1],['dubbel',0],['hr++',0],['podwojn',0],['2 szyb',0],['dwuszyb',0],['geluid',2],['veilig',3],['gelaagd',3],['bezpiecz',3],['zon',4],['antisol',4],['ornament',5],['gezandstraald',6],['zandstraal',6],['piaskow',6],['melk',7],['badkamer',7],['mat',7],['mlecz',7]];
   for(const a of al) if(v.includes(a[0])) return a[1];
   return _matchList(GLAZEN,val);
 }
 function _fnFromText(txt,schuif){
   const t=_norm(txt);
-  let base = /kiep/.test(t)?'draaikiep' : /draai/.test(t)?'draai' : /schuif/.test(t)?'schuif' : 'vast';
+  let base = /kiep|uchyl/.test(t)?'draaikiep' : /draai|rozwier|otwier/.test(t)?'draai' : /schuif|rozsuw|przesuw/.test(t)?'schuif' : 'vast';
   if(base==='vast') return 'vast';
   if(schuif && base!=='schuif') base='schuif';
   if(!schuif && base==='schuif') base='draaikiep';
-  const side = /link/.test(t)?'l' : 'r';
+  const side = /link|lewo|lewa|lewe/.test(t)?'l' : 'r';   // rechts/prawo = standaard r
   const f=base+'-'+side;
   return functiesFor().indexOf(f)>=0 ? f : 'vast';
 }
