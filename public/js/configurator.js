@@ -495,10 +495,15 @@ function lijnHint(){
 }
 function buildAfdichting(){ const a=afdichtingFor(); if(state.afdichting>=a.length) state.afdichting=0; chips('afdichtingChips',a,state.afdichting,i=>state.afdichting=i); }
 function setMateriaal(i){
+  const prevProduct=state.product;
   state.materiaal=Object.keys(LIJNEN)[i];
   if(state.materiaal!=='kunststof' && state.product==='voordeur') state.product='raam';
   if(!isVoordeur()) state.lijn=lijnenFor(state.materiaal)[0].id;
-  applyProductDefaults(); buildProfiel(); buildAfdichting(); buildIndeling(); draw();
+  // Alleen standaardwaarden (maten/indeling) resetten bij een ECHTE productwissel
+  // (bijv. voordeur->raam). Een materiaalwissel laat maten/indeling staan, zodat
+  // wat al is ingesteld (handmatig of door de AI) niet verloren gaat.
+  if(state.product!==prevProduct) applyProductDefaults();
+  buildProfiel(); buildAfdichting(); buildIndeling(); draw();
 }
 function setSoort(p){
   if(state.product===p) return;
