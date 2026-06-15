@@ -271,3 +271,30 @@ footer.site{border-top:1px solid var(--line);margin-top:40px;background:var(--pa
 /* subsidie-toelichting op werkwijze */
 .lever-note{margin:14px 0 0;font-size:13px;line-height:1.55;color:var(--muted);border-top:1px solid var(--line);padding-top:12px}
 .lever-note a{color:var(--accent-ink);font-weight:700}
+
+/* =========================================================
+   Mobiele leesbaarheid — voorkom dat (lange) tekst buiten de
+   kaders valt en dat de pagina horizontaal scrollt.
+   ========================================================= */
+*{overflow-wrap:break-word}
+img,svg,video,table,pre{max-width:100%}
+/* lange specificaties / monospace blokken netjes laten afbreken */
+.spec-table{table-layout:fixed}
+.spec-table td,.spec-table th{overflow-wrap:anywhere;word-break:break-word}
+.msg,.quote-summary,.placeholder,.prose,.foot .co{overflow-wrap:anywhere}
+.req-row .ref,.fld input,.fld textarea{overflow-wrap:anywhere}
+
+@media(max-width:600px){
+  html,body{overflow-x:hidden}           /* vangnet tegen horizontaal scrollen */
+  body{font-size:15px}
+  .wrap{padding:0 16px}
+  h1,h2,h3,h4{overflow-wrap:anywhere}
+  /* compactere, leesbare tabellen op telefoon */
+  .spec-table{font-size:13px}
+  .spec-table td,.spec-table th{padding:9px 11px}
+  .spec-table td:first-child{width:40%}
+  /* brede tabellen die niet mogen afbreken: laat ze scrollen i.p.v. uitsteken */
+  .table-scroll{max-width:100%}
+  .cta-band{padding:30px 20px}
+  .hero .lead,.section-head p{font-size:16px}
+}
