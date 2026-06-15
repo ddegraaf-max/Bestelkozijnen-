@@ -7,6 +7,9 @@ const { company, materials } = require('./data.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+// Asset-versie voor cache-busting: verandert bij elke (re)start/deploy, zodat
+// browsers én CDN verse CSS/JS ophalen i.p.v. een oude gecachte versie.
+const ASSET_VER = Date.now();
 
 // Achter de Railway-proxy: vertrouw X-Forwarded-* zodat req.protocol 'https' is
 // (nodig voor correcte herstellinks in e-mails).
@@ -34,6 +37,7 @@ app.use(async (req, res, next) => {
   res.locals.company = company;
   res.locals.materials = materials;
   res.locals.active = '';
+  res.locals.assetVer = ASSET_VER;
   next();
 });
 

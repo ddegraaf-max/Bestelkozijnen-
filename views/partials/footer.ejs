@@ -60,6 +60,6 @@
     if(b&&n) b.addEventListener('click',function(){n.classList.toggle('open');});
   })();
 </script>
-<% if (typeof extraJs !== 'undefined') { %><script src="<%= extraJs %>"></script><% } %>
+<% if (typeof extraJs !== 'undefined') { %><script src="<%= extraJs %><%= extraJs.indexOf('?')>=0?'&':'?' %>v=<%= (typeof assetVer!=='undefined'?assetVer:'1') %>"></script><% } %>
 </body>
 </html>
