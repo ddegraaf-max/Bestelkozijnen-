@@ -1,0 +1,539 @@
+/* ====== Drutex-configurator (stappen) ======
+   Links een stappen-nav, midden het grote voorbeeld (Realistisch/Schema + maat),
+   rechts de opties van de actieve stap. Eindigt met "Overzicht & aanvraag".
+   Mount op <div class="dx" data-model="<id>">. Vereist drutex-models.js + drutex-schema.js. */
+(function () {
+  'use strict';
+
+  var PLAY_ICON = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 1l9 5-9 5z"/></svg>';
+  var WMIN = 400, WMAX = 4000, HMIN = 400, HMAX = 2800;
+  var SCHEMA_BG = '#F4F2EC';
+  var MAXSW = 1500, MAXSH = 2600, MINSW = 400, MINSH = 500, MAXKG = 130;
+  var GLAZ_KGM2 = { Dubbel: 20, Triple: 30 };
+  var _colorCache = {};
+  var COMPANY_MAIL = 'montage@creditline.nl';
+
+  // ALLE opties komen 1:1 van de Drutex-modelpagina (m.options), niets verzonnen.
+  // Bekende Drutex-bloktitels → NL-staplabel + of het een keuzestap is (none = standaard "Geen").
+  // 'glas' = de glassoorten-proza; overige (onbekende) blokken tonen we read-only in "Drutex-uitrusting".
+  var BOX_STEPS = {
+    'Szprosy': { label: 'Roede', none: 'Geen' },
+    'Wentylacje': { label: 'Ventilatie', none: 'Geen' },
+    'Progi drzwiowe': { label: 'Dorpel' },
+    'Ramki': { label: 'Afstandhouder' }
+  };
+  // NL-vertaling van de Drutex-glassoorttermen (alleen label-hint; de optie zelf blijft Drutex').
+  var GLAS_NL = {
+    'laminowane (bezpieczne i antywłamaniowe)': 'gelaagd / veiligheid & inbraakwerend',
+    'przeciwsłoneczne': 'zonwerend', 'o podwyższonej izolacji akustycznej': 'geluidwerend',
+    'hartowane': 'gehard', 'ornamentowe': 'ornament / figuur', 'piaskowane': 'gezandstraald'
+  };
+
+  function el(tag, cls, attrs) {
+    var n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (attrs) for (var k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+  function clamp(v, lo, hi) { v = Math.round(v) || 0; return v < lo ? lo : v > hi ? hi : v; }
+  function hex2(n) { return ('0' + (n | 0).toString(16)).slice(-2); }
+  function sampleColor(url, cb) {
+    if (_colorCache[url]) return cb(_colorCache[url]);
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var c = document.createElement('canvas'); c.width = c.height = 10;
+        var ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0, 10, 10);
+        var d = ctx.getImageData(0, 0, 10, 10).data, r = 0, g = 0, b = 0, n = 0;
+        for (var i = 0; i < d.length; i += 4) { if (d[i + 3] < 200) continue; r += d[i]; g += d[i + 1]; b += d[i + 2]; n++; }
+        cb(_colorCache[url] = n ? '#' + hex2(r / n) + hex2(g / n) + hex2(b / n) : '#e9e7e1');
+      } catch (e) { cb('#e9e7e1'); }
+    };
+    img.onerror = function () { cb('#e9e7e1'); };
+    img.src = url;
+  }
+
+  function mount(root, modelId) {
+    var models = window.DRUTEX_MODELS || {};
+    var m = models[modelId];
+    if (!m) { root.innerHTML = '<p style="color:#b00">Onbekend model: ' + modelId + '</p>'; return; }
+    root.classList.add('dx'); root.innerHTML = '';
+
+    var mode = m.colorMode || 'image';
+    var colors = (mode === 'ral') ? (m.colors && m.colors.length ? m.colors : (window.DRUTEX_RAL || [])) : (m.colors || []);
+    // "Biały Ulti-Matt" overal verwijderd (op verzoek) — Antracyt/Czarny Ulti-Matt blijven
+    colors = colors.filter(function (c) { return !/^bia[łl]y\s+ulti-?matt$/i.test((c.name || '').trim()); });
+    var TYPE_BY_CAT = { 'Okna': 'window', 'Drzwi': 'door', 'Systemy tarasowe': 'sliding' };
+    var type = m.type || TYPE_BY_CAT[m.category] || 'window';
+    var indDef = type === 'door' ? 1 : type === 'sliding' ? 2 : type === 'gate' ? 4 : 1;
+    var defDim = type === 'door' ? { w: 1000, h: 2100 } : type === 'sliding' ? { w: 3000, h: 2200 }
+      : type === 'gate' ? { w: 2500, h: 2250 } : { w: 1000, h: 760 };
+    var ANTRACIET = '#293133';
+    var hasVideo = !!m.video;
+    // drewniano-aluminiowe: binnen = hout-decors (colors), buiten = alu-masker getint met RAL
+    var dual = !!(m.dual && m.maskOuter);
+    var RAL = window.DRUTEX_RAL || [];
+    var outerHex = m.maskOuterHex || '#7a7d7e';
+    var NL = window.DRUTEX_NL || function (s) { return s; }; // PL→NL vertaling van optienamen (alles in het Nederlands)
+
+    // ===== gedeelde staat =====
+    var W = clamp(defDim.w, WMIN, WMAX), H = clamp(defDim.h, HMIN, HMAX);
+    var vak = type === 'window' && m.vakken ? m.vakken : indDef;
+    var frameHex = '#e9e7e1', glaz = 'Triple', dimsVisible = false;
+    var currentFill = null, curApp = 'inox';
+    var opt = m.options || { std: [], glas: [], boxes: [] };
+    // standaard glaspakket (verbatim uit Drutex-standaarduitrusting)
+    var stdGlas = (opt.std || []).find(function (s) { return /pakiet szybow|szyba o Ug|Ug\s*=/i.test(s); }) || '';
+    var cfg = { kleur: '—', kleurBuiten: '—', kruk: '—', vulling: null, glas: 'Standaard', sel: {} };
+
+    /* ===================== PREVIEW (midden) ===================== */
+    var preview = el('div', 'dx-preview');
+    var pcard = el('div', 'dx-pcard');
+    var bar = el('div', 'dx-bar');
+    bar.innerHTML = '<span class="dx-dots"><i></i><i></i><i></i></span>';
+    pcard.appendChild(bar);   // "Schema op maat"-tab verwijderd → enkel realistische weergave
+
+    var stage = el('div', 'dx-stage ' + (hasVideo ? 'is-video' : 'is-color'));
+    var video = null;
+    if (hasVideo) {
+      video = el('video', 'dx-media dx-video', { autoplay: 'autoplay', loop: 'loop', muted: 'muted', playsinline: 'playsinline', preload: 'metadata' });
+      video.muted = true;
+      var vext = (m.video.match(/\.(webm|mp4)(?:$|\?)/i) || [, 'mp4'])[1].toLowerCase();
+      video.appendChild(el('source', null, { src: m.video, type: 'video/' + vext }));
+    }
+    var render = el('img', 'dx-media dx-render', { alt: m.name, loading: 'eager' });
+    var animBtn = el('button', 'dx-anim', { type: 'button', 'aria-label': 'Terug naar animatie' });
+    animBtn.innerHTML = PLAY_ICON + '<span>Animatie</span>';
+    if (!hasVideo) animBtn.style.display = 'none';
+    var mediabox = el('div', 'dx-mediabox');
+    if (video) mediabox.appendChild(video);
+    mediabox.appendChild(render);
+    stage.appendChild(mediabox); stage.appendChild(animBtn);
+    var dimov = el('div', 'dx-dimov');
+    var dimW = el('div', 'dx-dimov-w'); var dimWs = el('span'); dimW.appendChild(dimWs);
+    var dimH = el('div', 'dx-dimov-h'); var dimHs = el('span'); dimH.appendChild(dimHs);
+    dimov.appendChild(dimW); dimov.appendChild(dimH); stage.appendChild(dimov);
+
+    var schemaBox = el('div', 'dx-schemabox');
+    // groot glas-voorbeeld (stap Glas): toont de gekozen/aangewezen glasfoto groot in het paneel
+    var gz = el('div', 'dx-glasszoom');
+    var gzImg = el('img', 'dx-gz-img', { alt: '' });
+    var gzCap = el('div', 'dx-gz-cap');
+    gz.appendChild(gzImg); gz.appendChild(gzCap);
+    var viewWrap = el('div', 'dx-view'); viewWrap.appendChild(stage);
+
+    // drewniano-aluminiowe: twee weergaven naast elkaar — binnen (hout-render, links) + buiten (alu-masker + RAL, rechts)
+    var outerImg = null;
+    if (dual) {
+      viewWrap.classList.add('dual');
+      var lblIn = el('div', 'dx-sidelabel'); lblIn.textContent = 'Binnenkant'; stage.appendChild(lblIn);
+      var outer = el('div', 'dx-outer');
+      var lblOut = el('div', 'dx-sidelabel'); lblOut.textContent = 'Buitenkant · aluminium'; outer.appendChild(lblOut);
+      var obox = el('div', 'dx-mediabox');
+      outerImg = el('img', 'dx-media dx-outerimg', { alt: m.name + ' — buitenkant', loading: 'eager' });
+      outerImg.src = m.maskOuter; outerImg.style.backgroundColor = outerHex;
+      obox.appendChild(outerImg); outer.appendChild(obox);
+      viewWrap.appendChild(outer);
+    }
+    function selectOuter(c) {
+      if (!outerImg) return;
+      outerHex = c.hex; outerImg.style.backgroundColor = c.hex;
+      cfg.kleurBuiten = NL(c.name) + (c.code ? ' (' + c.code + ')' : '');
+      refreshOverview();
+    }
+
+    viewWrap.appendChild(schemaBox); viewWrap.appendChild(gz); pcard.appendChild(viewWrap);
+    var cap = el('div', 'dx-cap');
+    var capName = el('span', 'dx-cap-name'); var capCode = el('span', 'dx-cap-code');
+    cap.appendChild(capName); cap.appendChild(capCode); pcard.appendChild(cap);
+    preview.appendChild(pcard);
+
+    function setTab() { pcard.classList.remove('show-schema'); } // enkel realistisch (schema-tab verwijderd)
+
+    var selGlas = null; // gekozen glasoptie-object (voor het grote voorbeeld)
+    function glassZoom(item) {
+      if (!item || !item.img) { pcard.classList.remove('show-gz'); return; }
+      gzImg.src = item.img; gzCap.textContent = item.name + (item.detail ? ' · ' + item.detail : '');
+      pcard.classList.add('show-gz');
+    }
+
+    // plaats de maatlijnen tegen de echte beeldranden (beeld staat gecentreerd in eigen verhouding)
+    function layoutMedia() {
+      if (!dimsVisible) return;
+      var sr = stage.getBoundingClientRect(), mr = render.getBoundingClientRect();
+      if (!mr.width || !mr.height || !sr.width) return;
+      var l = mr.left - sr.left, t = mr.top - sr.top, b = sr.bottom - mr.bottom;
+      dimW.style.left = l + 'px'; dimW.style.right = (sr.right - mr.right) + 'px';
+      dimW.style.top = 'auto'; dimW.style.bottom = Math.max(8, b - 18) + 'px';
+      dimH.style.top = t + 'px'; dimH.style.bottom = b + 'px';
+      dimH.style.left = Math.max(8, l - 22) + 'px';
+    }
+    render.addEventListener('load', layoutMedia);
+    window.addEventListener('resize', layoutMedia);
+
+    function drawSchema() {
+      schemaBox.innerHTML = window.DrutexSchema ? window.DrutexSchema.build({ type: type, W: W, H: H, frameHex: frameHex, vakken: vak, bg: SCHEMA_BG }) : '';
+      dimWs.textContent = W + ' mm'; dimHs.textContent = H + ' mm';
+      stage.classList.toggle('dims-on', dimsVisible);
+      layoutMedia();
+      runCheck();
+    }
+    function runCheck() {
+      if (!checkEl) return;
+      if (type !== 'window') { checkEl.style.display = 'none'; return; }
+      checkEl.style.display = '';
+      var sashW = Math.round(W / vak), sashH = H, area = sashW * sashH / 1e6;
+      var kg = Math.round(area * (GLAZ_KGM2[glaz] || 30) + 2 * (sashW + sashH) / 1000 * 3.5);
+      var p = [];
+      if (sashW < MINSW || sashH < MINSH) p.push('vleugel te klein (' + sashW + '×' + sashH + ' mm)');
+      if (sashW > MAXSW) p.push('vleugel te breed (' + sashW + ' > ' + MAXSW + ')');
+      if (sashH > MAXSH) p.push('vleugel te hoog (' + sashH + ' > ' + MAXSH + ')');
+      if (kg > MAXKG) p.push('vleugel te zwaar (~' + kg + ' kg)');
+      if (p.length) { checkEl.className = 'dx-check warn'; checkEl.textContent = '⚠ ' + p.join(' · '); }
+      else { checkEl.className = 'dx-check ok'; checkEl.textContent = '✓ Produceerbaar — ' + sashW + ' × ' + sashH + ' mm, ± ' + kg + ' kg/vleugel'; }
+    }
+    function ensureStill() {
+      if (stage.classList.contains('is-color')) return;
+      if (colors[0]) selectColor(0); else if (m.fills && m.fills[0]) selectFill(0);
+    }
+    function showVideo() {
+      if (!hasVideo) return; setTab('real');
+      stage.classList.remove('is-color'); stage.classList.add('is-video');
+      dimsVisible = false; capName.textContent = m.name; capCode.textContent = ''; drawSchema();
+      colorBtns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      try { video.currentTime = 0; var p = video.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {}
+    }
+    animBtn.addEventListener('click', showVideo);
+
+    function selectColor(i) {
+      var c = colors[i]; dimsVisible = true; currentFill = null;
+      fillBtns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      if (mode === 'ral') { render.src = m.mask; render.style.backgroundColor = c.hex; }
+      else { render.src = c.render; render.style.backgroundColor = ''; }
+      render.alt = m.name + ' — ' + c.name; setTab('real');
+      stage.classList.remove('is-video'); stage.classList.add('is-color');
+      try { if (video) video.pause(); } catch (e) {}
+      capName.textContent = NL(c.name); capCode.textContent = c.code ? '(' + NL(c.code) + ')' : '';
+      cfg.kleur = NL(c.name) + (c.code ? ' (' + NL(c.code) + ')' : '');
+      colorBtns.forEach(function (x, j) { x.setAttribute('aria-pressed', j === i ? 'true' : 'false'); });
+      if (mode === 'ral') { frameHex = c.hex; drawSchema(); } else sampleColor(c.swatch, function (hex) { frameHex = hex; drawSchema(); });
+      refreshOverview();
+    }
+    function applyFill() {
+      if (currentFill == null) return; dimsVisible = true;
+      var f = m.fills[currentFill];
+      var img = (curApp === 'czarny' && f.apps.czarny) ? f.apps.czarny : (f.apps.inox || f.apps.czarny);
+      render.src = img; render.style.backgroundColor = ''; render.alt = m.name + ' — ' + f.name; setTab('real');
+      stage.classList.remove('is-video'); stage.classList.add('is-color');
+      try { if (video) video.pause(); } catch (e) {}
+      capName.textContent = f.name;
+      capCode.textContent = (f.apps.inox && f.apps.czarny) ? '· ' + (curApp === 'czarny' ? 'zwart' : 'inox') : '';
+      cfg.vulling = f.name + ((f.apps.inox && f.apps.czarny) ? ' · ' + (curApp === 'czarny' ? 'zwart' : 'inox') : '');
+      colorBtns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      fillBtns.forEach(function (x, j) { x.setAttribute('aria-pressed', j === currentFill ? 'true' : 'false'); });
+      frameHex = ANTRACIET; drawSchema(); refreshOverview();
+    }
+    function selectFill(i) { currentFill = i; applyFill(); }
+    function setApp(k) { curApp = k; appBtns.forEach(function (x) { x.b.setAttribute('aria-pressed', x.k === k ? 'true' : 'false'); }); applyFill(); }
+
+    /* ===================== STAPPEN ===================== */
+    function panel(title, count) {
+      var p = el('div', 'dx-panel2');
+      var h = el('div', 'dx-phead');
+      h.innerHTML = '<span>' + title + '</span>' + (count ? '<span class="dx-count">' + count + '</span>' : '');
+      p.appendChild(h); return p;
+    }
+    function chipRow(opts, current, onpick) {
+      var wrap = el('div', 'dx-chips'); var btns = [];
+      opts.forEach(function (o) {
+        var b = el('button', 'dx-chip', { type: 'button', 'aria-pressed': o === current ? 'true' : 'false' });
+        b.textContent = o;
+        b.addEventListener('click', function () { btns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); }); b.setAttribute('aria-pressed', 'true'); onpick(o); });
+        wrap.appendChild(b); btns.push(b);
+      });
+      return wrap;
+    }
+    // keuzelijst van Drutex-opties: foto (indien aanwezig) + naam (verbatim) + detail. één-keuze.
+    // onHover (optioneel): voor het grote glas-voorbeeld in het preview-paneel.
+    function optionList(items, isOn, onpick, onHover) {
+      var wrap = el('div', 'dx-optlist'); var btns = [];
+      items.forEach(function (it) {
+        var b = el('button', 'dx-opt', { type: 'button', 'aria-pressed': isOn(it) ? 'true' : 'false' });
+        b.innerHTML = (it.img ? '<img class="dx-opt-thumb" src="' + it.img + '" alt="" loading="lazy">' : '')
+          + '<span class="dx-opt-txt"><span class="dx-opt-name">' + it.name + '</span>'
+          + (it.detail ? '<span class="dx-opt-det">' + it.detail + '</span>' : '') + '</span>';
+        b.addEventListener('click', function () { btns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); }); b.setAttribute('aria-pressed', 'true'); onpick(it); });
+        if (onHover) {
+          b.addEventListener('mouseenter', function () { onHover(it); });
+          b.addEventListener('focus', function () { onHover(it); });
+        }
+        wrap.appendChild(b); btns.push(b);
+      });
+      // mouseleave op de hele lijst (niet per optie) → geen geflikker bij het bewegen tussen opties
+      if (onHover) wrap.addEventListener('mouseleave', function () { onHover(null); });
+      return wrap;
+    }
+    // uniek label per optie (naam + detail) — varianten met dezelfde naam maar andere kleur/maat
+    // (bv. "Swisspacer Ultimate" × 6 RAL) blijven los selecteerbaar.
+    function optLabel(it) { return it.name + (it.detail ? ' — ' + it.detail : ''); }
+
+    var steps = [];           // { key, label, el }
+    var colorBtns = [], fillBtns = [], appBtns = [], checkEl = null, glazBtns = [];
+
+    // -- Afmetingen --
+    (function () {
+      var p = panel('Afmetingen');
+      var sizeWrap = el('div', 'dx-size');
+      function sizeRow(label, val, min, max, set) {
+        var row = el('div', 'dx-size-row'); var lab = el('div', 'dx-size-lab');
+        var sp = el('span'); sp.textContent = label;
+        var num = el('input', null, { type: 'number', min: min, max: max, step: 10, value: val });
+        lab.appendChild(sp); lab.appendChild(num);
+        var rng = el('input', null, { type: 'range', min: min, max: max, step: 10, value: val });
+        row.appendChild(lab); row.appendChild(rng); sizeWrap.appendChild(row);
+        function on(v) { set(clamp(v, min, max)); num.value = rng.value = (label[0] === 'B' ? W : H); }
+        rng.addEventListener('input', function () { on(rng.value); });
+        num.addEventListener('input', function () { on(num.value); });
+      }
+      sizeRow('Breedte (mm)', W, WMIN, WMAX, function (v) { W = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
+      sizeRow('Hoogte (mm)', H, HMIN, HMAX, function (v) { H = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
+      p.appendChild(sizeWrap);
+      checkEl = el('div', 'dx-check'); p.appendChild(checkEl);
+      steps.push({ key: 'maat', label: 'Afmetingen', el: p });
+    })();
+
+    // -- Kleur --
+    (function () {
+      if (!colors.length) {
+        var pn = panel('Kleur');
+        var note = el('p', 'dx-hint'); note.style.margin = '0';
+        note.textContent = 'Voor dit model toont Drutex geen kleurkiezer — kleur/uitvoering op aanvraag.';
+        pn.appendChild(note); steps.push({ key: 'kleur', label: 'Kleur', el: pn }); return;
+      }
+      var p = panel(dual ? 'Kleur binnen' : ('Kleur' + (mode === 'ral' ? ' (RAL)' : '')), colors.length + ' kleuren');
+      var grid = el('div', 'dx-swatches');
+      colors.forEach(function (c, i) {
+        var label = NL(c.name) + (c.code ? ' · ' + NL(c.code) : '');
+        var b = el('button', 'dx-sw', { type: 'button', 'aria-pressed': 'false', title: label, 'aria-label': label });
+        if (mode === 'ral') b.style.background = c.hex;
+        else if (/\/renders\//.test(c.swatch || '')) {
+          // Drutex mist de echte kleurstaal (bestand ontbreekt) → géén venster-render tonen,
+          // maar een vlakke kleur (gemiddelde uit het render-beeld, bv. wit voor "Biały Ulti-Matt").
+          (function (btn) { sampleColor(c.swatch, function (hex) { btn.style.background = hex; }); })(b);
+        } else b.style.backgroundImage = 'url("' + c.swatch + '")';
+        b.addEventListener('click', function () { selectColor(i); });
+        grid.appendChild(b); colorBtns.push(b);
+      });
+      p.appendChild(grid); steps.push({ key: 'kleur', label: dual ? 'Kleur binnen' : 'Kleur', el: p });
+    })();
+
+    // -- Kleur buiten (aluminium · RAL) — alleen drewniano-aluminiowe --
+    if (dual && RAL.length) {
+      var pob = panel('Kleur buiten (aluminium · RAL)', RAL.length + ' kleuren');
+      var hintob = el('p', 'dx-hint'); hintob.style.margin = '0 0 10px'; hintob.textContent = 'RAL-kleur voor de aluminium buitenzijde (rechterbeeld).';
+      pob.appendChild(hintob);
+      var grido = el('div', 'dx-swatches');
+      RAL.forEach(function (c) {
+        var label = c.name + (c.code ? ' · ' + c.code : '');
+        var b = el('button', 'dx-sw', { type: 'button', 'aria-pressed': 'false', title: label, 'aria-label': label });
+        b.style.background = c.hex;
+        b.addEventListener('click', function () {
+          grido.querySelectorAll('.dx-sw').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+          b.setAttribute('aria-pressed', 'true'); selectOuter(c);
+        });
+        grido.appendChild(b);
+      });
+      pob.appendChild(grido); steps.push({ key: 'kleur-buiten', label: 'Kleur buiten', el: pob });
+    }
+
+    // -- Paneel / vulling (deuren) --
+    if (type === 'door' && m.fills && m.fills.length) {
+      var p = panel('Paneel / vulling', m.fills.length + ' patronen');
+      var hasCz = m.fills.some(function (f) { return f.apps.czarny; });
+      if (hasCz) {
+        var applic = el('div', 'dx-applic');
+        [{ k: 'inox', l: 'Inox / wit' }, { k: 'czarny', l: 'Zwart' }].forEach(function (a) {
+          var b = el('button', 'dx-chip', { type: 'button', 'aria-pressed': a.k === 'inox' ? 'true' : 'false' });
+          b.textContent = a.l; b.addEventListener('click', function () { setApp(a.k); });
+          applic.appendChild(b); appBtns.push({ k: a.k, b: b });
+        });
+        p.appendChild(applic);
+      }
+      var fgrid = el('div', 'dx-fills');
+      m.fills.forEach(function (f, i) {
+        var b = el('button', 'dx-fill', { type: 'button', 'aria-pressed': 'false', title: f.name });
+        b.style.backgroundImage = 'url("' + (f.apps.inox || f.apps.czarny) + '")';
+        b.innerHTML = '<span class="dx-fillnum">' + f.n + '</span>';
+        b.addEventListener('click', function () { selectFill(i); });
+        fgrid.appendChild(b); fillBtns.push(b);
+      });
+      p.appendChild(fgrid); steps.push({ key: 'vulling', label: 'Paneel', el: p });
+    }
+
+    // -- Beglazing / glas — uit de Drutex-glassoorten (+ standaard glaspakket verbatim) --
+    if ((opt.glas && opt.glas.length) || stdGlas) {
+      var pg = panel('Beglazing / glas', (opt.glas && opt.glas.length) ? (opt.glas.length + 1) + ' opties' : '');
+      if (stdGlas) { var sn = el('p', 'dx-hint'); sn.style.margin = '0 0 10px'; sn.innerHTML = '<b>Standaard pakket:</b> ' + NL(stdGlas); pg.appendChild(sn); }
+      var glasItems = [{ name: 'Standaard', detail: '', img: null }].concat((opt.glas || []).map(function (g) {
+        return { name: NL(g.name), detail: '', img: g.img || null };
+      }));
+      selGlas = glasItems[0];
+      var hint = el('p', 'dx-hint'); hint.style.margin = '0 0 10px'; hint.textContent = 'Beweeg over een glassoort voor een groot voorbeeld; klik om te kiezen.';
+      pg.appendChild(hint);
+      pg.appendChild(optionList(glasItems,
+        function (it) { return it.name === cfg.glas; },
+        function (it) { cfg.glas = it.name; selGlas = it; glassZoom(it); refreshOverview(); },
+        // "sticky": hover een glas-met-foto → tonen; hover een veld zonder foto (Standaard/leeg) → niets;
+        // lijst verlaten → terug naar gekozen enkel als die een foto heeft (anders blijft het laatste staan → geen geflikker)
+        function (it) { if (it) { if (it.img) glassZoom(it); } else if (selGlas && selGlas.img) glassZoom(selGlas); }));
+      steps.push({ key: 'glas', label: 'Glas', el: pg, getZoom: function () { return selGlas; } });
+    }
+
+    // -- keuzestappen uit de Drutex-blokken: Szprosy→Roede, Wentylacje→Ventilatie, Progi→Dorpel, Ramki→Afstandhouder --
+    var infoBoxes = [];
+    (opt.boxes || []).forEach(function (box) {
+      var mapd = BOX_STEPS[box.title];
+      if (!mapd) { infoBoxes.push(box); return; }           // onbekend blok → read-only "Drutex-uitrusting"
+      var items = box.items.map(function (it) { return { name: NL(it.name), detail: NL(it.detail || ''), img: it.img }; });
+      if (mapd.none) items = [{ name: mapd.none, detail: '' }].concat(items);
+      var lab = mapd.label;
+      cfg.sel[lab] = items[0] ? optLabel(items[0]) : '—';
+      var boxSel = items[0] || null;   // gekozen item → groot voorbeeld
+      var pb = panel(lab, box.items.length + ' opties');
+      if (items.some(function (it) { return it.img; })) {
+        var bh = el('p', 'dx-hint'); bh.style.margin = '0 0 10px'; bh.textContent = 'Beweeg over een optie voor een groot voorbeeld; klik om te kiezen.'; pb.appendChild(bh);
+      }
+      pb.appendChild(optionList(items,
+        function (it) { return optLabel(it) === cfg.sel[lab]; },
+        function (it) { cfg.sel[lab] = optLabel(it); boxSel = it; glassZoom(it); refreshOverview(); },
+        function (it) { if (it) { if (it.img) glassZoom(it); } else if (boxSel && boxSel.img) glassZoom(boxSel); }));
+      steps.push({ key: 'box-' + lab, label: lab, el: pb, getZoom: function () { return boxSel; } });
+    });
+
+    // -- Kruk / greep --
+    if (m.handles && m.handles.length) {
+      var hLabel = type === 'door' ? 'Deurkruk / greep' : (type === 'sliding' ? 'Greep' : 'Kruk');
+      var ph = panel(hLabel, m.handles.length + ' opties');
+      var hgrid = el('div', 'dx-handles'); var hcap = el('div', 'dx-handle-cap');
+      var krukSel = null;   // gekozen kruk → groot voorbeeld
+      m.handles.forEach(function (h) {
+        var hn = NL(h.name);
+        var item = { name: hn, detail: '', img: h.img };
+        var b = el('button', 'dx-handle', { type: 'button', 'aria-pressed': 'false', title: hn });
+        b.style.backgroundImage = 'url("' + h.img + '")';
+        b.addEventListener('click', function () {
+          hgrid.querySelectorAll('.dx-handle').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+          b.setAttribute('aria-pressed', 'true'); hcap.textContent = hn; cfg.kruk = hn; krukSel = item; glassZoom(item); refreshOverview();
+        });
+        b.addEventListener('mouseenter', function () { glassZoom(item); });
+        b.addEventListener('focus', function () { glassZoom(item); });
+        hgrid.appendChild(b);
+      });
+      // mouseleave op de hele grid (niet per kruk) → terug naar gekozen, geen geflikker tijdens het bewegen
+      hgrid.addEventListener('mouseleave', function () { if (krukSel) glassZoom(krukSel); });
+      var hh2 = el('p', 'dx-hint'); hh2.style.margin = '0 0 10px'; hh2.textContent = 'Beweeg over een kruk/greep voor een groot voorbeeld; klik om te kiezen.';
+      ph.appendChild(hh2); ph.appendChild(hgrid); ph.appendChild(hcap);
+      steps.push({ key: 'kruk', label: hLabel, el: ph, getZoom: function () { return krukSel; } });
+    }
+
+    // (stap "Drutex-uitrusting" verwijderd op verzoek — geen read-only infostap meer)
+
+    // -- Overzicht & aanvraag --
+    var ovBody = el('div', 'dx-ov');
+    (function () {
+      var p = panel('Overzicht & aanvraag');
+      p.appendChild(ovBody);
+      var btn = el('button', 'dx-cta', { type: 'button' }); btn.textContent = 'Vraag vrijblijvend offerte aan';
+      btn.addEventListener('click', sendRequest);
+      p.appendChild(btn);
+      var note = el('p', 'dx-hint'); note.style.marginTop = '10px';
+      note.innerHTML = 'Bron: <a href="' + m.productUrl + '" target="_blank" rel="noopener">Drutex ' + m.name + '</a> · prijs op aanvraag.';
+      p.appendChild(note);
+      steps.push({ key: 'overzicht', label: 'Overzicht & aanvraag', el: p });
+    })();
+
+    function summaryRows() {
+      var rows = [
+        ['Model', m.name + ' (' + m.category + ')'],
+        ['Afmeting', W + ' × ' + H + ' mm']
+      ];
+      if (dual) { rows.push(['Kleur binnen', cfg.kleur]); rows.push(['Kleur buiten (aluminium/RAL)', cfg.kleurBuiten]); }
+      else rows.push(['Kleur', cfg.kleur]);
+      if (type === 'door' && m.fills && m.fills.length) rows.push(['Paneel', cfg.vulling || '—']);
+      if ((opt.glas && opt.glas.length) || stdGlas) rows.push(['Glas', cfg.glas === 'Standaard' ? ('Standaard' + (stdGlas ? ' — ' + stdGlas : '')) : cfg.glas]);
+      // keuzes uit de Drutex-blokken (Roede, Ventilatie, Dorpel, Afstandhouder…) in stapvolgorde
+      Object.keys(cfg.sel).forEach(function (lab) { rows.push([lab, cfg.sel[lab]]); });
+      if (m.handles && m.handles.length) rows.push([type === 'door' ? 'Kruk/greep' : 'Kruk', cfg.kruk]);
+      return rows;
+    }
+    function refreshOverview() {
+      ovBody.innerHTML = '';
+      summaryRows().forEach(function (r) {
+        var row = el('div', 'dx-ovrow');
+        row.innerHTML = '<span class="dx-ovk">' + r[0] + '</span><span class="dx-ovv">' + r[1] + '</span>';
+        ovBody.appendChild(row);
+      });
+    }
+    function sendRequest() {
+      var body = 'Aanvraag via configurator\n\n' + summaryRows().map(function (r) { return r[0] + ': ' + r[1]; }).join('\n') + '\n\nBron: ' + m.productUrl;
+      window.location.href = 'mailto:' + COMPANY_MAIL + '?subject=' + encodeURIComponent('Offerteaanvraag — ' + m.name) + '&body=' + encodeURIComponent(body);
+    }
+
+    /* ===================== STAP-NAV + layout ===================== */
+    var navEl = el('div', 'dx-stepnav');
+    var bodyEl = el('div', 'dx-stepbody');
+    var active = 0;
+    var navBtns = steps.map(function (s, i) {
+      var b = el('button', 'dx-stepbtn', { type: 'button' });
+      b.innerHTML = '<span class="dx-stepn">' + (i + 1) + '</span><span>' + s.label + '</span>';
+      b.addEventListener('click', function () { showStep(i); });
+      navEl.appendChild(b); return b;
+    });
+    var navWrap = el('div', 'dx-navwrap'); navWrap.appendChild(navEl);
+
+    function showStep(i) {
+      active = Math.max(0, Math.min(steps.length - 1, i));
+      navBtns.forEach(function (b, j) { b.classList.toggle('active', j === active); b.classList.toggle('done', j < active); });
+      bodyEl.innerHTML = '';
+      bodyEl.appendChild(steps[active].el);
+      if (steps[active].key === 'overzicht') refreshOverview();
+      var navrow = el('div', 'dx-stepfoot');
+      var prev = el('button', 'dx-btn-ghost', { type: 'button' }); prev.textContent = '‹ Vorige'; prev.disabled = active === 0;
+      prev.addEventListener('click', function () { showStep(active - 1); });
+      var next = el('button', 'dx-btn-dark', { type: 'button' });
+      next.textContent = active === steps.length - 1 ? 'Klaar' : 'Volgende ›'; next.disabled = active === steps.length - 1;
+      next.addEventListener('click', function () { showStep(active + 1); });
+      navrow.appendChild(prev); navrow.appendChild(next);
+      bodyEl.appendChild(navrow);
+      glassZoom(steps[active].getZoom ? steps[active].getZoom() : null); // groot voorbeeld op stappen met foto's (glas, ramki, ventilatie, kruk…)
+      if (steps[active].key === 'kleur' && !dimsVisible) { /* laat animatie staan tot keuze */ }
+    }
+
+    root.appendChild(navWrap); root.appendChild(preview); root.appendChild(bodyEl);
+
+    // beginstaat
+    capName.textContent = m.name;
+    drawSchema();
+    if (!hasVideo && colors[0]) selectColor(0);
+    else if (!hasVideo) { stage.classList.remove('is-video', 'is-color'); render.style.display = 'none';
+      var ph = el('div', 'dx-nomedia'); ph.innerHTML = '<span>' + m.name + '</span><a href="' + m.productUrl + '" target="_blank" rel="noopener">Bekijk op Drutex ↗</a>'; stage.appendChild(ph); }
+    refreshOverview();
+    showStep(0);
+
+    var idle = window.requestIdleCallback || function (f) { return setTimeout(f, 600); };
+    idle(function () {
+      if (mode === 'ral') { if (m.mask) { var im = new Image(); im.src = m.mask; } }
+      else colors.forEach(function (c) { var im = new Image(); im.src = c.render; });
+    });
+  }
+
+  function init() {
+    var nodes = document.querySelectorAll('.dx[data-model]');
+    Array.prototype.forEach.call(nodes, function (n) {
+      if (n.getAttribute('data-dx-mounted')) return;
+      n.setAttribute('data-dx-mounted', '1'); mount(n, n.getAttribute('data-model'));
+    });
+  }
+  window.DrutexShowcase = { mount: mount, init: init };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();

@@ -1,0 +1,296 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Configurator · Drutex op maat</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/drutex-showcase.css">
+  <style>
+    :root{
+      --paper:#EEEDE8;--panel:#FBFAF7;--panel-2:#F4F2EC;
+      --ink:#1B1B1A;--muted:#76736B;--faint:#A9A599;
+      --line:#DCD8CE;--line-strong:#C7C2B5;
+      --accent:#C8502D;--accent-ink:#8E3417;--accent-soft:#F3E2D9;
+      --shadow:0 1px 2px rgba(27,27,26,.06),0 8px 30px rgba(27,27,26,.07);--radius:14px;
+      --font-display:'Archivo',sans-serif;--font-body:'Hanken Grotesk',sans-serif;--font-mono:'JetBrains Mono',monospace;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.55;
+      -webkit-font-smoothing:antialiased;
+      background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+      background-size:34px 34px}
+    a{color:inherit}
+    .wrap{max-width:1160px;margin:0 auto;padding:30px 22px 96px}
+
+    .eyebrow{display:inline-flex;align-items:center;gap:7px;font-family:var(--font-mono);font-size:11px;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--accent-ink);background:var(--accent-soft);padding:6px 12px;border-radius:30px;font-weight:500}
+    .eyebrow b{width:6px;height:6px;border-radius:50%;background:var(--accent)}
+
+    /* stappenbalk */
+    .steps{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:16px 0 4px}
+    .crumb{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--line);border-radius:999px;
+      background:var(--panel);cursor:default;white-space:nowrap;font-family:var(--font-display);font-weight:700;font-size:13.5px;color:var(--muted)}
+    .crumb.clickable{cursor:pointer}
+    .crumb.clickable:hover{border-color:var(--line-strong);color:var(--ink)}
+    .crumb .n{display:inline-flex;width:20px;height:20px;border-radius:50%;background:var(--panel-2);color:var(--muted);
+      align-items:center;justify-content:center;font-size:11px;font-weight:700;font-family:var(--font-mono)}
+    .crumb.active{border-color:var(--ink);background:var(--ink);color:#fff}
+    .crumb.active .n{background:rgba(255,255,255,.22);color:#fff}
+    .crumb.done{color:var(--accent-ink);border-color:var(--accent-soft);background:var(--accent-soft)}
+    .crumb.done .n{background:var(--accent);color:#fff}
+    .sep{color:var(--line-strong)}
+
+    h1{font-family:var(--font-display);font-weight:800;letter-spacing:-.025em;line-height:1.08;font-size:32px;margin:24px 0 6px}
+    h1 em{color:var(--accent);font-style:normal}
+    .lead{color:var(--muted);margin:0 0 26px;max-width:62ch}
+
+    /* keuze-kaarten */
+    .choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:16px}
+    .choice{position:relative;display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--panel);
+      border:1px solid var(--line);border-radius:var(--radius);padding:24px;cursor:pointer;box-shadow:var(--shadow);
+      transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}
+    .choice:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 10px 30px rgba(27,27,26,.10)}
+    .choice .ico{width:48px;height:48px;margin-bottom:10px;color:var(--accent)}
+    .choice .ico svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.6}
+    .choice h3{margin:0;font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;font-size:20px}
+    .choice p{margin:0;color:var(--muted);font-size:13.5px}
+    .choice .cnt{position:absolute;top:18px;right:18px;font-family:var(--font-mono);font-size:11px;color:var(--muted);
+      background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+
+    /* model-grid */
+    .group-title{display:flex;align-items:baseline;gap:10px;margin:28px 2px 14px;font-family:var(--font-display);font-size:16px;font-weight:800;letter-spacing:-.02em}
+    .group-title .gc{color:var(--muted);font-weight:500;font-size:12px;font-family:var(--font-mono)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(196px,1fr));gap:16px}
+    .mcard{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);
+      overflow:hidden;cursor:pointer;box-shadow:var(--shadow);transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}
+    .mcard:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 10px 28px rgba(27,27,26,.11)}
+    .mcard .thumb{aspect-ratio:4/3;background:var(--panel-2) center/contain no-repeat;display:block;border-bottom:1px solid var(--line)}
+    .mcard .meta{padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+    .mcard .nm{font-family:var(--font-display);font-weight:700;font-size:14.5px;line-height:1.2;letter-spacing:-.01em}
+    .mcard .tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:3px}
+    .pill{font-family:var(--font-mono);font-size:10.5px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:2px 8px}
+
+    /* detail */
+    .detailhead{display:flex;align-items:center;gap:12px;margin:8px 0 16px;flex-wrap:wrap}
+    .back{display:inline-flex;align-items:center;gap:7px;border:1.5px solid var(--line-strong);background:transparent;border-radius:11px;
+      padding:9px 15px;font-family:var(--font-display);font-weight:700;font-size:13.5px;cursor:pointer;color:var(--ink)}
+    .back:hover{border-color:var(--ink)}
+    .detailhead h2{margin:0;font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;font-size:24px}
+    .detailhead .cat{font-family:var(--font-mono);font-size:11px;color:var(--muted);background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
+    .note{margin-top:28px;font-family:var(--font-mono);font-size:11px;color:var(--faint);border-top:1px solid var(--line);padding-top:16px;letter-spacing:.04em}
+    .empty{color:var(--muted);padding:34px;border:1px dashed var(--line-strong);border-radius:14px;text-align:center;background:var(--panel)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px">
+      <span class="eyebrow"><b></b>Configurator · Drutex op maat</span>
+      <a href="/" style="font-family:var(--font-mono);font-size:12px;letter-spacing:.04em;color:var(--muted);text-decoration:none">← Terug naar de website</a>
+    </div>
+    <div class="steps" id="steps"></div>
+    <div id="app"></div>
+    <p class="note" id="foot">Officile Drutex-weergaven (animatie · kleuren · maatschema). Beelden: drutex.pl.</p>
+  </div>
+
+  <script src="/js/drutex-models.js"></script>
+  <script src="/js/drutex-schema.js"></script>
+  <script src="/js/drutex-nl.js"></script>
+  <script src="/js/drutex-showcase.js"></script>
+  <script>
+  (function () {
+    var MODELS = window.DRUTEX_MODELS || {};
+    var app = document.getElementById('app'), stepsEl = document.getElementById('steps');
+
+    // ---- type & materiaal ----
+    var TYPES = [
+      { cat: 'Okna', key: 'ramen', label: 'Ramen', desc: 'Draai-kiep ramen op maat', ico: icoWindow },
+      { cat: 'Drzwi', key: 'deuren', label: 'Deuren', desc: 'Voor- en designdeuren', ico: icoDoor },
+      { cat: 'Systemy tarasowe', key: 'schuif', label: 'Schuif- & terrassystemen', desc: 'Hefschuif, schuif, vouwwand, PSK', ico: icoSlide }
+    ];
+    var MATS = [
+      { key: 'kunststof', label: 'Kunststof', desc: 'PVC — onderhoudsarm & isolerend' },
+      { key: 'hout', label: 'Hout', desc: 'Massief hout & hout-aluminium' },
+      { key: 'aluminium', label: 'Aluminium', desc: 'Slank, sterk, RAL-kleuren' }
+    ];
+    var catByKey = {}; TYPES.forEach(function (t) { catByKey[t.key] = t.cat; });
+    var typeByCat = {}; TYPES.forEach(function (t) { typeByCat[t.cat] = t; });
+
+    function material(slug) {
+      if (/(^|[-_])mb-|cor-vision|d-art|monorail|fold-line|aluminium/i.test(slug)) return 'aluminium';
+      if (/softline|duoline|drewnian/i.test(slug)) return 'hout';
+      return 'kunststof';
+    }
+    // subcategorie binnen schuifsystemen (mooi gegroepeerd)
+    function kind(slug) {
+      if (/fold|vouw|harmonijk/i.test(slug)) return 'Vouwwanden';
+      if (/psk|uchylno-przesuwne/i.test(slug)) return 'Kiep-schuifdeuren (PSK)';
+      if (/(^|-)hs(-|$)|hefschuif|monorail|-hs-|hs-/i.test(slug)) return 'Hefschuifpuien (HS)';
+      if (/slide|przesuwne|cor-vision/i.test(slug)) return 'Schuifsystemen';
+      return 'Overige';
+    }
+    function thumb(m) {
+      if (m.colorMode === 'image' && m.colors && m.colors.length) {
+        var c = m.colors.filter(Boolean).find(function (x) { return /antrac|7016|grafit|graphite|zwart|czarn|jet|noten|eik|dab/i.test(x.name); }) || m.colors[Math.min(2, m.colors.length - 1)] || m.colors[0];
+        return { src: c.render, bg: '#f4f2ec' };
+      }
+      if (m.fills && m.fills.length) return { src: (m.fills[0].apps.inox || m.fills[0].apps.czarny), bg: '#f4f2ec' };
+      if (m.colorMode === 'ral' && m.mask) return { src: m.mask, bg: '#3f4548' }; // masker over antraciet → gekleurd raam
+      return { src: '', bg: '#e9e7e1' };
+    }
+
+    // index per type+materiaal
+    var keys = Object.keys(MODELS);
+    keys.forEach(function (k) { MODELS[k]._mat = material(k); });
+    function listFor(typeKey, mat) {
+      var cat = catByKey[typeKey];
+      return keys.map(function (k) { return MODELS[k]; })
+        .filter(function (m) { return m.category === cat && m._mat === mat; })
+        .sort(function (a, b) { return a.name.localeCompare(b.name); });
+    }
+    function matsFor(typeKey) {
+      var cat = catByKey[typeKey];
+      return MATS.filter(function (mt) { return keys.some(function (k) { return MODELS[k].category === cat && MODELS[k]._mat === mt.key; }); })
+        .map(function (mt) { return Object.assign({ count: keys.filter(function (k) { return MODELS[k].category === cat && MODELS[k]._mat === mt.key; }).length }, mt); });
+    }
+    function countType(typeKey) { var cat = catByKey[typeKey]; return keys.filter(function (k) { return MODELS[k].category === cat; }).length; }
+
+    // ---- routing via hash: #type/mat/model ----
+    var state = { type: null, mat: null, model: null };
+    function parseHash() {
+      var p = (location.hash || '').replace(/^#/, '').split('/').filter(Boolean);
+      state.type = p[0] && catByKey[p[0]] ? p[0] : null;
+      state.mat = p[1] && MATS.some(function (m) { return m.key === p[1]; }) ? p[1] : null;
+      state.model = p[2] && MODELS[p[2]] ? p[2] : null;
+    }
+    function go(t, m, mod) {
+      var parts = [t, m, mod].filter(Boolean);
+      location.hash = parts.join('/');
+    }
+
+    function crumb(label, n, cls, onclick) {
+      var c = document.createElement('div'); c.className = 'crumb ' + (cls || '');
+      c.innerHTML = '<span class="n">' + n + '</span><span>' + label + '</span>';
+      if (onclick) { c.classList.add('clickable'); c.addEventListener('click', onclick); }
+      return c;
+    }
+    function renderSteps() {
+      stepsEl.innerHTML = '';
+      var t = state.type, m = state.mat, mod = state.model;
+      var s1 = crumb(t ? (typeByCat[catByKey[t]].label) : 'Type', 1, !t ? 'active' : 'done', t ? function () { go(); } : null);
+      stepsEl.appendChild(s1);
+      stepsEl.appendChild(sep());
+      var matLbl = m ? (MATS.filter(function (x) { return x.key === m; })[0].label) : 'Materiaal';
+      stepsEl.appendChild(crumb(matLbl, 2, !t ? '' : (!m ? 'active' : 'done'), (t && m) ? function () { go(t); } : null));
+      stepsEl.appendChild(sep());
+      stepsEl.appendChild(crumb(mod ? MODELS[mod].name : 'Model', 3, (t && m && !mod) ? 'active' : (mod ? 'done' : ''), null));
+    }
+    function sep() { var s = document.createElement('span'); s.className = 'sep'; s.textContent = '›'; return s; }
+
+    function render() {
+      renderSteps();
+      app.innerHTML = '';
+      if (!state.type) return stepType();
+      if (!state.mat) return stepMat();
+      if (!state.model) return stepModels();
+      return stepDetail();
+    }
+
+    function stepType() {
+      app.appendChild(h1('Waar bent u naar op zoek?', 'Kies een productgroep om te beginnen.'));
+      var g = div('choices');
+      TYPES.forEach(function (t) {
+        var c = choice(t.label, t.desc, countType(t.key) + ' modellen', t.ico());
+        c.addEventListener('click', function () { go(t.key); });
+        g.appendChild(c);
+      });
+      app.appendChild(g);
+    }
+    function stepMat() {
+      var t = typeByCat[catByKey[state.type]];
+      app.appendChild(h1(t.label + ' — kies materiaal', 'Welk materiaal past bij uw project?'));
+      var g = div('choices');
+      matsFor(state.type).forEach(function (mt) {
+        var c = choice(mt.label, mt.desc, mt.count + ' modellen', icoMat(mt.key));
+        c.addEventListener('click', function () { go(state.type, mt.key); });
+        g.appendChild(c);
+      });
+      app.appendChild(g);
+    }
+    function stepModels() {
+      var t = typeByCat[catByKey[state.type]];
+      var matLbl = MATS.filter(function (x) { return x.key === state.mat; })[0].label;
+      app.appendChild(h1(t.label + ' · ' + matLbl, 'Kies een model. Klik door voor kleuren, maat en details.'));
+      var list = listFor(state.type, state.mat);
+      if (!list.length) { app.appendChild(Object.assign(document.createElement('div'), { className: 'empty', textContent: 'Geen modellen in deze combinatie.' })); return; }
+      // groeperen (vooral nuttig bij schuifsystemen)
+      var groups = {}; var order = [];
+      list.forEach(function (m) { var g = state.type === 'schuif' ? kind(m.slug) : t.label; if (!groups[g]) { groups[g] = []; order.push(g); } groups[g].push(m); });
+      order.forEach(function (gname) {
+        if (order.length > 1) {
+          var gt = div('group-title'); gt.innerHTML = '<span>' + gname + '</span><span class="gc">' + groups[gname].length + '</span>';
+          app.appendChild(gt);
+        }
+        var grid = div('grid');
+        groups[gname].forEach(function (m) { grid.appendChild(modelCard(m)); });
+        app.appendChild(grid);
+      });
+    }
+    function modelCard(m) {
+      var c = div('mcard');
+      var th = thumb(m);
+      var thumbEl = div('thumb');
+      if (th.src) thumbEl.style.backgroundImage = 'url("' + th.src + '")';
+      if (th.bg) thumbEl.style.backgroundColor = th.bg;
+      var meta = div('meta');
+      var tags = '';
+      if (m.colorMode === 'ral') tags += '<span class="pill">RAL-paletten</span>';
+      else if (m.colors && m.colors.length) tags += '<span class="pill">' + m.colors.length + ' kleuren</span>';
+      if (m.fills && m.fills.length) tags += '<span class="pill">' + m.fills.length + ' wzory</span>';
+      if (m.video) tags += '<span class="pill">animatie</span>';
+      meta.innerHTML = '<div class="nm">' + m.name + '</div><div class="tags">' + tags + '</div>';
+      c.appendChild(thumbEl); c.appendChild(meta);
+      c.addEventListener('click', function () { go(state.type, state.mat, m.slug); });
+      return c;
+    }
+    function stepDetail() {
+      var m = MODELS[state.model];
+      var head = div('detailhead');
+      var back = document.createElement('button'); back.className = 'back'; back.innerHTML = '‹ Terug naar modellen';
+      back.addEventListener('click', function () { go(state.type, state.mat); });
+      head.appendChild(back);
+      var h = document.createElement('h2'); h.textContent = m.name; head.appendChild(h);
+      var cat = document.createElement('span'); cat.className = 'cat'; cat.textContent = m.category; head.appendChild(cat);
+      app.appendChild(head);
+      var card = div('card');
+      var host = document.createElement('div'); host.className = 'dx'; host.setAttribute('data-model', m.slug);
+      card.appendChild(host); app.appendChild(card);
+      window.DrutexShowcase.mount(host, m.slug);
+    }
+
+    // ---- helpers ----
+    function div(cls) { var d = document.createElement('div'); if (cls) d.className = cls; return d; }
+    function h1(t, lead) { var w = document.createElement('div'); var H = document.createElement('h1'); H.textContent = t; var p = document.createElement('p'); p.className = 'lead'; p.textContent = lead; w.appendChild(H); w.appendChild(p); return w; }
+    function choice(title, desc, cnt, icoHtml) {
+      var c = document.createElement('button'); c.className = 'choice';
+      c.innerHTML = '<div class="ico">' + icoHtml + '</div><h3>' + title + '</h3><p>' + desc + '</p><span class="cnt">' + cnt + '</span>';
+      return c;
+    }
+    function icoWindow() { return '<svg viewBox="0 0 40 40"><rect x="6" y="5" width="28" height="30" rx="2"/><line x1="20" y1="5" x2="20" y2="35"/><line x1="6" y1="20" x2="34" y2="20"/></svg>'; }
+    function icoDoor() { return '<svg viewBox="0 0 40 40"><rect x="10" y="4" width="20" height="32" rx="2"/><circle cx="25" cy="20" r="1.6" fill="currentColor" stroke="none"/></svg>'; }
+    function icoSlide() { return '<svg viewBox="0 0 40 40"><rect x="4" y="7" width="32" height="26" rx="2"/><line x1="20" y1="7" x2="20" y2="33"/><path d="M9 20h8m0 0l-3-3m3 3l-3 3"/></svg>'; }
+    function icoMat(k) {
+      if (k === 'hout') return '<svg viewBox="0 0 40 40"><rect x="6" y="8" width="28" height="24" rx="2"/><path d="M12 8c2 8-2 16 0 24M20 8c2 8-2 16 0 24M28 8c2 8-2 16 0 24"/></svg>';
+      if (k === 'aluminium') return '<svg viewBox="0 0 40 40"><rect x="6" y="8" width="28" height="24" rx="2"/><line x1="6" y1="16" x2="34" y2="16"/><line x1="6" y1="24" x2="34" y2="24"/></svg>';
+      return '<svg viewBox="0 0 40 40"><rect x="6" y="8" width="28" height="24" rx="3"/><rect x="12" y="14" width="16" height="12" rx="2"/></svg>';
+    }
+
+    window.addEventListener('hashchange', function () { parseHash(); render(); window.scrollTo({ top: 0 }); });
+    parseHash(); render();
+  })();
+  </script>
+</body>
+</html>

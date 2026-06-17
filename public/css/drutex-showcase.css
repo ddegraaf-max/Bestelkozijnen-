@@ -1,0 +1,198 @@
+/* ====== Drutex-showcase — configurator-stijl ======
+   Links groot voorbeeld (Realistisch/Schema-tabs, sticky), rechts opties-sidebar.
+   Markup door drutex-showcase.js op <div class="dx" data-model="…">. */
+.dx{--dx-line:#DCD8CE;--dx-ink:#1B1B1A;--dx-muted:#76736B;--dx-accent:#C8502D;--dx-stagebg:#F4F2EC;--dx-soft:#FBFAF7;--dx-accent-soft:#F3E2D9;--dx-accent-ink:#8E3417;
+  display:grid;grid-template-columns:212px minmax(0,1fr) 344px;gap:20px;align-items:start;
+  font-family:inherit;color:var(--dx-ink)}
+@media(max-width:1080px){.dx{grid-template-columns:1fr}}
+
+/* stappen-nav (links) */
+.dx-navwrap{position:sticky;top:16px}
+@media(max-width:1080px){.dx-navwrap{position:static}}
+.dx-stepnav{display:flex;flex-direction:column;gap:4px;background:#fff;border:1px solid var(--dx-line);border-radius:13px;padding:8px}
+@media(max-width:1080px){.dx-stepnav{flex-direction:row;flex-wrap:wrap}}
+.dx-stepbtn{display:flex;align-items:center;gap:9px;width:100%;text-align:left;border:0;background:transparent;border-radius:9px;
+  padding:9px 10px;font:600 13.5px/1.2 inherit;color:var(--dx-muted);cursor:pointer;transition:background .12s,color .12s}
+.dx-stepbtn:hover{background:var(--dx-soft);color:var(--dx-ink)}
+.dx-stepbtn.active{background:var(--dx-ink);color:#fff}
+.dx-stepbtn.done{color:var(--dx-accent-ink)}
+.dx-stepn{display:inline-flex;width:21px;height:21px;flex:none;border-radius:50%;background:var(--dx-stagebg);color:var(--dx-muted);
+  align-items:center;justify-content:center;font:700 11px/1 ui-monospace,Menlo,monospace}
+.dx-stepbtn.active .dx-stepn{background:rgba(255,255,255,.22);color:#fff}
+.dx-stepbtn.done .dx-stepn{background:var(--dx-accent);color:#fff}
+
+/* stap-inhoud (rechts) */
+.dx-stepbody{display:flex;flex-direction:column;gap:14px;min-width:0}
+.dx-stepfoot{display:flex;gap:9px;justify-content:space-between}
+.dx-btn-ghost,.dx-btn-dark{flex:1;border-radius:10px;padding:11px 14px;font:700 13.5px/1 inherit;cursor:pointer}
+.dx-btn-ghost{border:1.5px solid var(--dx-line);background:#fff;color:var(--dx-ink)}
+.dx-btn-ghost:hover:not(:disabled){border-color:var(--dx-ink)}
+.dx-btn-dark{border:0;background:var(--dx-ink);color:#fff}
+.dx-btn-dark:hover:not(:disabled){transform:translateY(-1px)}
+.dx-btn-ghost:disabled,.dx-btn-dark:disabled{opacity:.4;cursor:default}
+.dx-cta{width:100%;border:0;border-radius:11px;background:var(--dx-accent);color:#fff;padding:13px 16px;font:700 14.5px/1 inherit;cursor:pointer;margin-top:4px}
+.dx-cta:hover{filter:brightness(.96)}
+
+/* overzicht */
+.dx-ov{display:flex;flex-direction:column;gap:1px;border:1px solid var(--dx-line);border-radius:10px;overflow:hidden}
+.dx-ovrow{display:flex;justify-content:space-between;gap:12px;padding:9px 12px;background:#fff;font-size:13px}
+.dx-ovrow:nth-child(even){background:var(--dx-soft)}
+.dx-ovk{color:var(--dx-muted)}
+.dx-ovv{font-weight:700;text-align:right}
+
+/* ---------- PREVIEW (links) ---------- */
+.dx-preview{position:sticky;top:16px;min-width:0}
+@media(max-width:900px){.dx-preview{position:static}}
+.dx-pcard{background:#fff;border:1px solid var(--dx-line);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.dx-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;
+  border-bottom:1px solid var(--dx-line);background:var(--dx-soft)}
+.dx-dots{display:inline-flex;gap:6px}
+.dx-dots i{width:9px;height:9px;border-radius:50%;background:#dcd8cd;display:block}
+.dx-tabs{display:inline-flex;gap:4px;background:#ece9e0;border-radius:999px;padding:3px}
+.dx-tab{border:0;background:transparent;border-radius:999px;padding:6px 15px;font-size:13px;font-weight:600;
+  color:var(--dx-muted);cursor:pointer;transition:background .12s,color .12s}
+.dx-tab.active{background:#fff;color:var(--dx-ink);box-shadow:0 1px 2px rgba(0,0,0,.10)}
+
+/* witte achtergrond: het productbeeld (witte fond) smelt naadloos samen — geen zichtbaar "kader" */
+.dx-view{position:relative;min-height:460px;background:#fff}
+@media(max-width:560px){.dx-view{min-height:360px}}
+.dx-stage,.dx-schemabox{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
+.dx-schemabox{padding:26px;display:none}
+.dx-pcard.show-schema .dx-stage{display:none}
+.dx-pcard.show-schema .dx-schemabox{display:flex}
+/* media-box laat onderaan + links ruimte vrij voor de maatlijnen; beeld blijft erbinnen */
+.dx-mediabox{position:absolute;inset:14px 18px 36px 40px}
+/* beeld in eigen verhouding, gecentreerd: de RAL-achtergrondkleur vult exact het beeld
+   (geen letterbox-banden meer); lege ruimte toont de lichte scene-achtergrond */
+.dx-mediabox .dx-media{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  max-width:100%;max-height:100%;width:auto;height:auto;display:block;transition:opacity .2s ease}
+.dx-stage.is-video .dx-render{opacity:0;pointer-events:none}
+.dx-stage.is-color .dx-video{opacity:0;pointer-events:none}
+.dx-schemabox svg{width:100%;height:100%;max-height:100%;display:block}
+
+/* groot glas-voorbeeld (stap Glas): toont de gekozen/aangewezen glasfoto groot over het paneel */
+.dx-glasszoom{position:absolute;inset:0;z-index:3;background:#fff;display:none;
+  flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:22px}
+.dx-pcard.show-gz .dx-glasszoom{display:flex}
+.dx-gz-img{max-width:90%;max-height:76%;object-fit:contain;border:1px solid var(--dx-line);
+  border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.14)}
+.dx-gz-cap{font:800 15px/1.25 'Archivo',sans-serif;color:var(--dx-ink);text-align:center;max-width:92%}
+
+/* drewniano-aluminiowe: twee weergaven naast elkaar (binnen hout · buiten alu) */
+.dx-view.dual{display:flex;align-items:stretch}
+.dx-view.dual .dx-stage,.dx-view.dual .dx-outer{position:relative;inset:auto;flex:1 1 0;min-width:0}
+.dx-view.dual .dx-outer{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--dx-line)}
+.dx-view.dual .dx-mediabox{inset:34px 14px 22px 32px} /* ruimte boven voor het kant-label + links voor de maatlijn */
+.dx-sidelabel{position:absolute;top:9px;left:0;right:0;text-align:center;z-index:2;pointer-events:none;
+  font:700 11.5px/1 'Archivo',sans-serif;letter-spacing:.03em;color:var(--dx-muted);text-transform:uppercase}
+
+/* maatlijnen (alleen na kleur-/maatkeuze): breedte = horizontaal onder, hoogte = verticaal links */
+.dx-dimov{position:absolute;inset:0;pointer-events:none;display:none;color:#5a5750}
+.dx-stage.dims-on .dx-dimov{display:block}
+.dx-dimov-w{position:absolute;left:40px;right:18px;bottom:16px;height:1px;background:currentColor;opacity:.6}
+.dx-dimov-w::before,.dx-dimov-w::after{content:"";position:absolute;top:-4px;width:1px;height:9px;background:currentColor}
+.dx-dimov-w::before{left:0}.dx-dimov-w::after{right:0}
+.dx-dimov-h{position:absolute;top:14px;bottom:36px;left:18px;width:1px;background:currentColor;opacity:.6}
+.dx-dimov-h::before,.dx-dimov-h::after{content:"";position:absolute;left:-4px;width:9px;height:1px;background:currentColor}
+.dx-dimov-h::before{top:0}.dx-dimov-h::after{bottom:0}
+.dx-dimov span{position:absolute;left:50%;top:50%;background:#fff;border:1px solid var(--dx-line);
+  border-radius:6px;padding:3px 9px;font:700 14px/1 ui-monospace,Menlo,monospace;color:#3a382f;white-space:nowrap;
+  box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.dx-dimov-w span{transform:translate(-50%,-50%)}
+.dx-dimov-h span{transform:translate(-50%,-50%) rotate(-90deg)}
+
+.dx-anim{position:absolute;right:14px;top:14px;display:none;align-items:center;gap:7px;
+  background:rgba(28,28,25,.82);color:#fff;border:0;border-radius:999px;padding:8px 14px;
+  font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);z-index:2}
+.dx-stage.is-color .dx-anim{display:inline-flex}
+.dx-anim:hover{background:rgba(28,28,25,.95)}
+.dx-anim svg{width:12px;height:12px;fill:currentColor}
+.dx-nomedia{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:10px;text-align:center;color:var(--dx-muted);padding:20px}
+.dx-nomedia span{font-weight:700;font-size:16px;color:var(--dx-ink)}
+.dx-nomedia a{font-size:13px;color:var(--dx-muted)}
+
+.dx-cap{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;padding:11px 14px;border-top:1px solid var(--dx-line);
+  font-size:13px;min-height:18px;background:#fff}
+.dx-cap .dx-cap-name{font-weight:700}
+.dx-cap .dx-cap-code{color:var(--dx-muted);font-size:11px;font-family:ui-monospace,Menlo,monospace}
+.dx-cap .dx-cap-size{margin-left:auto;font:700 12.5px/1 ui-monospace,Menlo,monospace;color:#3a382f}
+
+/* ---------- OPTIES (rechts, sidebar) ---------- */
+.dx-options{display:flex;flex-direction:column;gap:14px;min-width:0}
+.dx-panel2{background:#fff;border:1px solid var(--dx-line);border-radius:13px;padding:15px 16px}
+.dx-phead{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px;font-size:14.5px;font-weight:800;
+  font-family:'Archivo',sans-serif;letter-spacing:-.01em}
+.dx-phead .dx-count{color:var(--dx-muted);font-weight:500;font-size:12px}
+
+/* maatregelaars */
+.dx-size{display:flex;flex-direction:column;gap:13px}
+.dx-size-lab{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px;font-size:13px}
+.dx-size-row input[type=number]{width:80px;text-align:right;border:1px solid var(--dx-line);border-radius:7px;
+  padding:4px 8px;font:700 12px/1 ui-monospace,Menlo,monospace;color:#3a382f}
+.dx-size-row input[type=range]{width:100%;accent-color:var(--dx-accent);cursor:pointer}
+.dx-check{margin-top:13px;border-radius:9px;padding:9px 11px;font-size:12.5px;font-weight:600;line-height:1.4}
+.dx-check.ok{background:#eaf5ec;color:#1c6b32;border:1px solid #bfe0c7}
+.dx-check.warn{background:#fdf3e6;color:#8a5a14;border:1px solid #f0d9b0}
+
+/* chips (beglazing / applicatie) */
+.dx-chips{display:flex;flex-wrap:wrap;gap:7px}
+.dx-chip{border:1px solid var(--dx-line);background:#faf9f5;border-radius:8px;padding:6px 13px;
+  font-size:13px;font-weight:600;color:var(--dx-ink);cursor:pointer}
+.dx-chip[aria-pressed="true"]{background:var(--dx-accent);color:#fff;border-color:var(--dx-accent)}
+.dx-applic{display:flex;gap:7px;margin-bottom:11px}
+
+/* kleur-swatches */
+.dx-swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(40px,1fr));gap:7px;max-height:300px;overflow:auto}
+.dx-sw{position:relative;aspect-ratio:1;border-radius:8px;border:1px solid var(--dx-line);
+  background-size:cover;background-position:center;cursor:pointer;padding:0;outline:0;
+  transition:transform .12s ease,box-shadow .12s ease}
+.dx-sw:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.14)}
+.dx-sw[aria-pressed="true"]{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--dx-accent)}
+
+/* wypełnienia (deuren) */
+.dx-fills{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:10px;max-height:440px;overflow:auto}
+.dx-fill{position:relative;aspect-ratio:3/5;border-radius:8px;border:1px solid var(--dx-line);
+  background-color:#eceae4;background-size:contain;background-position:center;background-repeat:no-repeat;
+  cursor:pointer;padding:0;outline:0;transition:transform .12s ease,box-shadow .12s ease}
+.dx-fill:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.14)}
+.dx-fill[aria-pressed="true"]{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--dx-accent)}
+.dx-fillnum{position:absolute;left:3px;top:3px;background:rgba(28,28,25,.78);color:#fff;
+  font:700 10px/1 ui-monospace,Menlo,monospace;border-radius:5px;padding:2px 4px}
+
+/* krukken */
+.dx-handles{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;max-height:320px;overflow:auto}
+.dx-handle{aspect-ratio:1;border-radius:9px;border:1px solid var(--dx-line);
+  background-color:#2b2e30;background-size:84%;background-position:center;background-repeat:no-repeat;
+  cursor:pointer;padding:0;outline:0;transition:transform .12s ease,box-shadow .12s ease}
+.dx-handle:hover{transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.18)}
+.dx-handle[aria-pressed="true"]{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--dx-accent)}
+.dx-handle-cap{margin-top:9px;font-size:13px;font-weight:600;color:var(--dx-ink);min-height:18px}
+
+.dx-hint{margin:2px 0 0;font-size:12px;color:var(--dx-muted);line-height:1.5}
+.dx-hint a{color:var(--dx-muted)}
+
+/* keuzelijst van Drutex-opties (glas, roede, ventilatie, dorpel…) — foto + naam + detail */
+.dx-optlist{display:flex;flex-direction:column;gap:7px;max-height:440px;overflow:auto}
+.dx-opt{display:flex;flex-direction:row;align-items:center;gap:11px;text-align:left;width:100%;
+  border:1px solid var(--dx-line);background:#faf9f5;border-radius:9px;padding:8px 11px;cursor:pointer;outline:0;
+  transition:border-color .12s ease,background .12s ease}
+.dx-opt:hover{border-color:var(--dx-line-strong,#c7c2b5)}
+.dx-opt[aria-pressed="true"]{border-color:var(--dx-accent);background:var(--dx-soft);box-shadow:inset 0 0 0 1px var(--dx-accent)}
+.dx-opt-thumb{width:46px;height:46px;flex:0 0 46px;border-radius:7px;object-fit:cover;
+  border:1px solid var(--dx-line);background:#fff}
+.dx-opt-txt{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dx-opt-name{font-size:13.5px;font-weight:700;color:var(--dx-ink)}
+.dx-opt-det{font-size:11.5px;color:var(--dx-muted);font-family:ui-monospace,Menlo,monospace}
+
+/* read-only specificatie (Drutex-uitrusting & opties) */
+.dx-subh{font-size:12px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:var(--dx-muted);
+  margin:14px 0 6px}
+.dx-subh:first-child{margin-top:0}
+.dx-spec{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:3px}
+.dx-spec li{font-size:12.5px;color:var(--dx-ink);line-height:1.45}
+.dx-spec-note{margin:0;font-size:12.5px;color:var(--dx-muted)}
+/* read-only fotogalerij (Akcesoria, Okucia, Ramki…) in de uitrusting-stap */
+.dx-thumblist{display:flex;flex-direction:column;gap:6px}
+.dx-thumb{display:flex;align-items:center;gap:9px;font-size:12.5px;color:var(--dx-ink)}
+.dx-thumb img{width:38px;height:38px;flex:0 0 38px;border-radius:6px;object-fit:cover;border:1px solid var(--dx-line);background:#fff}
