@@ -104,10 +104,11 @@
   (function () {
     var MODELS = window.DRUTEX_MODELS || {};
     var app = document.getElementById('app'), stepsEl = document.getElementById('steps');
-    // speel kaart-animaties alleen als de kaart in beeld is (bespaart CPU/bandbreedte)
-    var cardVio = window.IntersectionObserver ? new IntersectionObserver(function (es) {
+    // desktop (muis) = animatie pas bij hover; touch/mobiel (geen hover) = speel als kaart in beeld komt
+    var canHover = !!(window.matchMedia && window.matchMedia('(hover: hover) and (pointer: fine)').matches);
+    var cardVio = (!canHover && window.IntersectionObserver) ? new IntersectionObserver(function (es) {
       es.forEach(function (e) { var v = e.target; if (e.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else { try { v.pause(); } catch (x) {} } });
-    }, { threshold: 0.15 }) : null;
+    }, { threshold: 0.25 }) : null;
 
     // ---- type & materiaal ----
     var TYPES = [
@@ -251,13 +252,17 @@
         // toon de openingsanimatie i.p.v. een statische miniatuur (alleen zichtbare kaarten spelen → performance)
         thumbEl.style.backgroundColor = '#f6f5f1';
         var v = document.createElement('video');
-        v.muted = true; v.loop = true; v.autoplay = true; v.preload = 'metadata';
+        v.muted = true; v.loop = true; v.preload = 'metadata';
         v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
         if (th.src) v.poster = th.src;
         v.src = m.video;
         v.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block';
         thumbEl.appendChild(v);
-        if (cardVio) cardVio.observe(v); else { var pp = v.play(); if (pp && pp.catch) pp.catch(function () {}); }
+        if (canHover) {            // desktop: start bij hover, terug naar begin bij verlaten
+          c.addEventListener('mouseenter', function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); });
+          c.addEventListener('mouseleave', function () { try { v.pause(); v.currentTime = 0; } catch (x) {} });
+        } else if (cardVio) cardVio.observe(v);   // mobiel: speel als de kaart in beeld is
+        else { var pp = v.play(); if (pp && pp.catch) pp.catch(function () {}); }
       } else {
         if (th.src) thumbEl.style.backgroundImage = 'url("' + th.src + '")';
         if (th.bg) thumbEl.style.backgroundColor = th.bg;
