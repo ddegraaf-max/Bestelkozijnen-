@@ -307,7 +307,7 @@
       if (!colors.length) {
         var pn = panel('Kleur');
         var note = el('p', 'dx-hint'); note.style.margin = '0';
-        note.textContent = 'Voor dit model toont Drutex geen kleurkiezer — kleur/uitvoering op aanvraag.';
+        note.textContent = 'Voor dit model is geen kleurkiezer beschikbaar — kleur/uitvoering op aanvraag.';
         pn.appendChild(note); steps.push({ key: 'kleur', label: 'Kleur', el: pn }); return;
       }
       var p = panel(dual ? 'Kleur binnen' : ('Kleur' + (mode === 'ral' ? ' (RAL)' : '')), colors.length + ' kleuren');
@@ -447,7 +447,7 @@
       btn.addEventListener('click', sendRequest);
       p.appendChild(btn);
       var note = el('p', 'dx-hint'); note.style.marginTop = '10px';
-      note.innerHTML = 'Bron: <a href="' + m.productUrl + '" target="_blank" rel="noopener">Drutex ' + m.name + '</a> · prijs op aanvraag.';
+      note.textContent = 'Prijs op aanvraag — u ontvangt een vrijblijvende offerte op maat.';
       p.appendChild(note);
       steps.push({ key: 'overzicht', label: 'Overzicht & aanvraag', el: p });
     })();
@@ -475,7 +475,7 @@
       });
     }
     function sendRequest() {
-      var body = 'Aanvraag via configurator\n\n' + summaryRows().map(function (r) { return r[0] + ': ' + r[1]; }).join('\n') + '\n\nBron: ' + m.productUrl;
+      var body = 'Aanvraag via configurator\n\n' + summaryRows().map(function (r) { return r[0] + ': ' + r[1]; }).join('\n');
       window.location.href = 'mailto:' + COMPANY_MAIL + '?subject=' + encodeURIComponent('Offerteaanvraag — ' + m.name) + '&body=' + encodeURIComponent(body);
     }
 
@@ -516,7 +516,7 @@
     drawSchema();
     if (!hasVideo && colors[0]) selectColor(0);
     else if (!hasVideo) { stage.classList.remove('is-video', 'is-color'); render.style.display = 'none';
-      var ph = el('div', 'dx-nomedia'); ph.innerHTML = '<span>' + m.name + '</span><a href="' + m.productUrl + '" target="_blank" rel="noopener">Bekijk op Drutex ↗</a>'; stage.appendChild(ph); }
+      var ph = el('div', 'dx-nomedia'); ph.innerHTML = '<span>' + m.name + '</span><span style="font-size:13px;color:var(--dx-muted)">Uitvoering op aanvraag</span>'; stage.appendChild(ph); }
     refreshOverview();
     showStep(0);
 

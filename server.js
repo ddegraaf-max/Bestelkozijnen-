@@ -49,8 +49,8 @@ function render(res, view, data = {}) { res.render(view, { active: '', ...data }
 
 // ================= PUBLIEKE PAGINA'S =================
 app.get('/', (req, res) => render(res, 'home', { active: 'home', title: 'Kozijnen op maat bestellen' }));
-// configurator vervangen door de nieuwe Drutex-configurator (/drutex/). Oude EJS-view blijft in de repo maar wordt niet meer geserveerd.
-app.get('/configurator', (req, res) => res.redirect('/drutex/'));
+// nieuwe configurator op /configurator (standalone pagina). Oude EJS-view blijft in de repo maar wordt niet meer geserveerd.
+app.get('/configurator', (req, res) => res.sendFile(path.join(__dirname, 'public', 'configurator.html')));
 app.get('/kozijnen/:slug', (req, res) => {
   const m = materials[req.params.slug];
   if (!m) return res.status(404).render('404', { active: '', title: 'Niet gevonden' });
