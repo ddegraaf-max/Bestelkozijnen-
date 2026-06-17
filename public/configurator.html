@@ -289,7 +289,11 @@
         // GEEN aparte poster: het beeld in rust = de eerste filmframe (raam in dichte stand);
         // hover laat de animatie pas afspelen — geen "sprong" van foto naar video.
         v.src = m.video;
-        v.addEventListener('loadeddata', function () { try { if (v.paused) v.currentTime = 0; } catch (e) {} }); // forceer 1e frame
+        v.addEventListener('loadeddata', function () { try { if (v.paused) v.currentTime = 0; } catch (e) {} thumbEl.style.backgroundImage = 'none'; }); // forceer 1e frame
+        // fallback: als de video niet laadt/niet ondersteund wordt (bv. webm op Safari) → toon de still-afbeelding
+        function vFallback() { if (th.src && v.readyState < 2) thumbEl.style.backgroundImage = 'url("' + th.src + '")'; }
+        v.addEventListener('error', vFallback);
+        setTimeout(vFallback, 2600);
         v.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block';
         thumbEl.appendChild(v);
         if (canHover) {            // desktop: animatie staat klaar (1e frame), start bij hover, terug naar begin bij verlaten
