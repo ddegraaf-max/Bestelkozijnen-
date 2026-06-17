@@ -77,6 +77,20 @@ app.post('/api/contact', async (req, res) => {
   res.json({ ok: true });
 });
 
+// offerteaanvraag vanuit de configurator (/configurator)
+app.post('/api/offerte', async (req, res) => {
+  const { naam, email, telefoon, opmerking, samenvatting, model, website, elapsed } = req.body;
+  if (website) return res.json({ ok: true });                                   // honeypot
+  if (typeof elapsed === 'number' && elapsed < 2500) return res.json({ ok: true });
+  if (!naam || !email) return res.status(400).json({ ok: false, error: 'Vul uw naam en e-mailadres in.' });
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(email))) return res.status(400).json({ ok: false, error: 'Vul een geldig e-mailadres in.' });
+  if (String(naam).length > 120 || String(email).length > 160 || String(samenvatting || '').length > 8000 || String(opmerking || '').length > 4000)
+    return res.status(400).json({ ok: false, error: 'Aanvraag is te lang.' });
+  const sam = (model ? 'Model: ' + model + '\n' : '') + String(samenvatting || '');
+  mailer.notifyNewRequest({ ref: 'CONFIGURATOR', klant: { naam, email, telefoon: telefoon || '', opmerking }, samenvatting: sam }).catch(() => {});
+  res.json({ ok: true });
+});
+
 // ================= AUTH / PORTAAL / BEHEER / API =================
 app.use('/', require('./routes/auth')(company, mailer));
 // Tweestapsverificatie is optioneel: gebruikers kunnen het zelf aan- of

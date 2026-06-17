@@ -75,6 +75,7 @@
     var RAL = window.DRUTEX_RAL || [];
     var outerHex = m.maskOuterHex || '#7a7d7e';
     var NL = window.DRUTEX_NL || function (s) { return s; }; // PL→NL vertaling van optienamen (alles in het Nederlands)
+    var t0 = Date.now(); // voor lichte anti-spam op de offerteaanvraag
 
     // ===== gedeelde staat =====
     var W = clamp(defDim.w, WMIN, WMAX), H = clamp(defDim.h, HMIN, HMAX);
@@ -443,11 +444,28 @@
     (function () {
       var p = panel('Overzicht & aanvraag');
       p.appendChild(ovBody);
+
+      // contactgegevens → echte offerteaanvraag (wordt per e-mail naar Creditline Montage gestuurd)
+      var fh = el('div', 'dx-subh'); fh.textContent = 'Vraag uw offerte aan'; fh.style.marginTop = '14px'; p.appendChild(fh);
+      var form = el('div', 'dx-form');
+      function field(label, type, req) {
+        var w = el('label', 'dx-field');
+        var sp = el('span', 'dx-field-lab'); sp.textContent = label + (req ? ' *' : '');
+        var inp = (type === 'textarea') ? el('textarea', 'dx-input', { rows: '2' }) : el('input', 'dx-input', { type: type });
+        w.appendChild(sp); w.appendChild(inp); form.appendChild(w); return inp;
+      }
+      var fNaam = field('Naam', 'text', true), fMail = field('E-mail', 'email', true);
+      var fTel = field('Telefoon', 'tel', false), fOpm = field('Opmerking', 'textarea', false);
+      var hp = el('input', null, { type: 'text', tabindex: '-1', autocomplete: 'off', 'aria-hidden': 'true' });
+      hp.style.cssText = 'position:absolute;left:-9999px;width:1px;height:1px;opacity:0'; form.appendChild(hp);
+      p.appendChild(form);
+
       var btn = el('button', 'dx-cta', { type: 'button' }); btn.textContent = 'Vraag vrijblijvend offerte aan';
-      btn.addEventListener('click', sendRequest);
-      p.appendChild(btn);
+      var status = el('p', 'dx-formstatus');
+      btn.addEventListener('click', function () { sendRequest({ naam: fNaam, email: fMail, tel: fTel, opm: fOpm, hp: hp, btn: btn, status: status }); });
+      p.appendChild(btn); p.appendChild(status);
       var note = el('p', 'dx-hint'); note.style.marginTop = '10px';
-      note.textContent = 'Prijs op aanvraag — u ontvangt een vrijblijvende offerte op maat.';
+      note.textContent = 'Prijs op aanvraag — u ontvangt een vrijblijvende offerte op maat. Geen verplichtingen.';
       p.appendChild(note);
       steps.push({ key: 'overzicht', label: 'Overzicht & aanvraag', el: p });
     })();
@@ -460,7 +478,7 @@
       if (dual) { rows.push(['Kleur binnen', cfg.kleur]); rows.push(['Kleur buiten (aluminium/RAL)', cfg.kleurBuiten]); }
       else rows.push(['Kleur', cfg.kleur]);
       if (type === 'door' && m.fills && m.fills.length) rows.push(['Paneel', cfg.vulling || '—']);
-      if ((opt.glas && opt.glas.length) || stdGlas) rows.push(['Glas', cfg.glas === 'Standaard' ? ('Standaard' + (stdGlas ? ' — ' + stdGlas : '')) : cfg.glas]);
+      if ((opt.glas && opt.glas.length) || stdGlas) rows.push(['Glas', cfg.glas === 'Standaard' ? ('Standaard' + (stdGlas ? ' — ' + NL(stdGlas) : '')) : cfg.glas]);
       // keuzes uit de Drutex-blokken (Roede, Ventilatie, Dorpel, Afstandhouder…) in stapvolgorde
       Object.keys(cfg.sel).forEach(function (lab) { rows.push([lab, cfg.sel[lab]]); });
       if (m.handles && m.handles.length) rows.push([type === 'door' ? 'Kruk/greep' : 'Kruk', cfg.kruk]);
@@ -474,9 +492,24 @@
         ovBody.appendChild(row);
       });
     }
-    function sendRequest() {
-      var body = 'Aanvraag via configurator\n\n' + summaryRows().map(function (r) { return r[0] + ': ' + r[1]; }).join('\n');
-      window.location.href = 'mailto:' + COMPANY_MAIL + '?subject=' + encodeURIComponent('Offerteaanvraag — ' + m.name) + '&body=' + encodeURIComponent(body);
+    function sendRequest(f) {
+      if (f.hp.value) return;                                   // honeypot (bot)
+      var naam = f.naam.value.trim(), email = f.email.value.trim();
+      function err(msg) { f.status.className = 'dx-formstatus err'; f.status.textContent = msg; }
+      if (!naam || !email) return err('Vul uw naam en e-mailadres in.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return err('Vul een geldig e-mailadres in.');
+      f.btn.disabled = true; f.status.className = 'dx-formstatus'; f.status.textContent = 'Versturen…';
+      var samenvatting = summaryRows().map(function (r) { return r[0] + ': ' + r[1]; }).join('\n');
+      fetch('/api/offerte', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ naam: naam, email: email, telefoon: f.tel.value.trim(), opmerking: f.opm.value.trim(), samenvatting: samenvatting, model: m.name, website: f.hp.value, elapsed: Date.now() - t0 })
+      }).then(function (r) { return r.json().catch(function () { return { ok: r.ok }; }); }).then(function (j) {
+        if (j && j.ok) {
+          f.status.className = 'dx-formstatus ok';
+          f.status.textContent = '✓ Bedankt! Uw aanvraag is verzonden — we nemen vrijblijvend contact met u op.';
+          f.btn.style.display = 'none';
+        } else { f.btn.disabled = false; err((j && j.error) || 'Er ging iets mis. Probeer het later opnieuw.'); }
+      }).catch(function () { f.btn.disabled = false; err('Geen verbinding. Probeer het later opnieuw.'); });
     }
 
     /* ===================== STAP-NAV + layout ===================== */
@@ -500,10 +533,12 @@
       var navrow = el('div', 'dx-stepfoot');
       var prev = el('button', 'dx-btn-ghost', { type: 'button' }); prev.textContent = '‹ Vorige'; prev.disabled = active === 0;
       prev.addEventListener('click', function () { showStep(active - 1); });
-      var next = el('button', 'dx-btn-dark', { type: 'button' });
-      next.textContent = active === steps.length - 1 ? 'Klaar' : 'Volgende ›'; next.disabled = active === steps.length - 1;
-      next.addEventListener('click', function () { showStep(active + 1); });
-      navrow.appendChild(prev); navrow.appendChild(next);
+      navrow.appendChild(prev);
+      if (active < steps.length - 1) {   // op de laatste stap (Overzicht) is de offerte-knop de actie — geen "Klaar"
+        var next = el('button', 'dx-btn-dark', { type: 'button' }); next.textContent = 'Volgende ›';
+        next.addEventListener('click', function () { showStep(active + 1); });
+        navrow.appendChild(next);
+      }
       bodyEl.appendChild(navrow);
       glassZoom(steps[active].getZoom ? steps[active].getZoom() : null); // groot voorbeeld op stappen met foto's (glas, ramki, ventilatie, kruk…)
       if (steps[active].key === 'kleur' && !dimsVisible) { /* laat animatie staan tot keuze */ }

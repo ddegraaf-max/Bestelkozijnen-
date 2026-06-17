@@ -32,6 +32,19 @@
 .dx-btn-ghost:disabled,.dx-btn-dark:disabled{opacity:.4;cursor:default}
 .dx-cta{width:100%;border:0;border-radius:11px;background:var(--dx-accent);color:#fff;padding:13px 16px;font:700 14.5px/1 inherit;cursor:pointer;margin-top:4px}
 .dx-cta:hover{filter:brightness(.96)}
+.dx-cta:disabled{opacity:.6;cursor:default}
+
+/* offerteformulier (stap Overzicht) */
+.dx-form{display:flex;flex-direction:column;gap:9px;margin:4px 0 12px}
+.dx-field{display:flex;flex-direction:column;gap:3px}
+.dx-field-lab{font-size:12px;font-weight:600;color:var(--dx-muted)}
+.dx-input{border:1px solid var(--dx-line);border-radius:8px;padding:8px 10px;font-family:inherit;font-size:13.5px;
+  color:var(--dx-ink);background:#fff;width:100%;box-sizing:border-box}
+.dx-input:focus{outline:0;border-color:var(--dx-accent);box-shadow:0 0 0 2px var(--dx-soft)}
+textarea.dx-input{resize:vertical;min-height:46px}
+.dx-formstatus{margin:8px 0 0;font-size:13px;min-height:16px;line-height:1.4}
+.dx-formstatus.err{color:#b3402a}
+.dx-formstatus.ok{color:#2f7d4f;font-weight:700}
 
 /* overzicht */
 .dx-ov{display:flex;flex-direction:column;gap:1px;border:1px solid var(--dx-line);border-radius:10px;overflow:hidden}

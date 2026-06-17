@@ -104,6 +104,10 @@
   (function () {
     var MODELS = window.DRUTEX_MODELS || {};
     var app = document.getElementById('app'), stepsEl = document.getElementById('steps');
+    // speel kaart-animaties alleen als de kaart in beeld is (bespaart CPU/bandbreedte)
+    var cardVio = window.IntersectionObserver ? new IntersectionObserver(function (es) {
+      es.forEach(function (e) { var v = e.target; if (e.isIntersecting) { var p = v.play(); if (p && p.catch) p.catch(function () {}); } else { try { v.pause(); } catch (x) {} } });
+    }, { threshold: 0.15 }) : null;
 
     // ---- type & materiaal ----
     var TYPES = [
@@ -243,8 +247,21 @@
       var c = div('mcard');
       var th = thumb(m);
       var thumbEl = div('thumb');
-      if (th.src) thumbEl.style.backgroundImage = 'url("' + th.src + '")';
-      if (th.bg) thumbEl.style.backgroundColor = th.bg;
+      if (m.video) {
+        // toon de openingsanimatie i.p.v. een statische miniatuur (alleen zichtbare kaarten spelen → performance)
+        thumbEl.style.backgroundColor = '#f6f5f1';
+        var v = document.createElement('video');
+        v.muted = true; v.loop = true; v.autoplay = true; v.preload = 'metadata';
+        v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
+        if (th.src) v.poster = th.src;
+        v.src = m.video;
+        v.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block';
+        thumbEl.appendChild(v);
+        if (cardVio) cardVio.observe(v); else { var pp = v.play(); if (pp && pp.catch) pp.catch(function () {}); }
+      } else {
+        if (th.src) thumbEl.style.backgroundImage = 'url("' + th.src + '")';
+        if (th.bg) thumbEl.style.backgroundColor = th.bg;
+      }
       var meta = div('meta');
       var tags = '';
       if (m.colorMode === 'ral') tags += '<span class="pill">RAL-paletten</span>';
