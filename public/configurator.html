@@ -18,6 +18,8 @@
       --font-display:'Archivo',sans-serif;--font-body:'Hanken Grotesk',sans-serif;--font-mono:'JetBrains Mono',monospace;
     }
     *{box-sizing:border-box}
+    /* knoppen erven kleur/typografie — voorkomt o.a. de iOS-standaard blauwe knoptekst */
+    button{font-family:inherit;font-size:100%;color:inherit;background:none;border:0;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent}
     body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--font-body);font-size:16px;line-height:1.55;
       -webkit-font-smoothing:antialiased;
       background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
@@ -48,17 +50,25 @@
     .lead{color:var(--muted);margin:0 0 26px;max-width:62ch}
 
     /* keuze-kaarten */
-    .choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(248px,1fr));gap:16px}
-    .choice{position:relative;display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--panel);
-      border:1px solid var(--line);border-radius:var(--radius);padding:24px;cursor:pointer;box-shadow:var(--shadow);
-      transition:transform .14s ease,box-shadow .14s ease,border-color .14s ease}
-    .choice:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 10px 30px rgba(27,27,26,.10)}
-    .choice .ico{width:48px;height:48px;margin-bottom:10px;color:var(--accent)}
-    .choice .ico svg{width:100%;height:100%;stroke:currentColor;fill:none;stroke-width:1.6}
-    .choice h3{margin:0;font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;font-size:20px}
-    .choice p{margin:0;color:var(--muted);font-size:13.5px}
-    .choice .cnt{position:absolute;top:18px;right:18px;font-family:var(--font-mono);font-size:11px;color:var(--muted);
-      background:var(--panel-2);border:1px solid var(--line);border-radius:999px;padding:3px 10px}
+    .choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+    .choice{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:7px;text-align:left;color:var(--ink);
+      background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:26px 24px 22px;cursor:pointer;
+      box-shadow:var(--shadow);overflow:hidden;transition:transform .16s ease,box-shadow .16s ease,border-color .16s ease}
+    .choice::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;transition:opacity .16s ease;
+      background:radial-gradient(130% 90% at 100% 0,var(--accent-soft),transparent 58%)}
+    .choice:hover{transform:translateY(-4px);border-color:var(--accent);box-shadow:0 16px 38px rgba(27,27,26,.14)}
+    .choice:hover::after{opacity:.85}
+    .choice:hover .go{gap:10px;color:var(--accent)}
+    .choice>*{position:relative;z-index:1}
+    .choice .ico{width:56px;height:56px;display:grid;place-items:center;border-radius:15px;margin-bottom:4px;
+      background:var(--accent-soft);color:var(--accent);box-shadow:inset 0 0 0 1px rgba(200,80,45,.12)}
+    .choice .ico svg{width:30px;height:30px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+    .choice h3{margin:0;color:var(--ink);font-family:var(--font-display);font-weight:800;letter-spacing:-.02em;font-size:21px}
+    .choice p{margin:0;color:var(--muted);font-size:13.5px;line-height:1.5}
+    .choice .cnt{position:absolute;top:18px;right:18px;font-family:var(--font-mono);font-size:11px;color:var(--accent-ink);
+      background:var(--accent-soft);border:1px solid #efd7cc;border-radius:999px;padding:4px 11px;letter-spacing:.02em}
+    .choice .go{margin-top:8px;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-display);font-weight:700;
+      font-size:13px;color:var(--accent-ink);transition:gap .16s ease,color .16s ease}
 
     /* model-grid */
     .group-title{display:flex;align-items:baseline;gap:10px;margin:28px 2px 14px;font-family:var(--font-display);font-size:16px;font-weight:800;letter-spacing:-.02em}
@@ -83,6 +93,28 @@
     .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:var(--shadow)}
     .note{margin-top:28px;font-family:var(--font-mono);font-size:11px;color:var(--faint);border-top:1px solid var(--line);padding-top:16px;letter-spacing:.04em}
     .empty{color:var(--muted);padding:34px;border:1px dashed var(--line-strong);border-radius:14px;text-align:center;background:var(--panel)}
+
+    /* ---- mobiel ---- */
+    html{overflow-x:hidden}
+    @media(max-width:600px){
+      .wrap{padding:20px 14px 64px}
+      h1{font-size:24px;margin:16px 0 5px}
+      .lead{font-size:14px;margin-bottom:18px}
+      .steps{gap:5px;margin:12px 0 2px}
+      .crumb{padding:6px 11px;font-size:12.5px}
+      .crumb .n{width:18px;height:18px}
+      .choices{grid-template-columns:1fr;gap:12px}
+      .choice{padding:18px 17px;border-radius:15px;gap:6px}
+      .choice .ico{width:48px;height:48px;border-radius:13px}
+      .choice .ico svg{width:26px;height:26px}
+      .choice h3{font-size:18.5px}
+      .choice p{font-size:13px}
+      .choice .cnt{position:static;align-self:flex-start;margin:2px 0 0}
+      .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:11px}
+      .detailhead h2{font-size:20px}
+      .card{padding:12px;border-radius:14px}
+      .note{margin-top:22px}
+    }
   </style>
 </head>
 <body>
@@ -208,7 +240,7 @@
       app.appendChild(h1('Waar bent u naar op zoek?', 'Kies een productgroep om te beginnen.'));
       var g = div('choices');
       TYPES.forEach(function (t) {
-        var c = choice(t.label, t.desc, countType(t.key) + ' modellen', t.ico());
+        var c = choice(t.label, t.desc, countType(t.key) + ' modellen', t.ico(), 'Kies materiaal');
         c.addEventListener('click', function () { go(t.key); });
         g.appendChild(c);
       });
@@ -219,7 +251,7 @@
       app.appendChild(h1(t.label + ' — kies materiaal', 'Welk materiaal past bij uw project?'));
       var g = div('choices');
       matsFor(state.type).forEach(function (mt) {
-        var c = choice(mt.label, mt.desc, mt.count + ' modellen', icoMat(mt.key));
+        var c = choice(mt.label, mt.desc, mt.count + ' modellen', icoMat(mt.key), 'Bekijk modellen');
         c.addEventListener('click', function () { go(state.type, mt.key); });
         g.appendChild(c);
       });
@@ -296,9 +328,10 @@
     // ---- helpers ----
     function div(cls) { var d = document.createElement('div'); if (cls) d.className = cls; return d; }
     function h1(t, lead) { var w = document.createElement('div'); var H = document.createElement('h1'); H.textContent = t; var p = document.createElement('p'); p.className = 'lead'; p.textContent = lead; w.appendChild(H); w.appendChild(p); return w; }
-    function choice(title, desc, cnt, icoHtml) {
-      var c = document.createElement('button'); c.className = 'choice';
-      c.innerHTML = '<div class="ico">' + icoHtml + '</div><h3>' + title + '</h3><p>' + desc + '</p><span class="cnt">' + cnt + '</span>';
+    function choice(title, desc, cnt, icoHtml, goLabel) {
+      var c = document.createElement('button'); c.className = 'choice'; c.type = 'button';
+      c.innerHTML = '<div class="ico">' + icoHtml + '</div><h3>' + title + '</h3><p>' + desc + '</p>'
+        + '<span class="cnt">' + cnt + '</span><span class="go">' + (goLabel || 'Kiezen') + ' →</span>';
       return c;
     }
     function icoWindow() { return '<svg viewBox="0 0 40 40"><rect x="6" y="5" width="28" height="30" rx="2"/><line x1="20" y1="5" x2="20" y2="35"/><line x1="6" y1="20" x2="34" y2="20"/></svg>'; }
