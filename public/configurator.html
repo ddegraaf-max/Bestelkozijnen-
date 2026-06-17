@@ -286,11 +286,13 @@
         var v = document.createElement('video');
         v.muted = true; v.loop = true; v.preload = 'metadata';
         v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('aria-hidden', 'true');
-        if (th.src) v.poster = th.src;
+        // GEEN aparte poster: het beeld in rust = de eerste filmframe (raam in dichte stand);
+        // hover laat de animatie pas afspelen — geen "sprong" van foto naar video.
         v.src = m.video;
+        v.addEventListener('loadeddata', function () { try { if (v.paused) v.currentTime = 0; } catch (e) {} }); // forceer 1e frame
         v.style.cssText = 'width:100%;height:100%;object-fit:contain;display:block';
         thumbEl.appendChild(v);
-        if (canHover) {            // desktop: start bij hover, terug naar begin bij verlaten
+        if (canHover) {            // desktop: animatie staat klaar (1e frame), start bij hover, terug naar begin bij verlaten
           c.addEventListener('mouseenter', function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); });
           c.addEventListener('mouseleave', function () { try { v.pause(); v.currentTime = 0; } catch (x) {} });
         } else if (cardVio) cardVio.observe(v);   // mobiel: speel als de kaart in beeld is
