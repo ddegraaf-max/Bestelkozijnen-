@@ -20,7 +20,8 @@
     'Szprosy': { label: 'Roede', none: 'Geen' },
     'Wentylacje': { label: 'Ventilatie', none: 'Geen' },
     'Progi drzwiowe': { label: 'Dorpel' },
-    'Ramki': { label: 'Afstandhouder' }
+    'Ramki': { label: 'Afstandhouder' },
+    'Niezawodne okucia': { label: 'Beslag', none: 'Standaard' }
   };
   // NL-vertaling van de Drutex-glassoorttermen (alleen label-hint; de optie zelf blijft Drutex').
   var GLAS_NL = {
@@ -135,7 +136,10 @@
     var opt = m.options || { std: [], glas: [], boxes: [] };
     // standaard glaspakket (verbatim uit Drutex-standaarduitrusting)
     var stdGlas = (opt.std || []).find(function (s) { return /pakiet szybow|szyba o Ug|Ug\s*=/i.test(s); }) || '';
+    // dichtingskleur: Drutex vermeldt in de standaard "uszczelki ... w kolorze czarnym lub szarym" → zwart/grijs
+    var dichtingKeuze = (opt.std || []).some(function (s) { return /uszczel/i.test(s) && /(czarn|szar)/i.test(s); });
     var cfg = { kleur: '—', kleurBuiten: '—', kruk: '—', vulling: null, glas: 'Standaard', sel: {} };
+    if (dichtingKeuze) cfg.dichting = 'Zwart';
     var hasIndeling = (type === 'window' || type === 'sliding');
     var curDiv = DIVISIONS[0];   // gekozen indeling (vakken)
     if (hasIndeling) { cfg.indeling = curDiv.label; cfg.openings = curDiv.vakken.map(function (_, i) { return i === 0 ? 'dk-r' : 'vast'; }); }
@@ -489,7 +493,16 @@
       steps.push({ key: 'glas', label: 'Glas', el: pg, getZoom: function () { return selGlas; } });
     }
 
-    // -- keuzestappen uit de Drutex-blokken: Szprosy→Roede, Wentylacje→Ventilatie, Progi→Dorpel, Ramki→Afstandhouder --
+    // -- Dichting (kleur) — Drutex standaard: zwart of grijs --
+    if (dichtingKeuze) {
+      var pdc = panel('Dichting (kleur)');
+      var dch = el('p', 'dx-hint'); dch.style.margin = '0 0 10px'; dch.textContent = 'Kleur van de afdichtingsrubbers (omloop, beglazing, centraal).';
+      pdc.appendChild(dch);
+      pdc.appendChild(chipRow(['Zwart', 'Grijs'], cfg.dichting, function (v) { cfg.dichting = v; refreshOverview(); }));
+      steps.push({ key: 'dichting', label: 'Dichting', el: pdc });
+    }
+
+    // -- keuzestappen uit de Drutex-blokken: Szprosy→Roede, Wentylacje→Ventilatie, Progi→Dorpel, Ramki→Afstandhouder, Okucia→Beslag --
     var infoBoxes = [];
     (opt.boxes || []).forEach(function (box) {
       var mapd = BOX_STEPS[box.title];
@@ -582,7 +595,8 @@
       else rows.push(['Kleur', cfg.kleur]);
       if (type === 'door' && m.fills && m.fills.length) rows.push(['Paneel', cfg.vulling || '—']);
       if ((opt.glas && opt.glas.length) || stdGlas) rows.push(['Glas', cfg.glas === 'Standaard' ? ('Standaard' + (stdGlas ? ' — ' + NL(stdGlas) : '')) : cfg.glas]);
-      // keuzes uit de Drutex-blokken (Roede, Ventilatie, Dorpel, Afstandhouder…) in stapvolgorde
+      if (dichtingKeuze) rows.push(['Dichting', cfg.dichting]);
+      // keuzes uit de Drutex-blokken (Roede, Ventilatie, Dorpel, Afstandhouder, Beslag…) in stapvolgorde
       Object.keys(cfg.sel).forEach(function (lab) { rows.push([lab, cfg.sel[lab]]); });
       if (m.handles && m.handles.length) rows.push([type === 'door' ? 'Kruk/greep' : 'Kruk', cfg.kruk]);
       return rows;
