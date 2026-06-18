@@ -144,6 +144,38 @@
     var curDiv = DIVISIONS[0];   // gekozen indeling (vakken)
     if (hasIndeling) { cfg.indeling = curDiv.label; cfg.openings = curDiv.vakken.map(function (_, i) { return i === 0 ? 'dk-r' : 'vast'; }); }
 
+    // ── Officiele Drutex-configuratorcatalogus (1:1 opties/afbeeldingen) ──
+    // Voor PVC-modellen (IGLO) komen de stappen 1:1 uit window.DRUTEX_KONF, in
+    // Drutex-volgorde, met de echte optie-afbeeldingen. Aluminium/hout houden onze
+    // eigen, modelspecifieke stappen (die catalogus bestaat daar niet voor).
+    var KONF = window.DRUTEX_KONF;
+    var konf = (function () {
+      if (!KONF || !KONF.productGroups) return null;
+      if (dual) return null;                          // hout-aluminium: onze dual-weergave + RAL-buiten behouden
+      var slug = (modelId || '').toLowerCase();
+      if (/(^|[-_])mb-|cor-vision|d-art|monorail|fold-line|aluminium|alu-cover/i.test(slug)) return null;
+      if (/softline|duoline|drewnian/i.test(slug)) return null;
+      var cat = m.category, grp;
+      if (cat === 'Drzwi') grp = 'doors';
+      else if (cat === 'Systemy tarasowe') grp = /(^|-)hs(-|$)|hefschuif|monorail/i.test(slug) ? 'HS' : 'suwanki';
+      else grp = /balk|balkon|balcony/i.test(slug) ? 'balcony' : 'windows';
+      var g = KONF.productGroups[grp]; if (!g || !g.stepsOrder) return null;
+      // maatlimieten van het best passende model in deze groep
+      var dim = null, lim = g.dimensionLimits || {}, mats = g.featureGroups.Material;
+      var key = Object.keys(lim)[0];
+      if (mats) mats.elements.forEach(function (e) {
+        var nm = (e.name || '').toLowerCase();
+        if (/energy/.test(slug) && /energy/.test(nm) && !/classic/.test(slug)) key = e.identity;
+        else if (/classic/.test(slug) && /classic/.test(nm)) key = e.identity;
+      });
+      dim = lim[key] || lim[Object.keys(lim)[0]] || null;
+      return { group: grp, gc: g, dim: dim };
+    })();
+    var gc = konf && konf.gc;
+    var wmin = WMIN, wmax = WMAX, hmin = HMIN, hmax = HMAX;
+    if (konf && konf.dim) { var _d = konf.dim; if (_d.minW) wmin = _d.minW; if (_d.maxW) wmax = _d.maxW; if (_d.minH) hmin = _d.minH; if (_d.maxH) hmax = _d.maxH; }
+    W = clamp(W, wmin, wmax); H = clamp(H, hmin, hmax);
+
     /* ===================== PREVIEW (midden) ===================== */
     var preview = el('div', 'dx-preview');
     var pcard = el('div', 'dx-pcard');
@@ -338,11 +370,15 @@
     function optLabel(it) { return it.name + (it.detail ? ' — ' + it.detail : ''); }
 
     var steps = [];           // { key, label, el }
+    var maatStep = null, ovStep = null;
     var colorBtns = [], fillBtns = [], appBtns = [], checkEl = null, glazBtns = [];
 
-    // -- Afmetingen --
+    // -- Afmetingen (min/max uit de Drutex-catalogus indien beschikbaar) --
     (function () {
       var p = panel('Afmetingen');
+      var lim = el('p', 'dx-hint'); lim.style.margin = '0 0 10px';
+      lim.textContent = 'Breedte ' + wmin + '–' + wmax + ' mm · hoogte ' + hmin + '–' + hmax + ' mm.';
+      p.appendChild(lim);
       var sizeWrap = el('div', 'dx-size');
       function sizeRow(label, val, min, max, set) {
         var row = el('div', 'dx-size-row'); var lab = el('div', 'dx-size-lab');
@@ -355,13 +391,16 @@
         rng.addEventListener('input', function () { on(rng.value); });
         num.addEventListener('input', function () { on(num.value); });
       }
-      sizeRow('Breedte (mm)', W, WMIN, WMAX, function (v) { W = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
-      sizeRow('Hoogte (mm)', H, HMIN, HMAX, function (v) { H = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
+      sizeRow('Breedte (mm)', W, wmin, wmax, function (v) { W = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
+      sizeRow('Hoogte (mm)', H, hmin, hmax, function (v) { H = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
       p.appendChild(sizeWrap);
       checkEl = el('div', 'dx-check'); p.appendChild(checkEl);
-      steps.push({ key: 'maat', label: 'Afmetingen', el: p });
+      maatStep = { key: 'maat', label: 'Afmetingen', el: p };
     })();
 
+    // ── Onze model-eigen stappen — alleen voor niet-PVC (aluminium/hout). ──
+    // PVC (IGLO) gebruikt de officiele Drutex-catalogus verderop (1:1 stappen).
+    if (!konf) {
     // -- Indeling & opening (ramen & schuif) — schematisch, gaat mee in de offerte --
     if (hasIndeling) {
       var pdv = panel('Indeling & opening');
@@ -548,8 +587,47 @@
       ph.appendChild(hh2); ph.appendChild(hgrid); ph.appendChild(hcap);
       steps.push({ key: 'kruk', label: hLabel, el: ph, getZoom: function () { return krukSel; } });
     }
+    } // ── einde model-eigen stappen (!konf) ──
 
-    // (stap "Drutex-uitrusting" verwijderd op verzoek — geen read-only infostap meer)
+    // ── Catalogus-gedreven stappen (1:1 Drutex) voor PVC-modellen ──
+    function konfStep(fg) {
+      var label = fg.name;
+      // omschrijving alleen tonen als die volledig NL/neutraal is (geen Pools) — anders enkel de naam
+      function cleanNL(s) {
+        if (!s) return '';
+        if (/[ąćęłńóśźż]/i.test(s)) return '';
+        if (/\b(kt[oó]re|widoku|mi[eę]dzy|progiem|nadpro[zż]|skrzyd|szyb|okno|okna|drzwi|oraz|jest|dla|przy|jako|wraz|naklejan|wewn|zewn|uszczel|kolor|bia[lł])\b/i.test(s)) return '';
+        return s.length <= 80 ? s : '';
+      }
+      var items = fg.elements.map(function (e) {
+        return { name: e.name, detail: cleanNL(e.desc), img: e.image || null, identity: e.identity };
+      });
+      cfg.sel[label] = items[0] ? items[0].name : '—';
+      var sel = items[0] || null;
+      var p = panel(label, fg.elements.length + (fg.elements.length === 1 ? ' optie' : ' opties'));
+      if (items.some(function (it) { return it.img; })) {
+        var bh = el('p', 'dx-hint'); bh.style.margin = '0 0 10px';
+        bh.textContent = 'Beweeg over een optie voor een groot voorbeeld; klik om te kiezen.'; p.appendChild(bh);
+      }
+      p.appendChild(optionList(items,
+        function (it) { return it.name === cfg.sel[label]; },
+        function (it) { cfg.sel[label] = it.name; sel = it; if (it.img) glassZoom(it); refreshOverview(); },
+        function (it) { if (it) { if (it.img) glassZoom(it); } else if (sel && sel.img) glassZoom(sel); }));
+      return { key: 'konf-' + fg.identity, label: label, el: p, getZoom: function () { return sel; } };
+    }
+    function buildKonfSteps() {
+      var SKIP = { Material: 1, ProductSummary: 1 };   // model is al gekozen; overzicht doen wij zelf
+      var out = [];
+      gc.stepsOrder.forEach(function (id) {
+        if (id === 'ProductDimensions') { out.push(maatStep); return; }
+        if (SKIP[id]) return;
+        var fg = gc.featureGroups[id];
+        if (!fg || !fg.elements || !fg.elements.length) return;
+        out.push(konfStep(fg));
+      });
+      if (out.indexOf(maatStep) < 0) out.unshift(maatStep);   // dims ontbrak in volgorde → vooraan
+      return out;
+    }
 
     // -- Overzicht & aanvraag --
     var ovBody = el('div', 'dx-ov');
@@ -579,14 +657,24 @@
       var note = el('p', 'dx-hint'); note.style.marginTop = '10px';
       note.textContent = 'Prijs op aanvraag — u ontvangt een vrijblijvende offerte op maat. Geen verplichtingen.';
       p.appendChild(note);
-      steps.push({ key: 'overzicht', label: 'Overzicht & aanvraag', el: p });
+      ovStep = { key: 'overzicht', label: 'Overzicht & aanvraag', el: p };
     })();
+
+    // ── Stappen samenstellen ──
+    // PVC (IGLO): 1:1 Drutex-catalogus in Drutex-volgorde. Anders: onze model-eigen stappen.
+    if (konf) steps = buildKonfSteps();
+    else steps.unshift(maatStep);
+    steps.push(ovStep);
 
     function summaryRows() {
       var rows = [
         ['Model', m.name + ' (' + m.category + ')'],
         ['Afmeting', W + ' × ' + H + ' mm']
       ];
+      if (konf) {   // PVC: alle keuzes komen uit de Drutex-catalogus (cfg.sel)
+        Object.keys(cfg.sel).forEach(function (lab) { rows.push([lab, cfg.sel[lab]]); });
+        return rows;
+      }
       if (hasIndeling) {
         rows.push(['Indeling', cfg.indeling || 'Enkel']);
         rows.push(['Opening', (cfg.openings || []).map(function (k, i) { return 'Vak ' + (i + 1) + ': ' + openingLabel(k); }).join(' · ')]);
