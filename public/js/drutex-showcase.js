@@ -64,23 +64,24 @@
     { key: '1b2o', label: '1 boven / 2 onder', vakken: [{ x: 0, y: 0, w: 1, h: .5 }, { x: 0, y: .5, w: .5, h: .5 }, { x: .5, y: .5, w: .5, h: .5 }] },
     { key: '4', label: '4-delig', vakken: [{ x: 0, y: 0, w: .5, h: .5 }, { x: .5, y: 0, w: .5, h: .5 }, { x: 0, y: .5, w: .5, h: .5 }, { x: .5, y: .5, w: .5, h: .5 }] }
   ];
-  // openingstypes (zoals de oude configurator): vast + draai/draaikiep links/rechts
+  // openingstypes (Drutex-codes zoals in de officiele configurator): F/U/RP/RL/URP/URL
   var OPENINGS = [
-    { key: 'vast', label: 'Vast', short: 'Vast' },
-    { key: 'draai-l', label: 'Draai links', short: 'Draai L' },
-    { key: 'draai-r', label: 'Draai rechts', short: 'Draai R' },
-    { key: 'dk-l', label: 'Draaikiep links', short: 'D-kiep L' },
-    { key: 'dk-r', label: 'Draaikiep rechts', short: 'D-kiep R' }
+    { key: 'vast', label: 'Vast', short: 'Vast', code: 'F' },
+    { key: 'kiep', label: 'Kiep (uitzet)', short: 'Kiep', code: 'U' },
+    { key: 'draai-r', label: 'Draai rechts', short: 'Draai R', code: 'RP' },
+    { key: 'draai-l', label: 'Draai links', short: 'Draai L', code: 'RL' },
+    { key: 'dk-r', label: 'Draaikiep rechts', short: 'D-kiep R', code: 'URP' },
+    { key: 'dk-l', label: 'Draaikiep links', short: 'D-kiep L', code: 'URL' }
   ];
-  // open-symbool (draai/kiep) binnen een glasvak — punt wijst naar de scharnierzijde
+  // open-symbool (draai/kiep) binnen een glasvak — rode lijnen, zoals de Drutex-configurator
   function openSym(op, x, y, w, h) {
-    var cx = x + w / 2, cy = y + h / 2, st = ' stroke="#5e6164" stroke-width="1.5" fill="none" stroke-linejoin="round" opacity=".8"';
+    var cx = x + w / 2, cy = y + h / 2, st = ' stroke="#d64a3f" stroke-width="1.6" fill="none" stroke-linejoin="round"';
     var L = x, R = x + w, T = y, B = y + h;
     function v(p1, ap, p2) { return '<path d="M' + p1[0] + ' ' + p1[1] + ' L' + ap[0] + ' ' + ap[1] + ' L' + p2[0] + ' ' + p2[1] + '"' + st + '/>'; }
     var s = '';
     if (op === 'draai-r' || op === 'dk-r') s += v([L, T], [R, cy], [L, B]); // scharnier rechts → punt rechts
     if (op === 'draai-l' || op === 'dk-l') s += v([R, T], [L, cy], [R, B]); // scharnier links → punt links
-    if (op === 'dk-r' || op === 'dk-l') s += v([L, T], [cx, B], [R, T]);    // kiep → punt onder
+    if (op === 'kiep' || op === 'dk-r' || op === 'dk-l') s += v([L, T], [cx, B], [R, T]); // kiep → punt onder
     return s;
   }
   function divisionSVG(div, w, h, openings) {
@@ -232,7 +233,7 @@
     }
     // schematische indeling + openingen in het preview-paneel (alleen op de stap "Indeling")
     function drawDivisionPreview() { schemaBox.innerHTML = divisionSVG(curDiv, W, H, cfg.openings); }
-    function openingLabel(k) { for (var i = 0; i < OPENINGS.length; i++) if (OPENINGS[i].key === k) return OPENINGS[i].label; return 'Vast'; }
+    function openingLabel(k) { for (var i = 0; i < OPENINGS.length; i++) if (OPENINGS[i].key === k) return OPENINGS[i].label + ' (' + OPENINGS[i].code + ')'; return 'Vast (F)'; }
     function runCheck() {
       if (!checkEl) return;
       if (type !== 'window') { checkEl.style.display = 'none'; return; }
