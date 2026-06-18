@@ -258,6 +258,7 @@
     ['z jednym zamkiem', 'met één slot'], ['z dwoma zamkami', 'met twee sloten'],
     ['jednym', 'één'], ['zamkiem', 'slot'], ['dwoma', 'twee'], ['zamkami', 'sloten'], ['zamków', 'sloten'], ['zamek', 'slot'],
     ['Listwa podokienna', 'Onderdorpellat'], ['listwa podokienna', 'onderdorpellat'],
+    ['rząd', 'rij'], ['rzędu', 'rij'], ['Wysokość - rząd', 'Hoogte - rij'],
     ['listwy tynkowej', 'pleisterlat'], ['Listwy tynkowe', 'Pleisterlatten'], ['listwy tynkowe', 'pleisterlatten'],
     ['tynkowej', 'pleister'], ['tynkowe', 'pleister'], ['tynkowa', 'pleister'],
     ['moskitiery', 'hor'], ['zloty dab', 'goudeiken'], ['złoty dąb', 'goudeiken'],

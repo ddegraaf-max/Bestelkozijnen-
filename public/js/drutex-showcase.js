@@ -138,7 +138,7 @@
     var stdGlas = (opt.std || []).find(function (s) { return /pakiet szybow|szyba o Ug|Ug\s*=/i.test(s); }) || '';
     // dichtingskleur: Drutex vermeldt in de standaard "uszczelki ... w kolorze czarnym lub szarym" → zwart/grijs
     var dichtingKeuze = (opt.std || []).some(function (s) { return /uszczel/i.test(s) && /(czarn|szar)/i.test(s); });
-    var cfg = { kleur: '—', kleurBuiten: '—', kruk: '—', vulling: null, glas: 'Standaard', sel: {} };
+    var cfg = { kleur: '—', kleurBuiten: '—', kruk: '—', vulling: null, glas: 'Standaard', sel: {}, ids: {}, dims: null };
     if (dichtingKeuze) cfg.dichting = 'Zwart';
     var hasIndeling = (type === 'window' || type === 'sliding');
     var curDiv = DIVISIONS[0];   // gekozen indeling (vakken)
@@ -169,7 +169,7 @@
         else if (/classic/.test(slug) && /classic/.test(nm)) key = e.identity;
       });
       dim = lim[key] || lim[Object.keys(lim)[0]] || null;
-      return { group: grp, gc: g, dim: dim };
+      return { group: grp, gc: g, dim: dim, materialId: (mats ? key : null) };
     })();
     var gc = konf && konf.gc;
     var wmin = WMIN, wmax = WMAX, hmin = HMIN, hmax = HMAX;
@@ -603,6 +603,7 @@
         return { name: e.name, detail: cleanNL(e.desc), img: e.image || null, identity: e.identity };
       });
       cfg.sel[label] = items[0] ? items[0].name : '—';
+      cfg.ids[fg.identity] = items[0] ? items[0].identity : null;   // gekozen feature-id (voor live maatstap)
       var sel = items[0] || null;
       var p = panel(label, fg.elements.length + (fg.elements.length === 1 ? ' optie' : ' opties'));
       if (items.some(function (it) { return it.img; })) {
@@ -611,21 +612,81 @@
       }
       p.appendChild(optionList(items,
         function (it) { return it.name === cfg.sel[label]; },
-        function (it) { cfg.sel[label] = it.name; sel = it; if (it.img) glassZoom(it); refreshOverview(); },
+        function (it) { cfg.sel[label] = it.name; cfg.ids[fg.identity] = it.identity; sel = it; if (it.img) glassZoom(it); refreshOverview(); },
         function (it) { if (it) { if (it.img) glassZoom(it); } else if (sel && sel.img) glassZoom(sel); }));
       return { key: 'konf-' + fg.identity, label: label, el: p, getZoom: function () { return sel; } };
     }
+    // Dynamische maatstap: vraagt de exacte maatstructuur 1:1 op bij Drutex voor de
+    // gekozen configuratie (rijen/type/voet) → per-rij hoogtes, juiste ranges. Werkt
+    // automatisch voor ELK PVC-model, want het wordt live per configuratie opgehaald.
+    function konfDimsStep() {
+      var p = panel('Afmetingen');
+      var info = el('p', 'dx-hint'); info.style.margin = '0 0 10px'; info.textContent = 'Maten laden…';
+      var body = el('div', 'dx-size');
+      p.appendChild(info); p.appendChild(body);
+      var loaded = false, lastSig = '';
+      function selMap() { var s = {}; if (konf.materialId) s.Material = konf.materialId; for (var k in cfg.ids) if (cfg.ids[k]) s[k] = cfg.ids[k]; return s; }
+      function numRow(label, val, min, max, onset) {
+        var row = el('div', 'dx-size-row'); var lab = el('div', 'dx-size-lab');
+        var sp = el('span'); sp.textContent = label + ' (' + min + '–' + max + ' mm)';
+        var num = el('input', null, { type: 'number', min: min, max: max, step: 5, value: val });
+        lab.appendChild(sp); lab.appendChild(num);
+        var rng = el('input', null, { type: 'range', min: min, max: max, step: 5, value: val });
+        row.appendChild(lab); row.appendChild(rng); body.appendChild(row);
+        function on(v) { v = clamp(v, min, max); num.value = rng.value = v; onset(v); }
+        rng.addEventListener('input', function () { on(rng.value); });
+        num.addEventListener('input', function () { on(num.value); });
+      }
+      function recompute() {
+        if (!cfg.dims) return;
+        var tot = cfg.dims.rows.reduce(function (a, r) { return a + (r.h || 0); }, 0);
+        if (tot) H = clamp(tot, hmin, hmax * cfg.dims.rows.length); W = cfg.dims.width;
+        dimsVisible = true; ensureStill(); drawSchema(); refreshOverview();
+      }
+      function render(d) {
+        body.innerHTML = ''; info.style.display = 'none';
+        var wr = d.widthRange && d.widthRange.max ? d.widthRange : { min: wmin, max: wmax };
+        cfg.dims = { width: clamp(W, wr.min, wr.max), rows: [] };
+        numRow('Breedte', cfg.dims.width, wr.min, wr.max, function (v) { cfg.dims.width = v; recompute(); });
+        var rws = (d.rows && d.rows.length) ? d.rows : [{ label: 'Hoogte', minH: (d.total && d.total.minHeight) || hmin, maxH: (d.total && d.total.maxHeight) || hmax, h: (d.total && d.total.height) || H }];
+        rws.forEach(function (r, i) {
+          if (r.minH === r.maxH) return;                       // niet-instelbaar hulpveld (bv. listwa/parapet) → niet tonen
+          var lbl = NL(r.label || ('Hoogte rij ' + (i + 1)));
+          var hv = clamp(r.h || r.minH, r.minH, r.maxH);
+          var rec = { label: lbl, h: hv }; cfg.dims.rows.push(rec);
+          numRow(lbl, hv, r.minH, r.maxH, function (v) { rec.h = v; recompute(); });
+        });
+        if (!cfg.dims.rows.length) cfg.dims.rows.push({ label: 'Hoogte', h: H });
+        recompute();
+      }
+      function fallback() {
+        info.style.display = 'none'; body.innerHTML = ''; cfg.dims = null;
+        numRow('Breedte', W, wmin, wmax, function (v) { W = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
+        numRow('Hoogte', H, hmin, hmax, function (v) { H = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
+      }
+      function load() {
+        var sig = JSON.stringify(selMap());
+        if (loaded && sig === lastSig) return;                 // alleen herladen als keuzes wijzigden
+        lastSig = sig; loaded = false;
+        info.style.display = ''; info.textContent = 'Maten laden…'; body.innerHTML = '';
+        fetch('/api/konf/dims', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ group: konf.group, sel: selMap() }) })
+          .then(function (r) { return r.json(); })
+          .then(function (d) { if (d && d.ok) { render(d); loaded = true; } else fallback(); })
+          .catch(fallback);
+      }
+      return { key: 'maat', label: 'Afmetingen', el: p, onShow: load };
+    }
     function buildKonfSteps() {
       var SKIP = { Material: 1, ProductSummary: 1 };   // model is al gekozen; overzicht doen wij zelf
-      var out = [];
+      var out = [], hasDims = false;
       gc.stepsOrder.forEach(function (id) {
-        if (id === 'ProductDimensions') { out.push(maatStep); return; }
+        if (id === 'ProductDimensions') { out.push(konfDimsStep()); hasDims = true; return; }
         if (SKIP[id]) return;
         var fg = gc.featureGroups[id];
         if (!fg || !fg.elements || !fg.elements.length) return;
         out.push(konfStep(fg));
       });
-      if (out.indexOf(maatStep) < 0) out.unshift(maatStep);   // dims ontbrak in volgorde → vooraan
+      if (!hasDims) out.unshift(konfDimsStep());   // dims ontbrak in volgorde → vooraan
       return out;
     }
 
@@ -671,9 +732,15 @@
         ['Model', m.name + ' (' + m.category + ')'],
         ['Afmeting', W + ' × ' + H + ' mm']
       ];
-      if (konf) {   // PVC: alle keuzes komen uit de Drutex-catalogus (cfg.sel)
-        Object.keys(cfg.sel).forEach(function (lab) { rows.push([lab, cfg.sel[lab]]); });
-        return rows;
+      if (konf) {   // PVC: alle keuzes komen uit de Drutex-catalogus (cfg.sel) + live maten
+        var kr = [['Model', m.name + ' (' + m.category + ')']];
+        if (cfg.dims && cfg.dims.rows && cfg.dims.rows.length) {
+          kr.push(['Breedte', cfg.dims.width + ' mm']);
+          if (cfg.dims.rows.length === 1) kr.push(['Hoogte', cfg.dims.rows[0].h + ' mm']);
+          else cfg.dims.rows.forEach(function (r) { kr.push([r.label, r.h + ' mm']); });
+        } else kr.push(['Afmeting', W + ' × ' + H + ' mm']);
+        Object.keys(cfg.sel).forEach(function (lab) { kr.push([lab, cfg.sel[lab]]); });
+        return kr;
       }
       if (hasIndeling) {
         rows.push(['Indeling', cfg.indeling || 'Enkel']);
@@ -734,6 +801,7 @@
       navBtns.forEach(function (b, j) { b.classList.toggle('active', j === active); b.classList.toggle('done', j < active); });
       bodyEl.innerHTML = '';
       bodyEl.appendChild(steps[active].el);
+      if (steps[active].onShow) steps[active].onShow();
       if (steps[active].key === 'overzicht') refreshOverview();
       var navrow = el('div', 'dx-stepfoot');
       var prev = el('button', 'dx-btn-ghost', { type: 'button' }); prev.textContent = '‹ Vorige'; prev.disabled = active === 0;
