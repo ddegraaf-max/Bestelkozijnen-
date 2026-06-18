@@ -603,7 +603,8 @@
         return { name: e.name, detail: cleanNL(e.desc), img: e.image || null, identity: e.identity };
       });
       cfg.sel[label] = items[0] ? items[0].name : '—';
-      cfg.ids[fg.identity] = items[0] ? items[0].identity : null;   // gekozen feature-id (voor live maatstap)
+      // cfg.ids alleen vullen bij een ECHTE keuze (niet de standaard) — anders zou een
+      // niet-gekozen standaard (bv. ProductType "F") de live maatstap verkeerd sturen.
       var sel = items[0] || null;
       var p = panel(label, fg.elements.length + (fg.elements.length === 1 ? ' optie' : ' opties'));
       if (items.some(function (it) { return it.img; })) {
