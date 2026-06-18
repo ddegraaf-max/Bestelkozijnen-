@@ -58,13 +58,15 @@ app.get('/configurator', (req, res) => render(res, 'configurator', { active: 'co
 // Injecteer een versie (?v=) op de eigen JS/CSS zodat browsers na een (re)deploy verse
 // bestanden ophalen i.p.v. een oude gecachte versie (anders zie je wijzigingen pas na
 // een handmatige harde refresh).
-function serveDrutexConfigurator(req, res) {
-  let html = fs.readFileSync(path.join(__dirname, 'public', 'configurator.html'), 'utf8');
-  html = html.replace(/(["'])(\/(?:js|css)\/[A-Za-z0-9._\-]+\.(?:js|css))\1/g, '$1$2?v=' + ASSET_VER + '$1');
-  res.type('html').send(html);
+function serveConfigPage(file) {
+  return function (req, res) {
+    let html = fs.readFileSync(path.join(__dirname, 'public', file), 'utf8');
+    html = html.replace(/(["'])(\/(?:js|css)\/[A-Za-z0-9._\-]+\.(?:js|css))\1/g, '$1$2?v=' + ASSET_VER + '$1');
+    res.type('html').send(html);
+  };
 }
-app.get('/configurator2', serveDrutexConfigurator);   // Drutex-catalogus-configurator
-app.get('/drutex', serveDrutexConfigurator);           // directe toegang: /drutex/#model-slug
+app.get('/configurator2', serveConfigPage('configurator2.html'));  // nieuw "Precision Architectural"-design
+app.get('/drutex', serveConfigPage('configurator.html'));          // originele Drutex-catalogus (directe toegang: /drutex/#model-slug)
 app.get('/kozijnen/:slug', (req, res) => {
   const m = materials[req.params.slug];
   if (!m) return res.status(404).render('404', { active: '', title: 'Niet gevonden' });

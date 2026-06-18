@@ -167,6 +167,11 @@
     var m = models[modelId];
     if (!m) { root.innerHTML = '<p style="color:#b00">Onbekend model: ' + modelId + '</p>'; return; }
     root.classList.add('dx'); root.innerHTML = '';
+    // "archi"-skin (alleen op /configurator2): 3-koloms layout (stappenbalk links, technische
+    // tekening in het midden, optiepaneel rechts) + technische tekening i.p.v. productfoto's.
+    // Default (/drutex) blijft ongewijzigd.
+    var ARCHI = (window.DX_SKIN === 'archi');
+    if (ARCHI) root.classList.add('dx-archi');
 
     var mode = m.colorMode || 'image';
     var colors = (mode === 'ral') ? (m.colors && m.colors.length ? m.colors : (window.DRUTEX_RAL || [])) : (m.colors || []);
@@ -783,7 +788,8 @@
       // er geen Pools meer in zit (anders niets, nooit Pools tonen).
       function ptDesc(s) {
         s = String(s || '').trim();
-        if (!s || /[ąćęłńóśźż]/i.test(s)) return '';
+        if (!s || /^(empty|brak|n\/?a|none|null|-)$/i.test(s)) return '';   // placeholder-omschrijvingen niet tonen
+        if (/[ąćęłńóśźż]/i.test(s)) return '';
         if (/\b(komorow|profil|gwaran|urz[aą]dz|s[lł]u[zż]|przed|wraz|oraz|jako|dla|przy|kt[oó]re|naszego|udzia|wybran|pozycj|odrygl|przewod|domykan|skrzyd|drzwi|okno|okna|szyb|kolor|bia[lł]|naklejan|widok|mi[eę]dzy|nadpro|zewn|wewn)\b/i.test(s)) return '';
         return s.length > 220 ? s.slice(0, 217) + '…' : s;
       }
@@ -1177,6 +1183,10 @@
       navBtns.forEach(function (b, j) { b.classList.toggle('active', j === active); b.classList.toggle('done', j < active); });
       bodyEl.innerHTML = '';
       bodyEl.appendChild(steps[active].el);
+      if (ARCHI) {   // stapnummer-badge in de paneelkop (zoals het mockup-ontwerp)
+        var ph = steps[active].el.querySelector('.dx-phead');
+        if (ph && !ph.querySelector('.dx-archi-num')) { var nb = el('span', 'dx-archi-num'); nb.textContent = (active + 1); ph.insertBefore(nb, ph.firstChild); }
+      }
       if (steps[active].onShow) steps[active].onShow();
       if (steps[active].key === 'overzicht') refreshOverview();
       var navrow = el('div', 'dx-stepfoot');
@@ -1194,6 +1204,7 @@
       // op "Indeling" de vorm met openingen
       if (steps[active].key === 'maat' && cfg.dims) { drawDimSchema(); pcard.classList.add('show-schema'); }
       else if (steps[active].key === 'indeling') { drawDivisionPreview(); pcard.classList.add('show-schema'); }
+      else if (ARCHI) { if (cfg.dims) drawDimSchema(); else drawDivisionPreview(); pcard.classList.add('show-schema'); } // technische tekening op elke stap
       else pcard.classList.remove('show-schema');
       // maatlijnen-overlay alleen op de Afmetingen-stap (geen "raam met maat" bij kleuren e.d.)
       stage.classList.toggle('dims-on', steps[active].key === 'maat' && dimsVisible);
