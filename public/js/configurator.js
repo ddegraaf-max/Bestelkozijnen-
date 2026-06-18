@@ -223,8 +223,14 @@ function defs(frameC){
   <pattern id="wood${GID}" patternUnits="userSpaceOnUse" width="11" height="230"><rect width="11" height="230" fill="url(#wbase${GID})"/><g stroke="${wDk}" stroke-width=".7" fill="none" opacity=".22"><path d="M2.5 0 Q4.5 58 2.5 116 T2.5 230"/><path d="M7 0 Q5 70 7 140 T7 230"/></g><line x1="10.4" y1="0" x2="10.4" y2="230" stroke="${wMd}" stroke-width=".55" opacity=".28"/><line x1=".6" y1="0" x2=".6" y2="230" stroke="${wHi}" stroke-width=".5" opacity=".25"/></pattern>
   <filter id="blur${GID}" x="-30%" y="-30%" width="160%" height="170%"><feGaussianBlur stdDeviation="6"/></filter></defs>`; }
 function paneSym(sym,x,y,w,h,c){
-  // De gestreepte open-richting-driehoeken (draai/kiep/deur) zijn verwijderd: de live-animatie laat de opening al zien, dus die schematische lijnen waren overbodig en ogen rommelig.
-  let s=''; const ay=y+h/2;
+  // Statische open-richting-symbolen (technische tekening): gestippelde driehoek naar
+  // de scharnierzijde voor draai/deur, plus een extra driehoek naar boven bij kiep
+  // (draaikiep). Vervangt de vroegere open/dicht-animatie, zodat de preview stilstaat.
+  const d=`stroke="${c}" stroke-width="1.3" stroke-dasharray="4 3" fill="none"`; let s=''; const ay=y+h/2;
+  if(sym==='draaiL'||sym==='kiepL'||sym==='deurL') s+=`<path d="M${x+w} ${y+4} L${x+4} ${y+h/2} L${x+w} ${y+h-4}" ${d}/>`;
+  if(sym==='draaiR'||sym==='kiepR'||sym==='deurR') s+=`<path d="M${x} ${y+4} L${x+w-4} ${y+h/2} L${x} ${y+h-4}" ${d}/>`;
+  if(sym==='kiepL'||sym==='kiepR') s+=`<path d="M${x+4} ${y+h-4} L${x+w/2} ${y+4} L${x+w-4} ${y+h-4}" ${d}/>`;
+  if(sym==='vast') s+=`<rect x="${x+w/2-7}" y="${y+h/2-7}" width="14" height="14" rx="2" fill="none" stroke="${c}" stroke-width="1" opacity=".5"/>`;
   if(sym==='schuifR') s+=`<line x1="${x+w*0.32}" y1="${ay}" x2="${x+w*0.68}" y2="${ay}" stroke="${c}" stroke-width="1.6"/><path d="M${x+w*0.68} ${ay} l-7 -5 m7 5 l-7 5" stroke="${c}" stroke-width="1.6" fill="none"/>`;
   if(sym==='schuifL') s+=`<line x1="${x+w*0.32}" y1="${ay}" x2="${x+w*0.68}" y2="${ay}" stroke="${c}" stroke-width="1.6"/><path d="M${x+w*0.32} ${ay} l7 -5 m-7 5 l7 5" stroke="${c}" stroke-width="1.6" fill="none"/>`;
   return s;

@@ -65,22 +65,13 @@
 .cfg .stage{min-width:0}
 .cfg .stage svg{width:100%;max-width:100%;height:auto;display:block}   /* width:100% nodig: iOS Safari laat een viewBox-SVG in flex anders tot 0 krimpen */
 
-/* ---- Mini-animaties: laat per vleugel zien hóé het opent ---- */
-.cfg .stage svg .cfg-sash{transform-box:fill-box;will-change:transform}
-@media (prefers-reduced-motion: no-preference){
-  .cfg .stage svg .cfg-turn-r{transform-origin:left center;animation:cfgTurnR 5.6s ease-in-out infinite}
-  .cfg .stage svg .cfg-turn-l{transform-origin:right center;animation:cfgTurnL 5.6s ease-in-out infinite}
-  .cfg .stage svg .cfg-tt-r{transform-origin:left bottom;animation:cfgTTR 7.8s ease-in-out infinite}
-  .cfg .stage svg .cfg-tt-l{transform-origin:right bottom;animation:cfgTTL 7.8s ease-in-out infinite}
-  .cfg .stage svg .cfg-slide-r{animation:cfgSlideR 6.4s ease-in-out infinite}
-  .cfg .stage svg .cfg-slide-l{animation:cfgSlideL 6.4s ease-in-out infinite}
-  /* Buitenaanzicht: een naar-binnen-openend raam opent van de kijker AF i.p.v. naar de kijker toe. */
-  .cfg .stage svg .cfg-turn-r.cfg-out{animation-name:cfgTurnROut}
-  .cfg .stage svg .cfg-turn-l.cfg-out{animation-name:cfgTurnLOut}
-  .cfg .stage svg .cfg-tt-r.cfg-out{animation-name:cfgTTROut}
-  .cfg .stage svg .cfg-tt-l.cfg-out{animation-name:cfgTTLOut}
-}
-/* binnenaanzicht: opent NAAR de kijker toe */
+/* ---- Statische preview: geen open/dicht-animatie ----
+   De openingsrichting wordt nu getoond met vaste, gestippelde symbolen
+   (driehoek naar de scharnierzijde, extra driehoek omhoog bij kiep) in de
+   SVG zelf — net als op een technische tekening. De vroegere lus-animatie
+   is bewust verwijderd zodat de preview stilstaat. */
+.cfg .stage svg .cfg-sash{transform-box:fill-box}
+/* (ongebruikte keyframes hieronder blijven staan; ze worden nergens meer toegepast) */
 @keyframes cfgTurnR{0%,24%,100%{transform:perspective(900px) rotateY(0deg)}62%{transform:perspective(900px) rotateY(-38deg)}}
 @keyframes cfgTurnL{0%,24%,100%{transform:perspective(900px) rotateY(0deg)}62%{transform:perspective(900px) rotateY(38deg)}}
 @keyframes cfgTTR{0%,8%,100%{transform:perspective(900px) rotateY(0deg) rotateX(0deg)}32%{transform:perspective(900px) rotateY(-34deg) rotateX(0deg)}52%{transform:perspective(900px) rotateY(0deg) rotateX(0deg)}76%{transform:perspective(900px) rotateY(0deg) rotateX(-20deg)}92%{transform:perspective(900px) rotateY(0deg) rotateX(0deg)}}

@@ -24,7 +24,7 @@ function cleanDesc(html) {
 
 // Stap(groep)namen waarvoor de generieke NL-vertaler botst met optiewaarden
 // (bv. "Szyby" als staptitel = Beglazing, maar "szyby" in waarden = ruiten).
-const STEP_NAMES = { KolorSzyba: 'Beglazing' };
+const STEP_NAMES = { KolorSzyba: 'Beglazing', JedenZamek: 'Cilinder' };
 
 const cat = JSON.parse(fs.readFileSync(SRC, 'utf8'));
 const out = { productGroups: {} };

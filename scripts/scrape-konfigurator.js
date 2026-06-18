@@ -89,9 +89,20 @@ async function pool(items, n, worker) {
   return res;
 }
 
+// Drutex cel-identiteit (URL/URP/RL/RP/U/F…) -> onze openingscode (voor het schema).
+function codeToOp(id) {
+  id = String(id || '').toUpperCase();
+  if (/URL/.test(id)) return 'dk-l';
+  if (/URP/.test(id)) return 'dk-r';
+  if (/RL/.test(id)) return 'draai-l';
+  if (/RP/.test(id)) return 'draai-r';
+  if (/(^|[^A-Z])U([^A-Z]|$)/.test(id)) return 'kiep';
+  return 'vast';
+}
+
 // Loopt vanaf een set keuzes door tot de stap "Afmetingen" en leest de exacte
-// maatstructuur: totale breedte-range + de afzonderlijke rij-hoogtes (met label
-// "Wysokość - rząd N" en eigen min/max). Negeert vaste hulpvelden (min==max).
+// maatstructuur 1:1: totale breedte-range + per rij de hoogte-range én de cellen
+// (breedte-fractie + openingstype). Zo kan het schema het echte raster tekenen.
 async function walkToDims(group, picks) {
   const sid = await newSession();
   let r = await initProduct(group, sid);
@@ -104,10 +115,15 @@ async function walkToDims(group, picks) {
     const nx = await selectFeature(sid, f); if (!nx) break; pd = nx.productData;
   }
   if (!pd || !pd.totalDimensions) return null;
-  const rows = (pd.rowDimensions || [])
-    .filter(rd => rd.minHeight !== rd.maxHeight)
-    .map(rd => ({ label: rd.translationLabel || '', minH: rd.minHeight, maxH: rd.maxHeight }));
-  if (!rows.length) rows.push({ label: '', minH: pd.totalDimensions.minHeight, maxH: pd.totalDimensions.maxHeight });
+  const cellRows = pd.rowCellDimensions || [];
+  const glassRows = (pd.rowDimensions || []).filter(rd => rd.minHeight !== rd.maxHeight);
+  const rows = glassRows.map((rd, i) => {
+    const cs = cellRows[i] || [];
+    const tot = cs.reduce((a, c) => a + (c.width || c.minWidth || 1), 0) || 1;
+    const cells = cs.map(c => ({ w: Math.round((c.width || c.minWidth || 1) / tot * 1000) / 1000, op: codeToOp(c.identity), minW: c.minWidth, maxW: c.maxWidth }));
+    return { label: rd.translationLabel || '', minH: rd.minHeight, maxH: rd.maxHeight, h0: rd.height || rd.minHeight, cells: cells.length ? cells : [{ w: 1, op: 'vast' }] };
+  });
+  if (!rows.length) rows.push({ label: '', minH: pd.totalDimensions.minHeight, maxH: pd.totalDimensions.maxHeight, h0: pd.totalDimensions.height || pd.totalDimensions.minHeight, cells: [{ w: 1, op: 'vast' }] });
   return { widthRange: { min: pd.totalDimensions.minWidth, max: pd.totalDimensions.maxWidth }, rows };
 }
 

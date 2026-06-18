@@ -50,15 +50,21 @@ function render(res, view, data = {}) { res.render(view, { active: '', ...data }
 
 // ================= PUBLIEKE PAGINA'S =================
 app.get('/', (req, res) => render(res, 'home', { active: 'home', title: 'Kozijnen op maat bestellen' }));
-// nieuwe configurator op /configurator (standalone pagina). Oude EJS-view blijft in de repo maar wordt niet meer geserveerd.
-// Configurator: injecteer een versie (?v=) op de eigen JS/CSS zodat browsers na een
-// (re)deploy verse bestanden ophalen i.p.v. een oude gecachte versie (anders zie je
-// wijzigingen pas na een handmatige harde refresh).
-app.get('/configurator', (req, res) => {
+// /configurator = de oorspronkelijke (statische) kozijn-configurator (EJS-view).
+// Toont het kozijn als stilstaande technische tekening met open-richting-symbolen.
+app.get('/configurator', (req, res) => render(res, 'configurator', { active: 'configurator', title: 'Configurator – stel je kozijn samen', assistantEnabled: !!process.env.ANTHROPIC_API_KEY }));
+
+// De Drutex-catalogus-configurator (standalone HTML) staat op /configurator2 en /drutex.
+// Injecteer een versie (?v=) op de eigen JS/CSS zodat browsers na een (re)deploy verse
+// bestanden ophalen i.p.v. een oude gecachte versie (anders zie je wijzigingen pas na
+// een handmatige harde refresh).
+function serveDrutexConfigurator(req, res) {
   let html = fs.readFileSync(path.join(__dirname, 'public', 'configurator.html'), 'utf8');
   html = html.replace(/(["'])(\/(?:js|css)\/[A-Za-z0-9._\-]+\.(?:js|css))\1/g, '$1$2?v=' + ASSET_VER + '$1');
   res.type('html').send(html);
-});
+}
+app.get('/configurator2', serveDrutexConfigurator);   // Drutex-catalogus-configurator
+app.get('/drutex', serveDrutexConfigurator);           // directe toegang: /drutex/#model-slug
 app.get('/kozijnen/:slug', (req, res) => {
   const m = materials[req.params.slug];
   if (!m) return res.status(404).render('404', { active: '', title: 'Niet gevonden' });

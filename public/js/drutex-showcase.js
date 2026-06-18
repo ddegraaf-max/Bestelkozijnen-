@@ -37,6 +37,38 @@
     return n;
   }
   function clamp(v, lo, hi) { v = Math.round(v) || 0; return v < lo ? lo : v > hi ? hi : v; }
+  // Drutex gebruikt 'empty.png' én 'brak.jpg' (= "ontbreekt") als placeholder voor opties
+  // zonder foto → behandel beide als geen foto.
+  function realImg(s) { return (s && !/\/(empty|brak)\.(png|jpe?g)(\?|$)/i.test(s)) ? s : null; }
+  // Kleurstaal (hex) afleiden uit een kleurnaam: RAL-nummer in de naam → RAL-hex, anders woordkaart.
+  function hexFromName(name) {
+    var RAL = window.DRUTEX_RAL || [], m = String(name || '').match(/\b(\d{4})\b/);
+    if (m) { var r = RAL.filter(function (c) { return (c.code || '').indexOf(m[1]) >= 0; })[0]; if (r) return r.hex; }
+    var n = String(name || '').toLowerCase();
+    var MAP = [['antraciet', '#2f3438'], ['zwart', '#1c1c1c'], ['lichtgrijs', '#c6c6c2'], ['leisteengrijs', '#5b6066'], ['leisteen', '#4f555b'],
+      ['kwartsgrijs', '#6f7378'], ['bazaltgrijs', '#4b4e52'], ['betongrijs', '#8a8d90'], ['grijs', '#9a9a98'],
+      ['chocoladebruin', '#3a2418'], ['donker eiken', '#4a2f1c'], ['goudeiken', '#a6712e'], ['licht eiken', '#c79a5b'], ['eiken', '#b5894e'], ['oak', '#b5894e'],
+      ['noten', '#4a2e1a'], ['mahonie', '#5b2418'], ['douglas', '#a86b3b'], ['palissander', '#5a3a2a'], ['crème', '#efe6d0'], ['creme', '#efe6d0'],
+      ['beige', '#d8c6a0'], ['donkergroen', '#26432a'], ['mosgroen', '#4a5d2a'], ['groen', '#3f6b3a'],
+      ['donkerrood', '#6e1f1f'], ['rood', '#8e2a2a'], ['staalblauw', '#34495e'], ['blauw', '#2f4d7a'],
+      ['goud', '#b08d3a'], ['zilver', '#bfc1c2'], ['ivoor', '#e7dcc0'], ['platinum', '#9a9ea0'], ['crown', '#9a9ea0'], ['wit', '#f4f4f1']];
+    for (var i = 0; i < MAP.length; i++) if (n.indexOf(MAP[i][0]) >= 0) return MAP[i][1];
+    return null;
+  }
+  // Echte Drutex-kleurstaal zoeken in onze gescrapete modeldata (drutex.pl) op decor-code,
+  // bv. "... (F456-3081)" → de bijbehorende swatch-afbeelding. Geeft een URL of null.
+  var _swIdx = null;
+  function swatchFromName(name) {
+    if (!_swIdx) {
+      _swIdx = {}; var M = window.DRUTEX_MODELS || {};
+      for (var k in M) (M[k].colors || []).forEach(function (c) {
+        if (c.swatch && c.code) { var cc = String(c.code).toLowerCase().trim(); if (!_swIdx[cc]) _swIdx[cc] = c.swatch; }
+      });
+    }
+    var ps = String(name || '').match(/\(([^()]+)\)/g) || [];
+    for (var i = 0; i < ps.length; i++) { var code = ps[i].replace(/[()]/g, '').toLowerCase().trim(); if (_swIdx[code]) return _swIdx[code]; }
+    return null;
+  }
   function hex2(n) { return ('0' + (n | 0).toString(16)).slice(-2); }
   function sampleColor(url, cb) {
     if (_colorCache[url]) return cb(_colorCache[url]);
@@ -175,12 +207,11 @@
     // Drutex-volgorde, met de echte optie-afbeeldingen. Aluminium/hout houden onze
     // eigen, modelspecifieke stappen (die catalogus bestaat daar niet voor).
     var KONF = window.DRUTEX_KONF;
+    // ALLE modellen (PVC, aluminium, hout) gebruiken dezelfde Drutex-catalogus (22 stappen),
+    // gemapt op productgroep via de categorie. Geen aparte eigen kleur-/optiestappen meer.
     var konf = (function () {
       if (!KONF || !KONF.productGroups) return null;
-      if (dual) return null;                          // hout-aluminium: onze dual-weergave + RAL-buiten behouden
       var slug = (modelId || '').toLowerCase();
-      if (/(^|[-_])mb-|cor-vision|d-art|monorail|fold-line|aluminium|alu-cover/i.test(slug)) return null;
-      if (/softline|duoline|drewnian/i.test(slug)) return null;
       var cat = m.category, grp;
       if (cat === 'Drzwi') grp = 'doors';
       else if (cat === 'Systemy tarasowe') grp = /(^|-)hs(-|$)|hefschuif|monorail/i.test(slug) ? 'HS' : 'suwanki';
@@ -236,7 +267,7 @@
 
     // drewniano-aluminiowe: twee weergaven naast elkaar — binnen (hout-render, links) + buiten (alu-masker + RAL, rechts)
     var outerImg = null;
-    if (dual) {
+    if (dual && !konf) {   // dubbele weergave alleen bij onze eigen flow; catalogus-modellen tonen 1 beeld
       viewWrap.classList.add('dual');
       var lblIn = el('div', 'dx-sidelabel'); lblIn.textContent = 'Binnenkant'; stage.appendChild(lblIn);
       var outer = el('div', 'dx-outer');
@@ -263,9 +294,13 @@
     function setTab() { pcard.classList.remove('show-schema'); } // enkel realistisch (schema-tab verwijderd)
 
     var selGlas = null; // gekozen glasoptie-object (voor het grote voorbeeld)
+    var _PX = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; // 1×1 transparant
     function glassZoom(item) {
-      if (!item || !item.img) { pcard.classList.remove('show-gz'); return; }
-      gzImg.src = item.img; gzCap.textContent = item.name + (item.detail ? ' · ' + item.detail : '');
+      var hex = (item && !item.img) ? (item.swatch || item.hex) : null;   // kleurstaal zonder foto
+      if (!item || (!item.img && !hex)) { pcard.classList.remove('show-gz'); return; }
+      if (item.img) { gzImg.src = item.img; gzImg.style.background = ''; gzImg.style.width = ''; gzImg.style.height = ''; }
+      else { gzImg.src = _PX; gzImg.style.background = hex; gzImg.style.width = '260px'; gzImg.style.height = '200px'; }
+      gzCap.textContent = item.name + (item.detail ? ' · ' + item.detail : '');
       pcard.classList.add('show-gz');
     }
 
@@ -296,16 +331,27 @@
     // er labels bij (rij 1 / rij 2 …, of links/midden/rechts) zodat zichtbaar is welke
     // ingevoerde maat bij welke sectie hoort — net als in de Drutex-configurator.
     function dimSchemaSVG(dims) {
-      var cols = (dims.cols && dims.cols.length) ? dims.cols.map(function (c) { return { lab: (c.label || '').replace(/^Breedte\s*/i, ''), size: c.w || 1 }; })
-        : [{ lab: '', size: dims.width || 1000 }];
-      var rows = (dims.rows && dims.rows.length) ? dims.rows.map(function (r) { return { lab: (r.label || '').replace(/^Hoogte\s*-?\s*/i, ''), size: r.h || 1 }; })
-        : [{ lab: '', size: 1000 }];
-      var totW = cols.reduce(function (a, c) { return a + c.size; }, 0) || 1;
+      var hasCols = !!(dims.cols && dims.cols.length);
+      // per rij de cellen bepalen: PVC heeft echte cellen (breedte-fractie + opening),
+      // aluminium/hout gebruikt de kolommen uit de gekozen indeling (uniform per rij)
+      var rows = (dims.rows && dims.rows.length ? dims.rows : [{ h: 1 }]).map(function (r) {
+        var cells = (r.cells && r.cells.length) ? r.cells.map(function (c) { return { w: c.w || 1, op: c.op || null }; })
+          : (hasCols ? dims.cols.map(function (c) { return { w: c.w || 1, op: null }; }) : [{ w: 1, op: null }]);
+        var ct = cells.reduce(function (a, c) { return a + c.w; }, 0) || 1;
+        return { size: r.h || 1, cells: cells.map(function (c) { return { f: c.w / ct, op: c.op }; }) };
+      });
       var totH = rows.reduce(function (a, r) { return a + r.size; }, 0) || 1;
-      var ar = totW / totH, vw, vh;
-      if (ar >= 1) { vw = 280; vh = Math.max(120, Math.round(280 / ar)); } else { vh = 300; vw = Math.max(120, Math.round(300 * ar)); }
-      var padL = 8, padT = (cols.length > 1 ? 24 : 8), padR = 70, padB = 8, m = 4;
-      var ox = padL, oy = padT, iw = vw, ih = vh, W2 = vw + padL + padR, H2 = vh + padT + padB;
+      var totW = (dims.width || (hasCols ? dims.cols.reduce(function (a, c) { return a + (c.w || 1); }, 0) : 1000)) || 1000;
+      var colLabels = hasCols && dims.cols.length > 1;
+      // VAST tekenvlak; breedte en hoogte van het getekende kozijn worden ONAFHANKELIJK
+      // geschaald (eigen as), zodat het wijzigen van de breedte de getekende hoogte niet
+      // verandert — en omgekeerd. Geen herschaling van het hele schema meer.
+      var VBW = 330, VBH = 264, padL = 10, padR = 72, padB = 12, m = 3;
+      var padT = colLabels ? 22 : 12;
+      var boxW = VBW - padL - padR, boxH = VBH - padT - padB, REFW = 2600, REFH = 2600;
+      var iw = Math.max(80, Math.min(boxW, totW / REFW * boxW));
+      var ih = Math.max(70, Math.min(boxH, totH / REFH * boxH));
+      var ox = padL, oy = padT, W2 = VBW, H2 = VBH;
       var FR = '#3a382f', GL = '#e7eef1', TX = '#1b1b1a', LN = '#b9b4a8';
       var s = '<svg viewBox="0 0 ' + W2 + ' ' + H2 + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">';
       s += '<rect x="' + ox + '" y="' + oy + '" width="' + iw + '" height="' + ih + '" rx="4" fill="' + FR + '"/>';
@@ -313,23 +359,93 @@
       rows.forEach(function (r) {
         var rh = ih * (r.size / totH); rowMid.push(yy + rh / 2);
         var xx = ox;
-        cols.forEach(function (c) { var cw = iw * (c.size / totW); s += '<rect x="' + (xx + m) + '" y="' + (yy + m) + '" width="' + Math.max(2, cw - 2 * m) + '" height="' + Math.max(2, rh - 2 * m) + '" fill="' + GL + '"/>'; xx += cw; });
+        r.cells.forEach(function (c) {
+          var cw = iw * c.f, gx = xx + m, gy = yy + m, gw = Math.max(2, cw - 2 * m), gh = Math.max(2, rh - 2 * m);
+          s += '<rect x="' + gx + '" y="' + gy + '" width="' + gw + '" height="' + gh + '" fill="' + GL + '"/>';
+          if (c.op) s += openSym(c.op, gx, gy, gw, gh);
+          xx += cw;
+        });
         yy += rh;
       });
-      // rij-labels rechts
-      rows.forEach(function (r, ri) {
+      rows.forEach(function (r, ri) {   // rij-labels rechts
         var lab = rows.length > 1 ? ('rij ' + (ri + 1)) : 'hoogte';
         s += '<line x1="' + (ox + iw) + '" y1="' + rowMid[ri] + '" x2="' + (ox + iw + 8) + '" y2="' + rowMid[ri] + '" stroke="' + LN + '"/>';
         s += '<text x="' + (ox + iw + 12) + '" y="' + (rowMid[ri] + 4) + '" font-size="12" font-weight="700" fill="' + TX + '">' + lab + '</text>';
       });
-      // kolom-labels boven (alleen bij meerdere kolommen)
-      if (cols.length > 1) {
-        var xx2 = ox;
-        cols.forEach(function (c, ci) { var cw = iw * (c.size / totW); s += '<text x="' + (xx2 + cw / 2) + '" y="' + (oy - 7) + '" font-size="11" font-weight="700" fill="' + TX + '" text-anchor="middle">' + (c.lab || ('kolom ' + (ci + 1))) + '</text>'; xx2 += cw; });
+      if (colLabels) {   // kolom-labels boven (aluminium/hout met indeling)
+        var xx2 = ox, tw = dims.cols.reduce(function (a, c) { return a + (c.w || 1); }, 0) || 1;
+        dims.cols.forEach(function (c, ci) {
+          var cw = iw * ((c.w || 1) / tw);
+          s += '<text x="' + (xx2 + cw / 2) + '" y="' + (oy - 7) + '" font-size="10.5" font-weight="700" fill="' + TX + '" text-anchor="middle">' + ((c.label || '').replace(/^Breedte\s*/i, '') || ('kolom ' + (ci + 1))) + '</text>';
+          xx2 += cw;
+        });
       }
       return s + '</svg>';
     }
-    function drawDimSchema() { if (cfg.dims) schemaBox.innerHTML = dimSchemaSVG(cfg.dims); }
+    // Statisch maatschema: voor PVC het echte Drutex-beeld (niet uitrekken!) met rij-labels
+    // ernaast; voor aluminium/hout het getekende vorm-schema. Verandert NIET met de schuiven.
+    // Scherp vector-schema (SVG): kozijn + secties + openingssymbolen, met de maatlabels
+    // ↕ Hoogte / ↔ Breedte / sectienummers / rij-labels IN de SVG → altijd uitgelijnd, scherp
+    // op elk formaat (ook groot). Layout (proporties) is statisch, dus schuiven ≠ uitlijning.
+    function dimLayoutSVG(layout, perCol, multi) {
+      var rows = (layout && layout.rows && layout.rows.length) ? layout.rows : [{ frac: 1, cells: [{ frac: 1, op: null }] }];
+      var totR = rows.reduce(function (a, r) { return a + (r.frac || 0); }, 0) || 1;
+      var VBW = 360, VBH = 300, padL = 42, padR = (multi ? 54 : 14), padT = 12, padB = 30, m = 3;
+      var ox = padL, oy = padT, iw = VBW - padL - padR, ih = VBH - padT - padB;
+      var FR = '#3a382f', GL = '#e7eef1', TX = '#1b1b1a', AC = '#8e3417';
+      var s = '<svg viewBox="0 0 ' + VBW + ' ' + VBH + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="\'Hanken Grotesk\',sans-serif">';
+      s += '<rect x="' + ox + '" y="' + oy + '" width="' + iw + '" height="' + ih + '" rx="5" fill="' + FR + '"/>';
+      var yy = oy, rowMid = [];
+      rows.forEach(function (r) {
+        var rh = ih * ((r.frac || 0) / totR); rowMid.push(yy + rh / 2);
+        var cells = (r.cells && r.cells.length) ? r.cells : [{ frac: 1, op: null }];
+        var tc = cells.reduce(function (a, c) { return a + (c.frac || 0); }, 0) || 1, xx = ox;
+        cells.forEach(function (c) {
+          var cw = iw * ((c.frac || 0) / tc), gx = xx + m, gy = yy + m, gw = Math.max(2, cw - 2 * m), gh = Math.max(2, rh - 2 * m);
+          s += '<rect x="' + gx + '" y="' + gy + '" width="' + gw + '" height="' + gh + '" fill="' + GL + '"/>';
+          if (c.op) s += openSym(c.op, gx, gy, gw, gh);
+          xx += cw;
+        });
+        yy += rh;
+      });
+      var hy = oy + ih / 2;
+      s += '<g fill="' + AC + '" font-size="11" font-weight="700">';
+      s += '<text x="13" y="' + hy + '" text-anchor="middle" transform="rotate(-90 13 ' + hy + ')">↕ Hoogte</text>';
+      s += '<text x="' + (ox + iw / 2) + '" y="' + (oy + ih + 19) + '" text-anchor="middle">' + (perCol ? '↔ Breedte per sectie (1·2·3)' : '↔ Breedte') + '</text></g>';
+      if (multi) { s += '<g fill="' + TX + '" font-size="11" font-weight="700">'; rows.forEach(function (r, i) { s += '<text x="' + (ox + iw + 6) + '" y="' + (rowMid[i] + 4) + '">‹ rij ' + (i + 1) + '</text>'; }); s += '</g>'; }
+      if (perCol) {   // sectienummers (1·2·3) onder de kolommen van de breedste rij
+        var wr = rows.reduce(function (a, r) { return ((r.cells || []).length > ((a.cells || []).length)) ? r : a; }, rows[0]);
+        var cells2 = wr.cells || [], tc2 = cells2.reduce(function (a, c) { return a + (c.frac || 0); }, 0) || 1, xx2 = ox;
+        cells2.forEach(function (c, i) { var cw = iw * ((c.frac || 0) / tc2), cx = xx2 + cw / 2; s += '<circle cx="' + cx + '" cy="' + (oy + ih - 10) + '" r="8" fill="' + AC + '"/><text x="' + cx + '" y="' + (oy + ih - 6) + '" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">' + (i + 1) + '</text>'; xx2 += cw; });
+      }
+      return s + '</svg>';
+    }
+    function drawDimSchema() {
+      if (!cfg.dims) return;
+      var d = cfg.dims;
+      if (d.img && d.schemaRows && d.schemaRows.length) {
+        var Hpx = 230, multi = d.schemaRows.length > 1, perCol = d.perCol && d.cols && d.cols.length > 1;
+        var F = 'font:700 11px/1 \'Hanken Grotesk\',sans-serif;color:#8e3417;white-space:nowrap';
+        var rij = '<div></div>';
+        if (multi) {
+          var cum = 0;
+          rij = '<div style="position:relative;height:' + Hpx + 'px;min-width:44px">' +
+            d.schemaRows.map(function (fr, i) { var mid = (cum + fr / 2) * Hpx; cum += fr; return '<div style="position:absolute;top:' + mid + 'px;left:0;transform:translateY(-50%);font:700 12px/1 \'Hanken Grotesk\',sans-serif;color:#1b1b1a;white-space:nowrap">‹ rij ' + (i + 1) + '</div>'; }).join('') +
+            '</div>';
+        }
+        var badges = '';   // sectienummers op het beeld (per-kolom modus)
+        if (perCol) { var cw = 0; badges = d.cols.map(function (c, i) { var mid = cw + (c.frac || 0) / 2; cw += (c.frac || 0); return '<span style="position:absolute;bottom:5px;left:' + (mid * 100).toFixed(1) + '%;transform:translateX(-50%);background:#8e3417;color:#fff;font:700 10px/17px sans-serif;width:17px;height:17px;border-radius:50%;text-align:center">' + (i + 1) + '</span>'; }).join(''); }
+        var imgCell = '<div style="position:relative;display:inline-block;line-height:0"><img src="' + d.img + '" alt="" style="height:' + Hpx + 'px;width:auto;max-width:280px;display:block">' + badges + '</div>';
+        schemaBox.innerHTML =
+          '<div style="display:inline-grid;grid-template-columns:auto auto auto;align-items:center;gap:5px 7px;padding:8px">' +
+            '<div style="' + F + ';display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px"><span style="font-size:13px">↕</span><span style="writing-mode:vertical-rl;transform:rotate(180deg)">Hoogte</span></div>' +
+            imgCell + rij +
+            '<div></div><div style="' + F + ';text-align:center">' + (perCol ? '↔ Breedte per sectie (1·2·3)' : '↔ Breedte') + '</div><div></div>' +
+          '</div>';
+        return;
+      }
+      schemaBox.innerHTML = dimSchemaSVG(d);
+    }
     function openingLabel(k) { for (var i = 0; i < OPENINGS.length; i++) if (OPENINGS[i].key === k) return OPENINGS[i].label + ' (' + OPENINGS[i].code + ')'; return 'Vast (F)'; }
     function runCheck() {
       if (!checkEl) return;
@@ -412,7 +528,9 @@
       var wrap = el('div', 'dx-optlist'); var btns = [];
       items.forEach(function (it) {
         var b = el('button', 'dx-opt', { type: 'button', 'aria-pressed': isOn(it) ? 'true' : 'false' });
-        b.innerHTML = (it.img ? '<img class="dx-opt-thumb" src="' + it.img + '" alt="" loading="lazy">' : '')
+        var thumb = it.img ? '<img class="dx-opt-thumb" src="' + it.img + '" alt="" loading="lazy">'
+          : (it.swatch ? '<span class="dx-opt-thumb" style="background:' + it.swatch + ';box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)"></span>' : '');
+        b.innerHTML = thumb
           + '<span class="dx-opt-txt"><span class="dx-opt-name">' + it.name + '</span>'
           + (it.detail ? '<span class="dx-opt-det">' + it.detail + '</span>' : '') + '</span>';
         b.addEventListener('click', function () { btns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); }); b.setAttribute('aria-pressed', 'true'); onpick(it); });
@@ -660,23 +778,73 @@
         if (/\b(kt[oó]re|widoku|mi[eę]dzy|progiem|nadpro[zż]|skrzyd|szyb|okno|okna|drzwi|oraz|jest|dla|przy|jako|wraz|naklejan|wewn|zewn|uszczel|kolor|bia[lł])\b/i.test(s)) return '';
         return s.length <= 80 ? s : '';
       }
-      var items = fg.elements.map(function (e) {
-        return { name: e.name, detail: cleanNL(e.desc), img: e.image || null, identity: e.identity };
+      // producttype-beschrijving: volledige (vertaalde) tekst tonen — bv. "Raam vierdelig,
+      // buitenste vleugels niet te openen, … patio links schuift naar links, …". Alleen als
+      // er geen Pools meer in zit (anders niets, nooit Pools tonen).
+      function ptDesc(s) {
+        s = String(s || '').trim();
+        if (!s || /[ąćęłńóśźż]/i.test(s)) return '';
+        if (/\b(komorow|profil|gwaran|urz[aą]dz|s[lł]u[zż]|przed|wraz|oraz|jako|dla|przy|kt[oó]re|naszego|udzia|wybran|pozycj|odrygl|przewod|domykan|skrzyd|drzwi|okno|okna|szyb|kolor|bia[lł]|naklejan|widok|mi[eę]dzy|nadpro|zewn|wewn)\b/i.test(s)) return '';
+        return s.length > 220 ? s.slice(0, 217) + '…' : s;
+      }
+      var COLORG = { ProductColor: 1, KolorRamekMiedzySzybami: 1, SzprosKolor: 1, UszczelkaKolor: 1 };
+      var isColor = !!COLORG[fg.identity];
+      var allItems = fg.elements.filter(function (e) {
+        // "Wit" uit de raamkleur-stap verwijderen (op verzoek)
+        return !(fg.identity === 'ProductColor' && (e.identity === 'ProductColor__KolorBialy' || e.name === 'Wit'));
+      }).map(function (e) {
+        var img = realImg(e.image) || (isColor ? swatchFromName(e.name) : null);   // echte Drutex-kleurstaal voor kleuren
+        var det = ptDesc(e.desc);   // volledige NL-omschrijving tonen (leeg als er nog Pools in zou staan)
+        return { name: e.name, detail: det, img: img, swatch: (!img && isColor) ? hexFromName(e.name) : null, identity: e.identity };
       });
-      cfg.sel[label] = items[0] ? items[0].name : '—';
-      // cfg.ids alleen vullen bij een ECHTE keuze (niet de standaard) — anders zou een
-      // niet-gekozen standaard (bv. ProductType "F") de live maatstap verkeerd sturen.
-      var sel = items[0] || null;
-      var p = panel(label, fg.elements.length + (fg.elements.length === 1 ? ' optie' : ' opties'));
-      if (items.some(function (it) { return it.img; })) {
+      // Niet-kleurstappen met foto's: opties ZONDER foto verwijderen (bv. klamken zonder beeld).
+      // Stappen waar geen enkele optie een foto heeft, blijven gewoon als tekstkeuze staan.
+      if (!isColor) {
+        var withImg = allItems.filter(function (it) { return it.img; });
+        if (withImg.length && withImg.length < allItems.length) allItems = withImg;
+      }
+      // dubbele namen weghalen (zelfde kruk/optie staat soms meerdere keren in de catalogus)
+      var _seen = {}; allItems = allItems.filter(function (it) { if (_seen[it.name]) return false; _seen[it.name] = 1; return true; });
+      var isPT = (fg.identity === 'ProductType');
+      var p = panel(label, allItems.length + (allItems.length === 1 ? ' optie' : ' opties'));
+      var countEl = p.querySelector('.dx-count');
+      if (allItems.some(function (it) { return it.img; })) {
         var bh = el('p', 'dx-hint'); bh.style.margin = '0 0 10px';
         bh.textContent = 'Beweeg over een optie voor een groot voorbeeld; klik om te kiezen.'; p.appendChild(bh);
       }
-      p.appendChild(optionList(items,
-        function (it) { return it.name === cfg.sel[label]; },
-        function (it) { cfg.sel[label] = it.name; cfg.ids[fg.identity] = it.identity; sel = it; if (it.img) glassZoom(it); refreshOverview(); },
-        function (it) { if (it) { if (it.img) glassZoom(it); } else if (sel && sel.img) glassZoom(sel); }));
-      return { key: 'konf-' + fg.identity, label: label, el: p, getZoom: function () { return sel; } };
+      var listWrap = el('div'); p.appendChild(listWrap);
+      var sel = allItems[0] || null;
+      cfg.sel[label] = sel ? sel.name : '—';
+      // Producttype: alleen de types tonen die bij het gekozen aantal rijen horen
+      // (1 rij → enkel 1-rij types, 2 rijen → 2-rij types, enz.). Standaard 1 rij.
+      function curItems() {
+        if (!isPT) return allItems;
+        var bt = gc.dimModels && gc.dimModels.byType; if (!bt) return allItems;
+        // alleen op rij-aantal filteren als "aantal rijen" een echte keuzestap is (ramen/balkon);
+        // bij deuren/schuif bepaalt het type zelf de indeling → toon alle types
+        if (gc.stepsOrder.indexOf('IloscRzedow') < 0) return allItems;
+        var ir = cfg.ids['IloscRzedow'], rc = (ir && /(\d)Rzedy/i.exec(ir)) ? parseInt(RegExp.$1, 10) : 1;
+        var f = allItems.filter(function (it) { var mm = bt[it.identity]; return mm && mm.rows && mm.rows.length === rc; });
+        return f.length ? f : allItems;
+      }
+      function renderList() {
+        var items = curItems();
+        if (countEl) countEl.textContent = items.length + (items.length === 1 ? ' optie' : ' opties');
+        if (!sel || items.indexOf(sel) < 0) {                 // huidige keuze niet (meer) zichtbaar → eerste zichtbare
+          var keep = items.filter(function (it) { return it.name === cfg.sel[label]; })[0];
+          sel = keep || items[0] || null;
+          if (sel) { cfg.sel[label] = sel.name; if (isPT) cfg.ids[fg.identity] = sel.identity; }
+        }
+        listWrap.innerHTML = '';
+        listWrap.appendChild(optionList(items,
+          function (it) { return it.name === cfg.sel[label]; },
+          function (it) { cfg.sel[label] = it.name; cfg.ids[fg.identity] = it.identity; sel = it; if (it.img) glassZoom(it); refreshOverview(); },
+          function (it) { if (it) { if (it.img) glassZoom(it); } else if (sel && sel.img) glassZoom(sel); }));
+      }
+      renderList();
+      var step = { key: 'konf-' + fg.identity, label: label, el: p, getZoom: function () { return sel; } };
+      if (isPT) step.onShow = renderList;   // herfilter wanneer het aantal rijen wijzigt
+      return step;
     }
     // Dynamische maatstap: vraagt de exacte maatstructuur 1:1 op bij Drutex voor de
     // gekozen configuratie (rijen/type/voet) → per-rij hoogtes, juiste ranges. Werkt
@@ -714,9 +882,10 @@
       }
       function recompute() {
         if (!cfg.dims) return;
-        var tot = cfg.dims.rows.reduce(function (a, r) { return a + (r.h || 0); }, 0);
-        if (tot) H = tot; W = cfg.dims.width;
-        dimsVisible = true; ensureStill(); drawSchema(); drawDimSchema();
+        if (cfg.dims.cols && cfg.dims.cols.length) W = cfg.dims.cols.reduce(function (a, c) { return a + (c.w || 0); }, 0) || W;
+        else if (cfg.dims.width) W = cfg.dims.width;
+        var tot = cfg.dims.rows.reduce(function (a, r) { return a + (r.h || 0); }, 0); if (tot) H = tot;
+        dimsVisible = true; ensureStill(); drawSchema();
         ck.className = 'dx-check ok'; ck.textContent = '✓ Maten ingevuld — totaal ' + W + ' × ' + H + ' mm';
         refreshOverview();
       }
@@ -731,10 +900,51 @@
           recompute(); return;
         }
         var wr = (mdl.widthRange && mdl.widthRange.max) ? mdl.widthRange : { min: wmin, max: wmax };
+        // statisch Drutex-beeld van het gekozen (of representatieve) producttype + rij-proporties
+        var _PT = gc.featureGroups.ProductType, _t = cfg.ids['ProductType'];
+        if (!_t && _PT && gc.dimModels && gc.dimModels.byType) {
+          var _bt = gc.dimModels.byType, _rc = mdl.rows.length;
+          for (var _tk in _bt) { if (_bt[_tk].rows && _bt[_tk].rows.length === _rc) { _t = _tk; break; } }
+        }
+        var ptImg = '';
+        if (_t && _PT) { var _pe = _PT.elements.filter(function (x) { return x.identity === _t; })[0]; if (_pe) ptImg = realImg(_pe.image) || ''; }
+        var sh0 = mdl.rows.reduce(function (a, r) { return a + (r.h0 || r.minH || 1); }, 0) || 1;
+        var schemaRows = mdl.rows.map(function (r) { return (r.h0 || r.minH || 1) / sh0; });
+        // vorm-layout (rijen × cellen + opening) voor het scherpe vector-schema
+        var layout = { rows: mdl.rows.map(function (r, i) {
+          var cs = (r.cells && r.cells.length) ? r.cells : [{ w: 1, op: null }];
+          var tw = cs.reduce(function (a, c) { return a + (c.w || 1); }, 0) || 1;
+          return { frac: schemaRows[i], cells: cs.map(function (c) { return { frac: (c.w || 1) / tw, op: c.op || null }; }) };
+        }) };
+
+        // kolommen uit de rij met de meeste cellen; per-kolom-modus als de breedte-bereiken
+        // verschillen (bv. deur + zijlichten: 350-500 vs 800-1200). Anders één totale breedte.
+        var colRow = mdl.rows.reduce(function (a, r) { return (r.cells && r.cells.length > ((a.cells || []).length)) ? r : a; }, mdl.rows[0] || { cells: [] });
+        var cc = colRow.cells || [];
+        // per-sectie breedtes ALLEEN voor entreedeuren (deur + zijlichten staan naast elkaar).
+        // Ramen/balkon/schuif/HS gebruiken één totale breedte (+ hoogte per rij) — schuifpanelen
+        // overlappen, dus daar is een totale breedte de juiste maat.
+        var perCol = konf && konf.group === 'doors' && cc.length > 1 && cc.every(function (c) { return c.minW && c.maxW; });
+
+        if (perCol) {
+          info.textContent = 'Vul de breedte van elke sectie en de hoogte in — de nummers op het beeld tonen welke sectie welke is.';
+          cfg.dims = { perCol: true, img: ptImg, schemaRows: schemaRows, cols: [], rows: [] };
+          cc.forEach(function (c, i) {
+            var rec = { label: 'Breedte ' + (i + 1), w: clamp(c.minW, c.minW, c.maxW), frac: c.w || (1 / cc.length) }; cfg.dims.cols.push(rec);
+            numRow('Breedte ' + (i + 1), rec.w, c.minW, c.maxW, function (v) { rec.w = v; recompute(); });
+          });
+          mdl.rows.forEach(function (r, i) {
+            var lbl = (mdl.rows.length > 1) ? NL(r.label || ('Hoogte rij ' + (i + 1))) : 'Hoogte';
+            var rec = { label: lbl, h: clamp(r.minH, r.minH, r.maxH), frac: schemaRows[i] }; cfg.dims.rows.push(rec);
+            numRow(lbl, rec.h, r.minH, r.maxH, function (v) { rec.h = v; recompute(); });
+          });
+          recompute(); return;
+        }
+
         info.textContent = (mdl.rows.length > 1)
           ? ('Vul de breedte in en de hoogte van elke rij (' + mdl.rows.length + ' rijen) — het venster links toont welke maat welke is.')
           : 'Breedte en hoogte van het kozijn (mm).';
-        cfg.dims = { width: clamp(W, wr.min, wr.max), rows: [] };
+        cfg.dims = { width: clamp(W, wr.min, wr.max), img: ptImg, schemaRows: schemaRows, rows: [] };
         numRow('Breedte', cfg.dims.width, wr.min, wr.max, function (v) { cfg.dims.width = v; recompute(); });
         mdl.rows.forEach(function (r, i) {
           var lbl = NL(r.label || ('Hoogte rij ' + (i + 1)));
@@ -747,7 +957,9 @@
       return { key: 'maat', label: 'Afmetingen', el: p, onShow: build };
     }
     function buildKonfSteps() {
-      var SKIP = { Material: 1, ProductSummary: 1 };   // model is al gekozen; overzicht doen wij zelf
+      // niet tonen: model (al gekozen), overzicht (doen we zelf), en de lege tekststappen
+      // "Uitsparing onderdorpel" + "Koppelstukken" (op verzoek verwijderd)
+      var SKIP = { Material: 1, ProductSummary: 1, WycieciePodparapetowe: 1, Connectors: 1, DodatkowyZawias: 1, 'Łącznik': 1, Zasuwnica: 1, DwaZamki: 1 };
       var out = [], hasDims = false;
       gc.stepsOrder.forEach(function (id) {
         if (id === 'ProductDimensions') { out.push(konfDimsStep()); hasDims = true; return; }
@@ -795,7 +1007,7 @@
       function recompute() {
         W = cfg.dims.cols.reduce(function (a, c) { return a + c.w; }, 0) || W;
         H = cfg.dims.rows.reduce(function (a, r) { return a + r.h; }, 0) || H;
-        dimsVisible = true; ensureStill(); drawSchema(); drawDimSchema(); checkProducible(); refreshOverview();
+        dimsVisible = true; ensureStill(); drawSchema(); checkProducible(); refreshOverview();   // schema blijft statisch
       }
       function build() {
         var g = (hasIndeling && curDiv) ? dividerGrid(curDiv) : { cols: [1], rows: [1] };
@@ -849,7 +1061,16 @@
       var note = el('p', 'dx-hint'); note.style.marginTop = '10px';
       note.textContent = 'Prijs op aanvraag — u ontvangt een vrijblijvende offerte op maat. Geen verplichtingen.';
       p.appendChild(note);
-      ovStep = { key: 'overzicht', label: 'Overzicht & aanvraag', el: p };
+      ovStep = {
+        key: 'overzicht', label: 'Overzicht & aanvraag', el: p,
+        getZoom: function () {   // in het overzicht het gekozen producttype-schema tonen (niet het generieke raam)
+          if (!gc || !gc.featureGroups.ProductType) return null;
+          var PT = gc.featureGroups.ProductType, t = cfg.ids['ProductType'];
+          if (!t && gc.dimModels && gc.dimModels.byType) { for (var k in gc.dimModels.byType) { t = k; break; } }
+          var e = t ? PT.elements.filter(function (x) { return x.identity === t; })[0] : null;
+          return (e && e.image) ? { name: e.name, img: e.image } : null;
+        }
+      };
     })();
 
     // ── Stappen samenstellen ──
@@ -873,12 +1094,18 @@
     steps.push(ovStep);
 
     function summaryRows() {
-      if (konf) {   // PVC: alle keuzes komen uit de Drutex-catalogus (cfg.sel) + live maten
+      if (konf) {   // PVC: alle keuzes komen uit de Drutex-catalogus (cfg.sel) + maten
         var kr = [['Model', m.name + ' (' + m.category + ')']];
-        if (cfg.dims && cfg.dims.rows && cfg.dims.rows.length) {
-          kr.push(['Breedte', cfg.dims.width + ' mm']);
-          if (cfg.dims.rows.length === 1) kr.push(['Hoogte', cfg.dims.rows[0].h + ' mm']);
-          else cfg.dims.rows.forEach(function (r) { kr.push([r.label, r.h + ' mm']); });
+        var dd = cfg.dims;
+        if (dd && dd.cols && dd.cols.length) {                 // per-sectie breedtes (deuren met zijlichten)
+          dd.cols.forEach(function (c) { kr.push([c.label, c.w + ' mm']); });
+          if (dd.rows && dd.rows.length === 1) kr.push(['Hoogte', dd.rows[0].h + ' mm']);
+          else (dd.rows || []).forEach(function (r) { kr.push([r.label, r.h + ' mm']); });
+          kr.push(['Totaal', W + ' × ' + H + ' mm']);
+        } else if (dd && dd.rows && dd.rows.length) {
+          kr.push(['Breedte', dd.width + ' mm']);
+          if (dd.rows.length === 1) kr.push(['Hoogte', dd.rows[0].h + ' mm']);
+          else dd.rows.forEach(function (r) { kr.push([r.label, r.h + ' mm']); });
         } else kr.push(['Afmeting', W + ' × ' + H + ' mm']);
         Object.keys(cfg.sel).forEach(function (lab) { kr.push([lab, cfg.sel[lab]]); });
         return kr;
@@ -968,6 +1195,8 @@
       if (steps[active].key === 'maat' && cfg.dims) { drawDimSchema(); pcard.classList.add('show-schema'); }
       else if (steps[active].key === 'indeling') { drawDivisionPreview(); pcard.classList.add('show-schema'); }
       else pcard.classList.remove('show-schema');
+      // maatlijnen-overlay alleen op de Afmetingen-stap (geen "raam met maat" bij kleuren e.d.)
+      stage.classList.toggle('dims-on', steps[active].key === 'maat' && dimsVisible);
       if (steps[active].key === 'kleur' && !dimsVisible) { /* laat animatie staan tot keuze */ }
     }
 
