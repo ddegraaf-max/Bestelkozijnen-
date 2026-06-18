@@ -182,6 +182,16 @@ textarea.dx-input{resize:vertical;min-height:46px}
 .dx-handle[aria-pressed="true"]{box-shadow:0 0 0 2px #fff,0 0 0 4px var(--dx-accent)}
 .dx-handle-cap{margin-top:9px;font-size:13px;font-weight:600;color:var(--dx-ink);min-height:18px}
 
+/* indeling/vorm-selector (schematisch) */
+.dx-divgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:9px}
+.dx-divbtn{display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 7px;cursor:pointer;outline:0;
+  border:1px solid var(--dx-line);background:#faf9f5;border-radius:10px;transition:border-color .12s ease,background .12s ease}
+.dx-divbtn:hover{border-color:var(--dx-line-strong,#c7c2b5)}
+.dx-divbtn[aria-pressed="true"]{border-color:var(--dx-accent);background:var(--dx-soft);box-shadow:inset 0 0 0 1px var(--dx-accent)}
+.dx-divico{width:46px;height:46px;display:grid;place-items:center}
+.dx-divico svg{width:100%;height:100%;display:block}
+.dx-divlab{font-size:11px;font-weight:600;color:var(--dx-ink);text-align:center;line-height:1.2}
+
 .dx-hint{margin:2px 0 0;font-size:12px;color:var(--dx-muted);line-height:1.5}
 .dx-hint a{color:var(--dx-muted)}
 

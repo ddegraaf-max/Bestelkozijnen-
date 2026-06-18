@@ -53,6 +53,33 @@
     img.src = url;
   }
 
+  // Indeling/vorm-opties (schematisch) — lijnen genormaliseerd 0..1: {o:'v'|'h', p:positie, a,b:spanbereik}
+  var DIVISIONS = [
+    { key: 'enkel', label: 'Enkel', lines: [] },
+    { key: 'stijl2', label: '2-delig (stijl)', lines: [{ o: 'v', p: 0.5 }] },
+    { key: 'bovenlicht', label: 'Bovenlicht', lines: [{ o: 'h', p: 0.3 }] },
+    { key: '2b1o', label: '2 boven / 1 onder', lines: [{ o: 'h', p: 0.5 }, { o: 'v', p: 0.5, a: 0, b: 0.5 }] },
+    { key: '1b2o', label: '1 boven / 2 onder', lines: [{ o: 'h', p: 0.5 }, { o: 'v', p: 0.5, a: 0.5, b: 1 }] },
+    { key: 'delig3', label: '3-delig', lines: [{ o: 'v', p: 0.333 }, { o: 'v', p: 0.667 }] },
+    { key: 'kruis', label: '4-delig (kruis)', lines: [{ o: 'v', p: 0.5 }, { o: 'h', p: 0.5 }] }
+  ];
+  function divisionSVG(div, w, h) {
+    var ar = (w || 1000) / (h || 1000), vw, vh;
+    if (ar >= 1) { vw = 300; vh = Math.max(130, Math.round(300 / ar)); } else { vh = 300; vw = Math.max(130, Math.round(300 * ar)); }
+    var fw = Math.max(8, Math.round(Math.min(vw, vh) * 0.05)), mu = Math.max(5, Math.round(fw * 0.7));
+    var FR = '#3a382f', GL = '#e7eef1';
+    var gx0 = fw, gy0 = fw, gx1 = vw - fw, gy1 = vh - fw, gw = gx1 - gx0, gh = gy1 - gy0;
+    var s = '<svg viewBox="0 0 ' + vw + ' ' + vh + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">';
+    s += '<rect x="1" y="1" width="' + (vw - 2) + '" height="' + (vh - 2) + '" rx="6" fill="' + FR + '"/>';
+    s += '<rect x="' + gx0 + '" y="' + gy0 + '" width="' + gw + '" height="' + gh + '" fill="' + GL + '"/>';
+    (div.lines || []).forEach(function (L) {
+      var a = (L.a == null ? 0 : L.a), b = (L.b == null ? 1 : L.b);
+      if (L.o === 'v') { var x = gx0 + L.p * gw, ya = gy0 + a * gh, yb = gy0 + b * gh; s += '<rect x="' + (x - mu / 2) + '" y="' + ya + '" width="' + mu + '" height="' + (yb - ya) + '" fill="' + FR + '"/>'; }
+      else { var y = gy0 + L.p * gh, xa = gx0 + a * gw, xb = gx0 + b * gw; s += '<rect x="' + xa + '" y="' + (y - mu / 2) + '" width="' + (xb - xa) + '" height="' + mu + '" fill="' + FR + '"/>'; }
+    });
+    return s + '</svg>';
+  }
+
   function mount(root, modelId) {
     var models = window.DRUTEX_MODELS || {};
     var m = models[modelId];
@@ -86,6 +113,9 @@
     // standaard glaspakket (verbatim uit Drutex-standaarduitrusting)
     var stdGlas = (opt.std || []).find(function (s) { return /pakiet szybow|szyba o Ug|Ug\s*=/i.test(s); }) || '';
     var cfg = { kleur: '—', kleurBuiten: '—', kruk: '—', vulling: null, glas: 'Standaard', sel: {} };
+    var hasIndeling = (type === 'window' || type === 'sliding');
+    var curDiv = DIVISIONS[0];   // gekozen indeling/vorm (schematisch)
+    if (hasIndeling) cfg.indeling = curDiv.label;
 
     /* ===================== PREVIEW (midden) ===================== */
     var preview = el('div', 'dx-preview');
@@ -173,12 +203,13 @@
     window.addEventListener('resize', layoutMedia);
 
     function drawSchema() {
-      schemaBox.innerHTML = window.DrutexSchema ? window.DrutexSchema.build({ type: type, W: W, H: H, frameHex: frameHex, vakken: vak, bg: SCHEMA_BG }) : '';
       dimWs.textContent = W + ' mm'; dimHs.textContent = H + ' mm';
       stage.classList.toggle('dims-on', dimsVisible);
       layoutMedia();
       runCheck();
     }
+    // schematische indeling/vorm-tekening in het preview-paneel (alleen op de stap "Indeling")
+    function drawDivisionPreview() { schemaBox.innerHTML = divisionSVG(curDiv, W, H); }
     function runCheck() {
       if (!checkEl) return;
       if (type !== 'window') { checkEl.style.display = 'none'; return; }
@@ -302,6 +333,26 @@
       checkEl = el('div', 'dx-check'); p.appendChild(checkEl);
       steps.push({ key: 'maat', label: 'Afmetingen', el: p });
     })();
+
+    // -- Indeling / vorm (ramen & schuif) — schematisch, gaat mee in de offerte --
+    if (hasIndeling) {
+      var pdv = panel('Indeling / vorm', DIVISIONS.length + ' opties');
+      var dh = el('p', 'dx-hint'); dh.style.margin = '0 0 10px';
+      dh.textContent = 'Schematische indeling (geen echte foto) — gaat mee in uw offerteaanvraag.';
+      pdv.appendChild(dh);
+      var dvgrid = el('div', 'dx-divgrid'); var dvBtns = [];
+      DIVISIONS.forEach(function (d) {
+        var b = el('button', 'dx-divbtn', { type: 'button', 'aria-pressed': d.key === curDiv.key ? 'true' : 'false', title: d.label });
+        b.innerHTML = '<span class="dx-divico">' + divisionSVG(d, 100, 100) + '</span><span class="dx-divlab">' + d.label + '</span>';
+        b.addEventListener('click', function () {
+          dvBtns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); }); b.setAttribute('aria-pressed', 'true');
+          curDiv = d; cfg.indeling = d.label; drawDivisionPreview(); refreshOverview();
+        });
+        dvgrid.appendChild(b); dvBtns.push(b);
+      });
+      pdv.appendChild(dvgrid);
+      steps.push({ key: 'indeling', label: 'Indeling', el: pdv });
+    }
 
     // -- Kleur --
     (function () {
@@ -475,6 +526,7 @@
         ['Model', m.name + ' (' + m.category + ')'],
         ['Afmeting', W + ' × ' + H + ' mm']
       ];
+      if (hasIndeling) rows.push(['Indeling', cfg.indeling || 'Enkel']);
       if (dual) { rows.push(['Kleur binnen', cfg.kleur]); rows.push(['Kleur buiten (aluminium/RAL)', cfg.kleurBuiten]); }
       else rows.push(['Kleur', cfg.kleur]);
       if (type === 'door' && m.fills && m.fills.length) rows.push(['Paneel', cfg.vulling || '—']);
@@ -541,6 +593,9 @@
       }
       bodyEl.appendChild(navrow);
       glassZoom(steps[active].getZoom ? steps[active].getZoom() : null); // groot voorbeeld op stappen met foto's (glas, ramki, ventilatie, kruk…)
+      // op de stap "Indeling" tonen we de schematische tekening in het preview-paneel
+      if (steps[active].key === 'indeling') { drawDivisionPreview(); pcard.classList.add('show-schema'); }
+      else pcard.classList.remove('show-schema');
       if (steps[active].key === 'kleur' && !dimsVisible) { /* laat animatie staan tot keuze */ }
     }
 
