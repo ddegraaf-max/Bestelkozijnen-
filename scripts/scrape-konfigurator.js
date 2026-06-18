@@ -89,26 +89,68 @@ async function pool(items, n, worker) {
   return res;
 }
 
-// Loopt 1 model door de wizard, pakt telkens de eerste zichtbare optie, en leest
-// de maatlimieten (totalDimensions) zodra die gevuld zijn. Geeft {dim, steps}.
-async function walkModel(group, materialIdentity) {
+// Loopt vanaf een set keuzes door tot de stap "Afmetingen" en leest de exacte
+// maatstructuur: totale breedte-range + de afzonderlijke rij-hoogtes (met label
+// "Wysokość - rząd N" en eigen min/max). Negeert vaste hulpvelden (min==max).
+async function walkToDims(group, picks) {
   const sid = await newSession();
-  await initProduct(group, sid);
-  let j = await selectFeature(sid, materialIdentity);
-  let dim = null; const steps = [];
-  for (let guard = 0; guard < 30 && j; guard++) {
-    const pd = j.productData; if (!pd) break;
-    const td = pd.totalDimensions;
-    if (td && (td.minWidth > 0 || td.maxWidth > 0)) dim = { minW: td.minWidth, maxW: td.maxWidth, minH: td.minHeight, maxH: td.maxHeight };
-    const ns = pd.nextStepData; if (!ns) break;
-    steps.push({ group: ns.featureGroupIdentity, visible: ns.visibleFeatures || [] });
-    if (ns.featureGroupIdentity === 'ProductSummary') break;
-    const next = (ns.visibleFeatures || [])[0];
-    if (!next) break;                              // bv. ProductDimensions/Connectors: geen feature -> stop
-    if (/^ProductDimensions/.test(ns.featureGroupIdentity)) break;
-    j = await selectFeature(sid, next);
+  let r = await initProduct(group, sid);
+  for (const id of picks) { if (id) r = await selectFeature(sid, id); if (!r) return null; }
+  let pd = r && r.productData;
+  for (let g = 0; g < 18 && pd; g++) {
+    const ns = pd.nextStepData;
+    if (!ns || ns.featureGroupIdentity === 'ProductDimensions') break;
+    const f = (ns.visibleFeatures || [])[0]; if (!f) break;
+    const nx = await selectFeature(sid, f); if (!nx) break; pd = nx.productData;
   }
-  return { dim, steps };
+  if (!pd || !pd.totalDimensions) return null;
+  const rows = (pd.rowDimensions || [])
+    .filter(rd => rd.minHeight !== rd.maxHeight)
+    .map(rd => ({ label: rd.translationLabel || '', minH: rd.minHeight, maxH: rd.maxHeight }));
+  if (!rows.length) rows.push({ label: '', minH: pd.totalDimensions.minHeight, maxH: pd.totalDimensions.maxHeight });
+  return { widthRange: { min: pd.totalDimensions.minWidth, max: pd.totalDimensions.maxWidth }, rows };
+}
+
+// Vangt de maatstructuur 1:1 per producttype (en per rij-aantal) voor een groep.
+// Resultaat: { byType: {ProductType__X: {widthRange, rows[]}}, byRows: {1:{}, 2:{}, 3:{}} }.
+async function captureDimModels(group) {
+  const byType = {}, byRows = {};
+  const sid0 = await newSession();
+  const j0 = await initProduct(group, sid0);
+  if (!j0 || !j0.productSession) return { byType, byRows };
+  const fg = j0.productSession.productFeatureGroups;
+  const materialId = (fg.Material && fg.Material.elements[0]) ? fg.Material.elements[0].identity : null;
+  const irOpts = fg.IloscRzedow ? fg.IloscRzedow.elements.map(e => e.identity) : [null];
+
+  // verzamel (rij-keuze, producttype)-paren door tot de ProductType-stap te lopen
+  const pairs = [];
+  for (const ir of irOpts) {
+    const sid = await newSession();
+    let r = await initProduct(group, sid);
+    if (materialId) r = await selectFeature(sid, materialId);
+    if (ir) r = await selectFeature(sid, ir);
+    let types = null;
+    for (let g = 0; g < 8 && r; g++) {
+      const ns = r.productData && r.productData.nextStepData; if (!ns) break;
+      if (ns.featureGroupIdentity === 'ProductType') { types = ns.visibleFeatures || []; break; }
+      if (ns.featureGroupIdentity === 'ProductDimensions') break;
+      const f = (ns.visibleFeatures || [])[0]; if (!f) break; r = await selectFeature(sid, f);
+    }
+    if (types && types.length) types.forEach(t => pairs.push([materialId, ir, t]));
+    else pairs.push([materialId, ir, null]);
+  }
+
+  await pool(pairs, 8, async (picks) => {
+    try {
+      const m = await walkToDims(group, picks.filter(Boolean));
+      if (!m) return;
+      const t = picks[2];
+      if (t) byType[t] = m;
+      const rc = m.rows.length;
+      if (!byRows[rc]) byRows[rc] = m;
+    } catch (e) { /* skip */ }
+  });
+  return { byType, byRows };
 }
 
 (async () => {
@@ -139,21 +181,16 @@ async function walkModel(group, materialIdentity) {
     const byName = {}; for (const k in featureGroups) byName[featureGroups[k].name] = k;
     const stepsOrder = order.map(n => byName[n]).filter(Boolean);
 
-    // maatlimieten per model (lichte walk)
-    const dims = {};
-    const models = fg.Material ? fg.Material.elements : [{ identity: '__default' }];
-    for (const m of models) {
-      if (m.identity === '__default') continue;
-      try { const w = await walkModel(group, m.identity); if (w.dim) dims[m.identity] = w.dim; }
-      catch (e) { /* skip */ }
-    }
+    // maatstructuur 1:1 per producttype (welke rij-hoogtes + ranges) — kern voor de fabriek
+    let dimModels = { byType: {}, byRows: {} };
+    try { dimModels = await captureDimModels(group); } catch (e) { console.log('(dim-capture mislukt: ' + e.message + ')'); }
 
     catalog.productGroups[group] = {
       label: GROUPS[group],
       productGroupUrl: j.productData && j.productData.productGroupUrl,
-      stepsOrder, featureGroups, dimensionLimits: dims
+      stepsOrder, featureGroups, dimModels
     };
-    console.log(Object.keys(featureGroups).length + ' stappen, ' + (fg.Material ? fg.Material.elements.length : 0) + ' modellen, maatlimieten: ' + Object.keys(dims).length);
+    console.log(Object.keys(featureGroups).length + ' stappen · maten: ' + Object.keys(dimModels.byType).length + ' typen, rij-varianten: ' + Object.keys(dimModels.byRows).join('/'));
   }
 
   fs.mkdirSync(OUT, { recursive: true });

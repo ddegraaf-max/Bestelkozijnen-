@@ -51,7 +51,7 @@ for (const gk in cat.productGroups) {
     productGroupUrl: g.productGroupUrl,
     stepsOrder: g.stepsOrder,
     featureGroups: fgs,
-    dimensionLimits: g.dimensionLimits || {}
+    dimModels: g.dimModels || { byType: {}, byRows: {} }   // maatstructuur 1:1 per producttype
   };
 }
 

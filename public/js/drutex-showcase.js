@@ -186,20 +186,16 @@
       else if (cat === 'Systemy tarasowe') grp = /(^|-)hs(-|$)|hefschuif|monorail/i.test(slug) ? 'HS' : 'suwanki';
       else grp = /balk|balkon|balcony/i.test(slug) ? 'balcony' : 'windows';
       var g = KONF.productGroups[grp]; if (!g || !g.stepsOrder) return null;
-      // maatlimieten van het best passende model in deze groep
-      var dim = null, lim = g.dimensionLimits || {}, mats = g.featureGroups.Material;
-      var key = Object.keys(lim)[0];
-      if (mats) mats.elements.forEach(function (e) {
-        var nm = (e.name || '').toLowerCase();
-        if (/energy/.test(slug) && /energy/.test(nm) && !/classic/.test(slug)) key = e.identity;
-        else if (/classic/.test(slug) && /classic/.test(nm)) key = e.identity;
-      });
-      dim = lim[key] || lim[Object.keys(lim)[0]] || null;
-      return { group: grp, gc: g, dim: dim, materialId: (mats ? key : null) };
+      return { group: grp, gc: g };
     })();
     var gc = konf && konf.gc;
     var wmin = WMIN, wmax = WMAX, hmin = HMIN, hmax = HMAX;
-    if (konf && konf.dim) { var _d = konf.dim; if (_d.minW) wmin = _d.minW; if (_d.maxW) wmax = _d.maxW; if (_d.minH) hmin = _d.minH; if (_d.maxH) hmax = _d.maxH; }
+    // breedte/hoogte-defaults uit de vooraf opgehaalde maatstructuur (1-rij) van deze groep
+    if (konf && gc.dimModels && gc.dimModels.byRows && gc.dimModels.byRows[1]) {
+      var _d1 = gc.dimModels.byRows[1];
+      if (_d1.widthRange) { wmin = _d1.widthRange.min || wmin; wmax = _d1.widthRange.max || wmax; }
+      if (_d1.rows && _d1.rows[0]) { hmin = _d1.rows[0].minH || hmin; hmax = _d1.rows[0].maxH || hmax; }
+    }
     W = clamp(W, wmin, wmax); H = clamp(H, hmin, hmax);
 
     /* ===================== PREVIEW (midden) ===================== */
@@ -646,13 +642,15 @@
     // Dynamische maatstap: vraagt de exacte maatstructuur 1:1 op bij Drutex voor de
     // gekozen configuratie (rijen/type/voet) → per-rij hoogtes, juiste ranges. Werkt
     // automatisch voor ELK PVC-model, want het wordt live per configuratie opgehaald.
+    // PVC-maatstap: gebruikt de vooraf 1:1 opgehaalde maatstructuur (per producttype,
+    // anders per rij-aantal). Toont breedte + een hoogte per rij ("Hoogte - rij N") met
+    // de echte Drutex-ranges. Geen live-afhankelijkheid → werkt altijd, ook op productie.
     function konfDimsStep() {
       var p = panel('Afmetingen');
-      var info = el('p', 'dx-hint'); info.style.margin = '0 0 10px'; info.textContent = 'Maten laden…';
+      var info = el('p', 'dx-hint'); info.style.margin = '0 0 10px';
       var body = el('div', 'dx-size');
-      p.appendChild(info); p.appendChild(body);
-      var loaded = false, lastSig = '';
-      function selMap() { var s = {}; if (konf.materialId) s.Material = konf.materialId; for (var k in cfg.ids) if (cfg.ids[k]) s[k] = cfg.ids[k]; return s; }
+      var ck = el('div', 'dx-check');
+      p.appendChild(info); p.appendChild(body); p.appendChild(ck);
       function numRow(label, val, min, max, onset) {
         var row = el('div', 'dx-size-row'); var lab = el('div', 'dx-size-lab');
         var sp = el('span'); sp.textContent = label + ' (' + min + '–' + max + ' mm)';
@@ -664,44 +662,58 @@
         rng.addEventListener('input', function () { on(rng.value); });
         num.addEventListener('input', function () { on(num.value); });
       }
+      // het juiste maatmodel: exact per gekozen producttype, anders op rij-aantal, anders 1-rij
+      function pickModel() {
+        var dm = (gc && gc.dimModels) || { byType: {}, byRows: {} };
+        var t = cfg.ids['ProductType'];
+        if (t && dm.byType && dm.byType[t]) return dm.byType[t];
+        var ir = cfg.ids['IloscRzedow'], rc = (ir && /(\d)Rzedy/i.exec(ir)) ? parseInt(RegExp.$1, 10) : null;
+        if (rc && dm.byRows && dm.byRows[rc]) return dm.byRows[rc];
+        if (dm.byRows && dm.byRows[1]) return dm.byRows[1];
+        var ks = dm.byType ? Object.keys(dm.byType) : [];
+        return ks.length ? dm.byType[ks[0]] : null;
+      }
       function recompute() {
         if (!cfg.dims) return;
         var tot = cfg.dims.rows.reduce(function (a, r) { return a + (r.h || 0); }, 0);
-        if (tot) H = clamp(tot, hmin, hmax * cfg.dims.rows.length); W = cfg.dims.width;
-        dimsVisible = true; ensureStill(); drawSchema(); refreshOverview();
+        if (tot) H = tot; W = cfg.dims.width;
+        dimsVisible = true; ensureStill(); drawSchema();
+        ck.className = 'dx-check ok'; ck.textContent = '✓ Maten ingevuld — totaal ' + W + ' × ' + H + ' mm';
+        refreshOverview();
       }
-      function render(d) {
-        body.innerHTML = ''; info.style.display = 'none';
-        var wr = d.widthRange && d.widthRange.max ? d.widthRange : { min: wmin, max: wmax };
+      function build() {
+        body.innerHTML = '';
+        var mdl = pickModel();
+        if (!mdl) {                                            // geen model → eenvoudige breedte + hoogte
+          info.textContent = 'Breedte en hoogte van het kozijn (mm).';
+          cfg.dims = { width: clamp(W, wmin, wmax), rows: [{ label: 'Hoogte', h: clamp(H, hmin, hmax) }] };
+          numRow('Breedte', cfg.dims.width, wmin, wmax, function (v) { cfg.dims.width = v; recompute(); });
+          numRow('Hoogte', cfg.dims.rows[0].h, hmin, hmax, function (v) { cfg.dims.rows[0].h = v; recompute(); });
+          recompute(); return;
+        }
+        var wr = (mdl.widthRange && mdl.widthRange.max) ? mdl.widthRange : { min: wmin, max: wmax };
+        info.textContent = (mdl.rows.length > 1)
+          ? ('Vul de breedte in en de hoogte van elke rij (' + mdl.rows.length + ' rijen) — het venster links toont welke maat welke is.')
+          : 'Breedte en hoogte van het kozijn (mm).';
         cfg.dims = { width: clamp(W, wr.min, wr.max), rows: [] };
         numRow('Breedte', cfg.dims.width, wr.min, wr.max, function (v) { cfg.dims.width = v; recompute(); });
-        var rws = (d.rows && d.rows.length) ? d.rows : [{ label: 'Hoogte', minH: (d.total && d.total.minHeight) || hmin, maxH: (d.total && d.total.maxHeight) || hmax, h: (d.total && d.total.height) || H }];
-        rws.forEach(function (r, i) {
-          if (r.minH === r.maxH) return;                       // niet-instelbaar hulpveld (bv. listwa/parapet) → niet tonen
+        mdl.rows.forEach(function (r, i) {
           var lbl = NL(r.label || ('Hoogte rij ' + (i + 1)));
-          var hv = clamp(r.h || r.minH, r.minH, r.maxH);
+          var hv = clamp(Math.round(H / mdl.rows.length), r.minH, r.maxH);
           var rec = { label: lbl, h: hv }; cfg.dims.rows.push(rec);
           numRow(lbl, hv, r.minH, r.maxH, function (v) { rec.h = v; recompute(); });
         });
-        if (!cfg.dims.rows.length) cfg.dims.rows.push({ label: 'Hoogte', h: H });
         recompute();
       }
-      function fallback() {
-        info.style.display = 'none'; body.innerHTML = ''; cfg.dims = null;
-        numRow('Breedte', W, wmin, wmax, function (v) { W = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
-        numRow('Hoogte', H, hmin, hmax, function (v) { H = v; dimsVisible = true; ensureStill(); drawSchema(); refreshOverview(); });
-      }
-      function load() {
-        var sig = JSON.stringify(selMap());
-        if (loaded && sig === lastSig) return;                 // alleen herladen als keuzes wijzigden
-        lastSig = sig; loaded = false;
-        info.style.display = ''; info.textContent = 'Maten laden…'; body.innerHTML = '';
-        fetch('/api/konf/dims', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ group: konf.group, sel: selMap() }) })
-          .then(function (r) { return r.json(); })
-          .then(function (d) { if (d && d.ok) { render(d); loaded = true; } else fallback(); })
-          .catch(fallback);
-      }
-      return { key: 'maat', label: 'Afmetingen', el: p, onShow: load };
+      return {
+        key: 'maat', label: 'Afmetingen', el: p, onShow: build,
+        getZoom: function () {   // toon het gekozen producttype-schema groot (welke maat = welke rij)
+          var t = cfg.ids['ProductType'], PT = gc.featureGroups.ProductType;
+          if (!t || !PT) return null;
+          var e = PT.elements.filter(function (x) { return x.identity === t; })[0];
+          return (e && e.image) ? { name: e.name, img: e.image } : null;
+        }
+      };
     }
     function buildKonfSteps() {
       var SKIP = { Material: 1, ProductSummary: 1 };   // model is al gekozen; overzicht doen wij zelf
