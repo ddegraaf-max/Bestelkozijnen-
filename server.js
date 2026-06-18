@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const cookieSession = require('cookie-session');
 const db = require('./db');
 const { company, materials } = require('./data.js');
@@ -50,7 +51,14 @@ function render(res, view, data = {}) { res.render(view, { active: '', ...data }
 // ================= PUBLIEKE PAGINA'S =================
 app.get('/', (req, res) => render(res, 'home', { active: 'home', title: 'Kozijnen op maat bestellen' }));
 // nieuwe configurator op /configurator (standalone pagina). Oude EJS-view blijft in de repo maar wordt niet meer geserveerd.
-app.get('/configurator', (req, res) => res.sendFile(path.join(__dirname, 'public', 'configurator.html')));
+// Configurator: injecteer een versie (?v=) op de eigen JS/CSS zodat browsers na een
+// (re)deploy verse bestanden ophalen i.p.v. een oude gecachte versie (anders zie je
+// wijzigingen pas na een handmatige harde refresh).
+app.get('/configurator', (req, res) => {
+  let html = fs.readFileSync(path.join(__dirname, 'public', 'configurator.html'), 'utf8');
+  html = html.replace(/(["'])(\/(?:js|css)\/[A-Za-z0-9._\-]+\.(?:js|css))\1/g, '$1$2?v=' + ASSET_VER + '$1');
+  res.type('html').send(html);
+});
 app.get('/kozijnen/:slug', (req, res) => {
   const m = materials[req.params.slug];
   if (!m) return res.status(404).render('404', { active: '', title: 'Niet gevonden' });

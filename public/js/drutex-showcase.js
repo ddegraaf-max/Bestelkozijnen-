@@ -104,6 +104,32 @@
     return s + '</svg>';
   }
 
+  // Kolommen/rijen (als fracties) afleiden uit de rasterlijnen van een indeling.
+  // Zo weet de maatstap hoeveel breedtes (kolommen) en hoogtes (rijen) er nodig zijn.
+  function dividerGrid(div) {
+    function uq(a) {
+      a = a.map(function (v) { return Math.round(v * 1000) / 1000; }).sort(function (x, y) { return x - y; });
+      var o = []; a.forEach(function (v) { if (!o.length || Math.abs(o[o.length - 1] - v) > 1e-3) o.push(v); });
+      return o;
+    }
+    var xs = [], ys = [];
+    (div.vakken || []).forEach(function (v) { xs.push(v.x, v.x + v.w); ys.push(v.y, v.y + v.h); });
+    xs = uq(xs); ys = uq(ys);
+    var cols = [], rows = [];
+    for (var i = 0; i < xs.length - 1; i++) cols.push(xs[i + 1] - xs[i]);
+    for (var j = 0; j < ys.length - 1; j++) rows.push(ys[j + 1] - ys[j]);
+    return { cols: cols.length ? cols : [1], rows: rows.length ? rows : [1] };
+  }
+  // Positie-labels zodat de klant ziet welke maat welke is (links/midden/rechts, boven/onder).
+  function posLabels(n, kind) {
+    if (kind === 'col') {
+      if (n === 1) return ['']; if (n === 2) return ['links', 'rechts']; if (n === 3) return ['links', 'midden', 'rechts'];
+    } else {
+      if (n === 1) return ['']; if (n === 2) return ['boven', 'onder']; if (n === 3) return ['boven', 'midden', 'onder'];
+    }
+    var a = []; for (var i = 0; i < n; i++) a.push((kind === 'col' ? 'kolom ' : 'rij ') + (i + 1)); return a;
+  }
+
   function mount(root, modelId) {
     var models = window.DRUTEX_MODELS || {};
     var m = models[modelId];
@@ -691,6 +717,67 @@
       return out;
     }
 
+    // Maatstap voor aluminium/hout (niet-PVC): per sectie van de gekozen vorm.
+    // Bij een indeling met meerdere kolommen/rijen krijgt de klant een breedte per
+    // kolom (links/midden/rechts) en een hoogte per rij (boven/onder), met labels +
+    // schema zodat duidelijk is welke maat welke is. Gaat zo 1-op-1 naar de fabriek.
+    function customDimsStep() {
+      var SMIN = 300, SMAXW = 1600, SMAXH = 2600;   // sectie-limieten (Drutex-vleugel)
+      var p = panel('Afmetingen');
+      var info = el('p', 'dx-hint'); info.style.margin = '0 0 10px';
+      var body = el('div', 'dx-size');
+      var ck = el('div', 'dx-check');
+      p.appendChild(info); p.appendChild(body); p.appendChild(ck);
+      function numRow(label, val, min, max, onset) {
+        var row = el('div', 'dx-size-row'); var lab = el('div', 'dx-size-lab');
+        var sp = el('span'); sp.textContent = label + ' (' + min + '–' + max + ' mm)';
+        var num = el('input', null, { type: 'number', min: min, max: max, step: 5, value: val });
+        lab.appendChild(sp); lab.appendChild(num);
+        var rng = el('input', null, { type: 'range', min: min, max: max, step: 5, value: val });
+        row.appendChild(lab); row.appendChild(rng); body.appendChild(row);
+        function on(v) { v = clamp(v, min, max); num.value = rng.value = v; onset(v); }
+        rng.addEventListener('input', function () { on(rng.value); });
+        num.addEventListener('input', function () { on(num.value); });
+      }
+      function checkProducible() {
+        var maxW = 0, maxH = 0;
+        cfg.dims.cols.forEach(function (c) { maxW = Math.max(maxW, c.w); });
+        cfg.dims.rows.forEach(function (r) { maxH = Math.max(maxH, r.h); });
+        var warn = [];
+        if (maxW > SMAXW) warn.push('sectie te breed (' + maxW + ' > ' + SMAXW + ')');
+        if (maxH > SMAXH) warn.push('sectie te hoog (' + maxH + ' > ' + SMAXH + ')');
+        if (warn.length) { ck.className = 'dx-check warn'; ck.textContent = '⚠ ' + warn.join(' · '); }
+        else { ck.className = 'dx-check ok'; ck.textContent = '✓ Maten per sectie ingevuld — totaal ' + W + ' × ' + H + ' mm'; }
+      }
+      function recompute() {
+        W = cfg.dims.cols.reduce(function (a, c) { return a + c.w; }, 0) || W;
+        H = cfg.dims.rows.reduce(function (a, r) { return a + r.h; }, 0) || H;
+        dimsVisible = true; ensureStill(); drawSchema(); checkProducible(); refreshOverview();
+      }
+      function build() {
+        var g = (hasIndeling && curDiv) ? dividerGrid(curDiv) : { cols: [1], rows: [1] };
+        var nc = g.cols.length, nr = g.rows.length;
+        var cl = posLabels(nc, 'col'), rl = posLabels(nr, 'row');
+        info.textContent = (nc > 1 || nr > 1)
+          ? ('Vul de maat van elke sectie in. ' + (nc > 1 ? nc + ' breedtes' : '1 breedte') + ' × ' + (nr > 1 ? nr + ' hoogtes' : '1 hoogte') + ' — het venster links toont welke maat welke is.')
+          : 'Breedte en hoogte van het kozijn (mm).';
+        body.innerHTML = '';
+        cfg.dims = { cols: [], rows: [] };
+        g.cols.forEach(function (frac, i) {
+          var w = clamp(Math.round(W * frac), SMIN, SMAXW);
+          var rec = { label: 'Breedte' + (cl[i] ? ' ' + cl[i] : ''), w: w }; cfg.dims.cols.push(rec);
+          numRow(rec.label, w, SMIN, SMAXW, function (v) { rec.w = v; recompute(); });
+        });
+        g.rows.forEach(function (frac, j) {
+          var h = clamp(Math.round(H * frac), SMIN, SMAXH);
+          var rec = { label: 'Hoogte' + (rl[j] ? ' ' + rl[j] : ''), h: h }; cfg.dims.rows.push(rec);
+          numRow(rec.label, h, SMIN, SMAXH, function (v) { rec.h = v; recompute(); });
+        });
+        recompute();
+      }
+      return { key: 'maat', label: 'Afmetingen', el: p, onShow: build, isCustomDims: true };
+    }
+
     // -- Overzicht & aanvraag --
     var ovBody = el('div', 'dx-ov');
     (function () {
@@ -723,16 +810,26 @@
     })();
 
     // ── Stappen samenstellen ──
-    // PVC (IGLO): 1:1 Drutex-catalogus in Drutex-volgorde. Anders: onze model-eigen stappen.
-    if (konf) steps = buildKonfSteps();
-    else steps.unshift(maatStep);
+    // PVC (IGLO): 1:1 Drutex-catalogus in Drutex-volgorde.
+    // Aluminium/hout: onze flow in de volgorde kleur → vorm → afmetingen (per sectie) → rest.
+    if (konf) {
+      steps = buildKonfSteps();
+    } else {
+      var dimStep = customDimsStep();
+      var byKey = {}; steps.forEach(function (s) { byKey[s.key] = s; });
+      var FRONT = ['kleur', 'kleur-buiten', 'indeling'];
+      var MIDDLE = ['vulling', 'glas', 'dichting'];
+      var ordered = [];
+      FRONT.forEach(function (k) { if (byKey[k]) ordered.push(byKey[k]); });
+      ordered.push(dimStep);                                  // afmetingen direct na de vorm
+      MIDDLE.forEach(function (k) { if (byKey[k]) ordered.push(byKey[k]); });
+      var used = FRONT.concat(MIDDLE);
+      steps.forEach(function (s) { if (used.indexOf(s.key) < 0) ordered.push(s); });   // box-* + kruk
+      steps = ordered;
+    }
     steps.push(ovStep);
 
     function summaryRows() {
-      var rows = [
-        ['Model', m.name + ' (' + m.category + ')'],
-        ['Afmeting', W + ' × ' + H + ' mm']
-      ];
       if (konf) {   // PVC: alle keuzes komen uit de Drutex-catalogus (cfg.sel) + live maten
         var kr = [['Model', m.name + ' (' + m.category + ')']];
         if (cfg.dims && cfg.dims.rows && cfg.dims.rows.length) {
@@ -742,6 +839,14 @@
         } else kr.push(['Afmeting', W + ' × ' + H + ' mm']);
         Object.keys(cfg.sel).forEach(function (lab) { kr.push([lab, cfg.sel[lab]]); });
         return kr;
+      }
+      var rows = [['Model', m.name + ' (' + m.category + ')']];
+      if (cfg.dims && (cfg.dims.cols || cfg.dims.rows)) {   // aluminium/hout: maat per sectie
+        (cfg.dims.cols || []).forEach(function (c) { rows.push([c.label, c.w + ' mm']); });
+        (cfg.dims.rows || []).forEach(function (r) { rows.push([r.label, r.h + ' mm']); });
+        if (((cfg.dims.cols || []).length > 1) || ((cfg.dims.rows || []).length > 1)) rows.push(['Totaal', W + ' × ' + H + ' mm']);
+      } else {
+        rows.push(['Afmeting', W + ' × ' + H + ' mm']);
       }
       if (hasIndeling) {
         rows.push(['Indeling', cfg.indeling || 'Enkel']);
@@ -815,8 +920,9 @@
       }
       bodyEl.appendChild(navrow);
       glassZoom(steps[active].getZoom ? steps[active].getZoom() : null); // groot voorbeeld op stappen met foto's (glas, ramki, ventilatie, kruk…)
-      // op de stap "Indeling" tonen we de schematische tekening in het preview-paneel
-      if (steps[active].key === 'indeling') { drawDivisionPreview(); pcard.classList.add('show-schema'); }
+      // op "Indeling" én de per-sectie maatstap tonen we de schematische tekening (zodat
+      // de klant ziet welke maat bij welke sectie hoort)
+      if (steps[active].key === 'indeling' || (steps[active].isCustomDims && hasIndeling)) { drawDivisionPreview(); pcard.classList.add('show-schema'); }
       else pcard.classList.remove('show-schema');
       if (steps[active].key === 'kleur' && !dimsVisible) { /* laat animatie staan tot keuze */ }
     }
