@@ -291,6 +291,45 @@
     }
     // schematische indeling + openingen in het preview-paneel (alleen op de stap "Indeling")
     function drawDivisionPreview() { schemaBox.innerHTML = divisionSVG(curDiv, W, H, cfg.openings); }
+
+    // Gelabeld maatschema: tekent het kozijn met de rijen/kolommen uit cfg.dims en zet
+    // er labels bij (rij 1 / rij 2 …, of links/midden/rechts) zodat zichtbaar is welke
+    // ingevoerde maat bij welke sectie hoort — net als in de Drutex-configurator.
+    function dimSchemaSVG(dims) {
+      var cols = (dims.cols && dims.cols.length) ? dims.cols.map(function (c) { return { lab: (c.label || '').replace(/^Breedte\s*/i, ''), size: c.w || 1 }; })
+        : [{ lab: '', size: dims.width || 1000 }];
+      var rows = (dims.rows && dims.rows.length) ? dims.rows.map(function (r) { return { lab: (r.label || '').replace(/^Hoogte\s*-?\s*/i, ''), size: r.h || 1 }; })
+        : [{ lab: '', size: 1000 }];
+      var totW = cols.reduce(function (a, c) { return a + c.size; }, 0) || 1;
+      var totH = rows.reduce(function (a, r) { return a + r.size; }, 0) || 1;
+      var ar = totW / totH, vw, vh;
+      if (ar >= 1) { vw = 280; vh = Math.max(120, Math.round(280 / ar)); } else { vh = 300; vw = Math.max(120, Math.round(300 * ar)); }
+      var padL = 8, padT = (cols.length > 1 ? 24 : 8), padR = 70, padB = 8, m = 4;
+      var ox = padL, oy = padT, iw = vw, ih = vh, W2 = vw + padL + padR, H2 = vh + padT + padB;
+      var FR = '#3a382f', GL = '#e7eef1', TX = '#1b1b1a', LN = '#b9b4a8';
+      var s = '<svg viewBox="0 0 ' + W2 + ' ' + H2 + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" font-family="sans-serif">';
+      s += '<rect x="' + ox + '" y="' + oy + '" width="' + iw + '" height="' + ih + '" rx="4" fill="' + FR + '"/>';
+      var yy = oy, rowMid = [];
+      rows.forEach(function (r) {
+        var rh = ih * (r.size / totH); rowMid.push(yy + rh / 2);
+        var xx = ox;
+        cols.forEach(function (c) { var cw = iw * (c.size / totW); s += '<rect x="' + (xx + m) + '" y="' + (yy + m) + '" width="' + Math.max(2, cw - 2 * m) + '" height="' + Math.max(2, rh - 2 * m) + '" fill="' + GL + '"/>'; xx += cw; });
+        yy += rh;
+      });
+      // rij-labels rechts
+      rows.forEach(function (r, ri) {
+        var lab = rows.length > 1 ? ('rij ' + (ri + 1)) : 'hoogte';
+        s += '<line x1="' + (ox + iw) + '" y1="' + rowMid[ri] + '" x2="' + (ox + iw + 8) + '" y2="' + rowMid[ri] + '" stroke="' + LN + '"/>';
+        s += '<text x="' + (ox + iw + 12) + '" y="' + (rowMid[ri] + 4) + '" font-size="12" font-weight="700" fill="' + TX + '">' + lab + '</text>';
+      });
+      // kolom-labels boven (alleen bij meerdere kolommen)
+      if (cols.length > 1) {
+        var xx2 = ox;
+        cols.forEach(function (c, ci) { var cw = iw * (c.size / totW); s += '<text x="' + (xx2 + cw / 2) + '" y="' + (oy - 7) + '" font-size="11" font-weight="700" fill="' + TX + '" text-anchor="middle">' + (c.lab || ('kolom ' + (ci + 1))) + '</text>'; xx2 += cw; });
+      }
+      return s + '</svg>';
+    }
+    function drawDimSchema() { if (cfg.dims) schemaBox.innerHTML = dimSchemaSVG(cfg.dims); }
     function openingLabel(k) { for (var i = 0; i < OPENINGS.length; i++) if (OPENINGS[i].key === k) return OPENINGS[i].label + ' (' + OPENINGS[i].code + ')'; return 'Vast (F)'; }
     function runCheck() {
       if (!checkEl) return;
@@ -677,7 +716,7 @@
         if (!cfg.dims) return;
         var tot = cfg.dims.rows.reduce(function (a, r) { return a + (r.h || 0); }, 0);
         if (tot) H = tot; W = cfg.dims.width;
-        dimsVisible = true; ensureStill(); drawSchema();
+        dimsVisible = true; ensureStill(); drawSchema(); drawDimSchema();
         ck.className = 'dx-check ok'; ck.textContent = '✓ Maten ingevuld — totaal ' + W + ' × ' + H + ' mm';
         refreshOverview();
       }
@@ -705,15 +744,7 @@
         });
         recompute();
       }
-      return {
-        key: 'maat', label: 'Afmetingen', el: p, onShow: build,
-        getZoom: function () {   // toon het gekozen producttype-schema groot (welke maat = welke rij)
-          var t = cfg.ids['ProductType'], PT = gc.featureGroups.ProductType;
-          if (!t || !PT) return null;
-          var e = PT.elements.filter(function (x) { return x.identity === t; })[0];
-          return (e && e.image) ? { name: e.name, img: e.image } : null;
-        }
-      };
+      return { key: 'maat', label: 'Afmetingen', el: p, onShow: build };
     }
     function buildKonfSteps() {
       var SKIP = { Material: 1, ProductSummary: 1 };   // model is al gekozen; overzicht doen wij zelf
@@ -764,7 +795,7 @@
       function recompute() {
         W = cfg.dims.cols.reduce(function (a, c) { return a + c.w; }, 0) || W;
         H = cfg.dims.rows.reduce(function (a, r) { return a + r.h; }, 0) || H;
-        dimsVisible = true; ensureStill(); drawSchema(); checkProducible(); refreshOverview();
+        dimsVisible = true; ensureStill(); drawSchema(); drawDimSchema(); checkProducible(); refreshOverview();
       }
       function build() {
         var g = (hasIndeling && curDiv) ? dividerGrid(curDiv) : { cols: [1], rows: [1] };
@@ -932,9 +963,10 @@
       }
       bodyEl.appendChild(navrow);
       glassZoom(steps[active].getZoom ? steps[active].getZoom() : null); // groot voorbeeld op stappen met foto's (glas, ramki, ventilatie, kruk…)
-      // op "Indeling" én de per-sectie maatstap tonen we de schematische tekening (zodat
-      // de klant ziet welke maat bij welke sectie hoort)
-      if (steps[active].key === 'indeling' || (steps[active].isCustomDims && hasIndeling)) { drawDivisionPreview(); pcard.classList.add('show-schema'); }
+      // op de maatstap tonen we het gelabelde maatschema (rij 1/2/3, links/midden/rechts),
+      // op "Indeling" de vorm met openingen
+      if (steps[active].key === 'maat' && cfg.dims) { drawDimSchema(); pcard.classList.add('show-schema'); }
+      else if (steps[active].key === 'indeling') { drawDivisionPreview(); pcard.classList.add('show-schema'); }
       else pcard.classList.remove('show-schema');
       if (steps[active].key === 'kleur' && !dimsVisible) { /* laat animatie staan tot keuze */ }
     }
