@@ -120,10 +120,18 @@ h1 em{color:var(--primary);font-style:normal}
 .dx-archi .dx-view{flex:1;display:flex;align-items:center;justify-content:center;padding:54px 40px 40px;position:relative;
   background-image:radial-gradient(var(--c-highest) 1px,transparent 1px);background-size:20px 20px}
 .dx-archi .dx-view.dual{gap:0}
-.dx-archi .dx-stage,.dx-archi .dx-glasszoom,.dx-archi .dx-dimov,.dx-archi .dx-anim,.dx-archi .dx-outer,.dx-archi .dx-sidelabel{display:none!important}
+.dx-archi .dx-stage,.dx-archi .dx-dimov,.dx-archi .dx-anim,.dx-archi .dx-outer,.dx-archi .dx-sidelabel{display:none!important}
 .dx-archi .dx-schemabox{display:block;background:#fff;border:1px solid var(--outline-variant);padding:30px 44px;box-shadow:0 8px 24px rgba(0,0,0,.04);max-width:78%}
 .dx-archi .dx-schemabox svg{width:100%;height:auto;max-height:400px;display:block}
 .dx-archi .dx-schemabox svg path[stroke]{stroke:var(--primary)}  /* open-symbolen in emerald i.p.v. rood */
+/* gekozen optie (kleur/glas/kruk/type) groot in beeld tonen i.p.v. het schema, zodat je
+   ziet WAT je kiest. Schema blijft voor de maatstap + opties zonder afbeelding. */
+.dx-archi .dx-glasszoom{display:none;flex-direction:column;align-items:center;gap:14px;max-width:82%}
+.dx-archi .dx-pcard.show-gz .dx-glasszoom{display:flex}
+.dx-archi .dx-pcard.show-gz .dx-schemabox{display:none}
+.dx-archi .dx-pcard.show-gz .dx-bar::after{display:none}
+.dx-archi .dx-gz-img{max-width:100%;max-height:360px;background:#fff;border:1px solid var(--outline-variant);border-radius:var(--r);box-shadow:0 8px 24px rgba(0,0,0,.04);object-fit:contain}
+.dx-archi .dx-gz-cap{font-family:var(--fb);font-weight:600;font-size:14.5px;color:var(--on-surface);text-align:center}
 .dx-archi .dx-cap{flex:none;border-top:1px solid var(--outline-variant);background:var(--c-low);padding:14px 22px;display:flex;align-items:center;gap:16px}
 .dx-archi .dx-cap-name{font-family:var(--fb);font-weight:700;font-size:14px;color:var(--on-surface)}
 .dx-archi .dx-cap-name::before{content:"SERIE";display:block;font-size:9px;font-weight:700;letter-spacing:.18em;color:var(--on-variant);margin-bottom:2px}
