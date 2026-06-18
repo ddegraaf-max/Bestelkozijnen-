@@ -53,29 +53,51 @@
     img.src = url;
   }
 
-  // Indeling/vorm-opties (schematisch) — lijnen genormaliseerd 0..1: {o:'v'|'h', p:positie, a,b:spanbereik}
+  // Indeling/vorm-opties (schematisch). Elke indeling = lijst vakken (rect, genormaliseerd 0..1).
+  // Per vak kiest de klant een opening (zoals in de oude configurator).
   var DIVISIONS = [
-    { key: 'enkel', label: 'Enkel', lines: [] },
-    { key: 'stijl2', label: '2-delig (stijl)', lines: [{ o: 'v', p: 0.5 }] },
-    { key: 'bovenlicht', label: 'Bovenlicht', lines: [{ o: 'h', p: 0.3 }] },
-    { key: '2b1o', label: '2 boven / 1 onder', lines: [{ o: 'h', p: 0.5 }, { o: 'v', p: 0.5, a: 0, b: 0.5 }] },
-    { key: '1b2o', label: '1 boven / 2 onder', lines: [{ o: 'h', p: 0.5 }, { o: 'v', p: 0.5, a: 0.5, b: 1 }] },
-    { key: 'delig3', label: '3-delig', lines: [{ o: 'v', p: 0.333 }, { o: 'v', p: 0.667 }] },
-    { key: 'kruis', label: '4-delig (kruis)', lines: [{ o: 'v', p: 0.5 }, { o: 'h', p: 0.5 }] }
+    { key: '1', label: 'Enkel', vakken: [{ x: 0, y: 0, w: 1, h: 1 }] },
+    { key: '2', label: '2-delig', vakken: [{ x: 0, y: 0, w: .5, h: 1 }, { x: .5, y: 0, w: .5, h: 1 }] },
+    { key: '3', label: '3-delig', vakken: [{ x: 0, y: 0, w: 1 / 3, h: 1 }, { x: 1 / 3, y: 0, w: 1 / 3, h: 1 }, { x: 2 / 3, y: 0, w: 1 / 3, h: 1 }] },
+    { key: 'bl', label: 'Bovenlicht', vakken: [{ x: 0, y: 0, w: 1, h: .3 }, { x: 0, y: .3, w: 1, h: .7 }] },
+    { key: '2b1o', label: '2 boven / 1 onder', vakken: [{ x: 0, y: 0, w: .5, h: .5 }, { x: .5, y: 0, w: .5, h: .5 }, { x: 0, y: .5, w: 1, h: .5 }] },
+    { key: '1b2o', label: '1 boven / 2 onder', vakken: [{ x: 0, y: 0, w: 1, h: .5 }, { x: 0, y: .5, w: .5, h: .5 }, { x: .5, y: .5, w: .5, h: .5 }] },
+    { key: '4', label: '4-delig', vakken: [{ x: 0, y: 0, w: .5, h: .5 }, { x: .5, y: 0, w: .5, h: .5 }, { x: 0, y: .5, w: .5, h: .5 }, { x: .5, y: .5, w: .5, h: .5 }] }
   ];
-  function divisionSVG(div, w, h) {
+  // openingstypes (zoals de oude configurator): vast + draai/draaikiep links/rechts
+  var OPENINGS = [
+    { key: 'vast', label: 'Vast', short: 'Vast' },
+    { key: 'draai-l', label: 'Draai links', short: 'Draai L' },
+    { key: 'draai-r', label: 'Draai rechts', short: 'Draai R' },
+    { key: 'dk-l', label: 'Draaikiep links', short: 'D-kiep L' },
+    { key: 'dk-r', label: 'Draaikiep rechts', short: 'D-kiep R' }
+  ];
+  // open-symbool (draai/kiep) binnen een glasvak — punt wijst naar de scharnierzijde
+  function openSym(op, x, y, w, h) {
+    var cx = x + w / 2, cy = y + h / 2, st = ' stroke="#5e6164" stroke-width="1.5" fill="none" stroke-linejoin="round" opacity=".8"';
+    var L = x, R = x + w, T = y, B = y + h;
+    function v(p1, ap, p2) { return '<path d="M' + p1[0] + ' ' + p1[1] + ' L' + ap[0] + ' ' + ap[1] + ' L' + p2[0] + ' ' + p2[1] + '"' + st + '/>'; }
+    var s = '';
+    if (op === 'draai-r' || op === 'dk-r') s += v([L, T], [R, cy], [L, B]); // scharnier rechts → punt rechts
+    if (op === 'draai-l' || op === 'dk-l') s += v([R, T], [L, cy], [R, B]); // scharnier links → punt links
+    if (op === 'dk-r' || op === 'dk-l') s += v([L, T], [cx, B], [R, T]);    // kiep → punt onder
+    return s;
+  }
+  function divisionSVG(div, w, h, openings) {
     var ar = (w || 1000) / (h || 1000), vw, vh;
-    if (ar >= 1) { vw = 300; vh = Math.max(130, Math.round(300 / ar)); } else { vh = 300; vw = Math.max(130, Math.round(300 * ar)); }
-    var fw = Math.max(8, Math.round(Math.min(vw, vh) * 0.05)), mu = Math.max(5, Math.round(fw * 0.7));
+    if (ar >= 1) { vw = 300; vh = Math.max(140, Math.round(300 / ar)); } else { vh = 300; vw = Math.max(140, Math.round(300 * ar)); }
+    var fw = Math.max(8, Math.round(Math.min(vw, vh) * 0.05)), mu = Math.max(4, Math.round(fw * 0.5));
     var FR = '#3a382f', GL = '#e7eef1';
-    var gx0 = fw, gy0 = fw, gx1 = vw - fw, gy1 = vh - fw, gw = gx1 - gx0, gh = gy1 - gy0;
+    var ix = fw, iy = fw, iw = vw - 2 * fw, ih = vh - 2 * fw;
     var s = '<svg viewBox="0 0 ' + vw + ' ' + vh + '" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">';
     s += '<rect x="1" y="1" width="' + (vw - 2) + '" height="' + (vh - 2) + '" rx="6" fill="' + FR + '"/>';
-    s += '<rect x="' + gx0 + '" y="' + gy0 + '" width="' + gw + '" height="' + gh + '" fill="' + GL + '"/>';
-    (div.lines || []).forEach(function (L) {
-      var a = (L.a == null ? 0 : L.a), b = (L.b == null ? 1 : L.b);
-      if (L.o === 'v') { var x = gx0 + L.p * gw, ya = gy0 + a * gh, yb = gy0 + b * gh; s += '<rect x="' + (x - mu / 2) + '" y="' + ya + '" width="' + mu + '" height="' + (yb - ya) + '" fill="' + FR + '"/>'; }
-      else { var y = gy0 + L.p * gh, xa = gx0 + a * gw, xb = gx0 + b * gw; s += '<rect x="' + xa + '" y="' + (y - mu / 2) + '" width="' + (xb - xa) + '" height="' + mu + '" fill="' + FR + '"/>'; }
+    (div.vakken || []).forEach(function (vk, i) {
+      var gl = (vk.x > 1e-6 ? mu : 0), gt = (vk.y > 1e-6 ? mu : 0);
+      var gr = (vk.x + vk.w < 1 - 1e-6 ? mu : 0), gb = (vk.y + vk.h < 1 - 1e-6 ? mu : 0);
+      var gx = ix + vk.x * iw + gl, gy = iy + vk.y * ih + gt;
+      var gw = vk.w * iw - gl - gr, gh = vk.h * ih - gt - gb;
+      s += '<rect x="' + gx + '" y="' + gy + '" width="' + gw + '" height="' + gh + '" fill="' + GL + '"/>';
+      s += openSym((openings && openings[i]) || 'vast', gx, gy, gw, gh);
     });
     return s + '</svg>';
   }
@@ -114,8 +136,8 @@
     var stdGlas = (opt.std || []).find(function (s) { return /pakiet szybow|szyba o Ug|Ug\s*=/i.test(s); }) || '';
     var cfg = { kleur: '—', kleurBuiten: '—', kruk: '—', vulling: null, glas: 'Standaard', sel: {} };
     var hasIndeling = (type === 'window' || type === 'sliding');
-    var curDiv = DIVISIONS[0];   // gekozen indeling/vorm (schematisch)
-    if (hasIndeling) cfg.indeling = curDiv.label;
+    var curDiv = DIVISIONS[0];   // gekozen indeling (vakken)
+    if (hasIndeling) { cfg.indeling = curDiv.label; cfg.openings = curDiv.vakken.map(function (_, i) { return i === 0 ? 'dk-r' : 'vast'; }); }
 
     /* ===================== PREVIEW (midden) ===================== */
     var preview = el('div', 'dx-preview');
@@ -208,8 +230,9 @@
       layoutMedia();
       runCheck();
     }
-    // schematische indeling/vorm-tekening in het preview-paneel (alleen op de stap "Indeling")
-    function drawDivisionPreview() { schemaBox.innerHTML = divisionSVG(curDiv, W, H); }
+    // schematische indeling + openingen in het preview-paneel (alleen op de stap "Indeling")
+    function drawDivisionPreview() { schemaBox.innerHTML = divisionSVG(curDiv, W, H, cfg.openings); }
+    function openingLabel(k) { for (var i = 0; i < OPENINGS.length; i++) if (OPENINGS[i].key === k) return OPENINGS[i].label; return 'Vast'; }
     function runCheck() {
       if (!checkEl) return;
       if (type !== 'window') { checkEl.style.display = 'none'; return; }
@@ -334,23 +357,47 @@
       steps.push({ key: 'maat', label: 'Afmetingen', el: p });
     })();
 
-    // -- Indeling / vorm (ramen & schuif) — schematisch, gaat mee in de offerte --
+    // -- Indeling & opening (ramen & schuif) — schematisch, gaat mee in de offerte --
     if (hasIndeling) {
-      var pdv = panel('Indeling / vorm', DIVISIONS.length + ' opties');
+      var pdv = panel('Indeling & opening');
       var dh = el('p', 'dx-hint'); dh.style.margin = '0 0 10px';
-      dh.textContent = 'Schematische indeling (geen echte foto) — gaat mee in uw offerteaanvraag.';
+      dh.textContent = 'Kies indeling en per vak de opening. Schematisch (geen echte foto) — gaat mee in uw offerteaanvraag.';
       pdv.appendChild(dh);
       var dvgrid = el('div', 'dx-divgrid'); var dvBtns = [];
+      var openWrap = el('div', 'dx-openwrap');   // per-vak openingen, herbouwd bij indelingswissel
+
+      function buildOpenings() {
+        openWrap.innerHTML = '';
+        var hd = el('div', 'dx-subh'); hd.textContent = 'Opening per vak'; openWrap.appendChild(hd);
+        curDiv.vakken.forEach(function (vk, i) {
+          var row = el('div', 'dx-openrow');
+          var lab = el('span', 'dx-openvak'); lab.textContent = 'Vak ' + (i + 1); row.appendChild(lab);
+          var chips = el('div', 'dx-openchips');
+          OPENINGS.forEach(function (o) {
+            var b = el('button', 'dx-openchip', { type: 'button', 'aria-pressed': cfg.openings[i] === o.key ? 'true' : 'false' });
+            b.textContent = o.short;
+            b.addEventListener('click', function () {
+              chips.querySelectorAll('.dx-openchip').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+              b.setAttribute('aria-pressed', 'true'); cfg.openings[i] = o.key; drawDivisionPreview(); refreshOverview();
+            });
+            chips.appendChild(b);
+          });
+          row.appendChild(chips); openWrap.appendChild(row);
+        });
+      }
+      function setDivision(d) {
+        curDiv = d; cfg.indeling = d.label;
+        cfg.openings = d.vakken.map(function (_, i) { return i === 0 ? 'dk-r' : 'vast'; });
+        dvBtns.forEach(function (x, j) { x.setAttribute('aria-pressed', DIVISIONS[j].key === d.key ? 'true' : 'false'); });
+        buildOpenings(); drawDivisionPreview(); refreshOverview();
+      }
       DIVISIONS.forEach(function (d) {
         var b = el('button', 'dx-divbtn', { type: 'button', 'aria-pressed': d.key === curDiv.key ? 'true' : 'false', title: d.label });
         b.innerHTML = '<span class="dx-divico">' + divisionSVG(d, 100, 100) + '</span><span class="dx-divlab">' + d.label + '</span>';
-        b.addEventListener('click', function () {
-          dvBtns.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); }); b.setAttribute('aria-pressed', 'true');
-          curDiv = d; cfg.indeling = d.label; drawDivisionPreview(); refreshOverview();
-        });
+        b.addEventListener('click', function () { setDivision(d); });
         dvgrid.appendChild(b); dvBtns.push(b);
       });
-      pdv.appendChild(dvgrid);
+      pdv.appendChild(dvgrid); pdv.appendChild(openWrap); buildOpenings();
       steps.push({ key: 'indeling', label: 'Indeling', el: pdv });
     }
 
@@ -526,7 +573,10 @@
         ['Model', m.name + ' (' + m.category + ')'],
         ['Afmeting', W + ' × ' + H + ' mm']
       ];
-      if (hasIndeling) rows.push(['Indeling', cfg.indeling || 'Enkel']);
+      if (hasIndeling) {
+        rows.push(['Indeling', cfg.indeling || 'Enkel']);
+        rows.push(['Opening', (cfg.openings || []).map(function (k, i) { return 'Vak ' + (i + 1) + ': ' + openingLabel(k); }).join(' · ')]);
+      }
       if (dual) { rows.push(['Kleur binnen', cfg.kleur]); rows.push(['Kleur buiten (aluminium/RAL)', cfg.kleurBuiten]); }
       else rows.push(['Kleur', cfg.kleur]);
       if (type === 'door' && m.fills && m.fills.length) rows.push(['Paneel', cfg.vulling || '—']);
