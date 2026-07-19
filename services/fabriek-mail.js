@@ -7,15 +7,22 @@
 //   const { stuurFabriekMail } = require('../services/fabriek-mail');
 //   await stuurFabriekMail({ aanvraag, kozijnen, scanId, attachments });
 //
-// Vereist env vars (Railway):
-//   RESEND_API_KEY   — bestaande Resend key
-//   FABRIEK_EMAIL    — e-mailadres fabriek, bv. offerte@drutex.pl
+// Env vars (Railway) — allemaal optioneel, standaardwaarden staan hieronder:
+//   RESEND_API_KEY   — bestaande Resend key (vereist)
+//   FABRIEK_EMAIL    — standaard: mpanek@drutex.com.pl
 //                      (meerdere mogelijk, kommagescheiden)
-//   FABRIEK_FROM     — afzender, bv. "Bestelkozijnenopmaat <offerte@bestelkozijnenopmaat.nl>"
+//   FABRIEK_REPLY    — antwoord-/offerteadres, standaard: montage@creditline.nl
+//   FABRIEK_FROM     — afzender, bv. "Creditline B.V. <offerte@bestelkozijnenopmaat.nl>"
 //   FABRIEK_CC       — optioneel, bv. je eigen adres voor een kopie
 //   FABRIEK_STUUR_KLANTGEGEVENS — optioneel, "true" om klantdata mee
 //                      te sturen (standaard UIT i.v.m. AVG: de fabriek
 //                      heeft alleen specs + jouw referentie nodig)
+//
+// De mail is tweetalig PL/NL, vermeldt Creditline B.V. als aanvrager en
+// vraagt expliciet de offerte te sturen aan het FABRIEK_REPLY-adres.
+
+const FABRIEK_EMAIL_DEFAULT = 'mpanek@drutex.com.pl';
+const OFFERTE_ADRES_DEFAULT = 'montage@creditline.nl';
 // =====================================================================
 
 const { Pool } = require('pg');
@@ -42,16 +49,19 @@ const pool = new Pool({
 // ---------------------------------------------------------------------
 async function stuurFabriekMail({ aanvraag, kozijnen = [], scanId = null, attachments = [] }) {
   if (!process.env.RESEND_API_KEY) throw new Error('RESEND_API_KEY ontbreekt');
-  if (!process.env.FABRIEK_EMAIL) throw new Error('FABRIEK_EMAIL ontbreekt');
 
   const scanData = scanId ? await haalScanOp(scanId) : null;
-  const html = renderMail({ aanvraag, kozijnen, scanData });
+  const offerteAdres = process.env.FABRIEK_REPLY || OFFERTE_ADRES_DEFAULT;
+  const html = renderMail({ aanvraag, kozijnen, scanData, offerteAdres });
 
-  const to = process.env.FABRIEK_EMAIL.split(',').map(s => s.trim()).filter(Boolean);
+  const to = (process.env.FABRIEK_EMAIL || FABRIEK_EMAIL_DEFAULT)
+    .split(',').map(s => s.trim()).filter(Boolean);
+  const aantal = kozijnen.length || (scanData ? scanData.items.length : 0);
   const payload = {
-    from: process.env.FABRIEK_FROM || 'Bestelkozijnenopmaat <onboarding@resend.dev>',
+    from: process.env.FABRIEK_FROM || 'Creditline B.V. <onboarding@resend.dev>',
     to,
-    subject: `Offerteaanvraag ${aanvraag.nummer} — ${kozijnen.length || (scanData ? scanData.items.length : 0)} kozijn(en)`,
+    reply_to: offerteAdres,
+    subject: `Zapytanie ofertowe / Offerteaanvraag ${aanvraag.nummer} — Creditline B.V. — ${aantal} okno/okien`,
     html
   };
   if (process.env.FABRIEK_CC) payload.cc = process.env.FABRIEK_CC.split(',').map(s => s.trim());
@@ -111,9 +121,10 @@ function esc(s) {
   return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function renderMail({ aanvraag, kozijnen, scanData }) {
+function renderMail({ aanvraag, kozijnen, scanData, offerteAdres }) {
   const stuurKlant = process.env.FABRIEK_STUUR_KLANTGEGEVENS === 'true';
   const datum = aanvraag.datum || new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+  const offerteMail = offerteAdres || OFFERTE_ADRES_DEFAULT;
 
   // --- Klantblok (standaard UIT — AVG) ---
   const klantBlok = (stuurKlant && aanvraag.klant) ? `
@@ -129,7 +140,7 @@ function renderMail({ aanvraag, kozijnen, scanData }) {
   // --- Kozijnblokken uit de configurator-aanvraag ---
   const kozijnBlokken = kozijnen.map((k, i) => `
     <div style="${S.card}">
-      <h2 style="${S.h2}">Kozijn ${String(i + 1).padStart(3, '0')}${k.label ? ' · ' + esc(k.label) : ''}${k.aantal ? ' · ' + esc(k.aantal) + '×' : ''}</h2>
+      <h2 style="${S.h2}">Okno / Kozijn ${String(i + 1).padStart(3, '0')}${k.label ? ' · ' + esc(k.label) : ''}${k.aantal ? ' · ' + esc(k.aantal) + '×' : ''}</h2>
       <table style="${S.table}">
         ${Object.entries(k.specs || {}).map(([key, val]) => `
           <tr><th style="${S.th}">${esc(key)}</th><td style="${S.td}">${esc(val).replace(/\n/g, '<br>')}</td></tr>
@@ -142,7 +153,7 @@ function renderMail({ aanvraag, kozijnen, scanData }) {
   if (scanData && scanData.items.length) {
     scanBlok = `
     <div style="${S.card}">
-      <h2 style="${S.h2}">Foto-analyse — geschatte afmetingen</h2>
+      <h2 style="${S.h2}">Analiza zdjęć — wymiary szacunkowe / Foto-analyse — geschatte afmetingen</h2>
       <p style="${S.meta}">Project: ${esc(scanData.scan.project || '—')} · Scan #${scanData.scan.id}</p>
       <table style="${S.table}">
         <tr>
@@ -174,19 +185,36 @@ function renderMail({ aanvraag, kozijnen, scanData }) {
 <html><body style="${S.body}">
   <div style="${S.wrap}">
     <div style="${S.card}">
-      <h1 style="${S.h1}">Offerteaanvraag ${esc(aanvraag.nummer)}</h1>
+      <h1 style="${S.h1}">Zapytanie ofertowe / Offerteaanvraag ${esc(aanvraag.nummer)}</h1>
       <p style="${S.meta}">
-        bestelkozijnenopmaat.nl · ${esc(datum)}<br>
-        Referentie voor alle correspondentie: <b>${esc(aanvraag.nummer)}</b>
+        Creditline B.V. (bestelkozijnenopmaat.nl) · ${esc(datum)}<br>
+        Nr referencyjny do korespondencji / referentie: <b>${esc(aanvraag.nummer)}</b>
       </p>
-      <p style="margin:0">Graag ontvangen wij een offerte voor onderstaande specificatie(s).</p>
-      ${aanvraag.opmerking ? `<p style="margin:12px 0 0 0"><b>Opmerking:</b> ${esc(aanvraag.opmerking)}</p>` : ''}
+      <p style="margin:0 0 10px 0">
+        <b>PL:</b> Dzień dobry, niniejsze zapytanie pochodzi od firmy <b>Creditline B.V.</b>
+        Uprzejmie prosimy o przygotowanie oferty na poniższą specyfikację i przesłanie jej
+        na adres: <b><a href="mailto:${esc(offerteMail)}" style="color:#e8590c">${esc(offerteMail)}</a></b>.
+      </p>
+      <p style="margin:0">
+        <b>NL:</b> Deze aanvraag komt van <b>Creditline B.V.</b> Graag ontvangen wij uw offerte
+        voor onderstaande specificatie(s) op: <b><a href="mailto:${esc(offerteMail)}" style="color:#e8590c">${esc(offerteMail)}</a></b>.
+      </p>
+      ${aanvraag.opmerking ? `<p style="margin:12px 0 0 0"><b>Uwagi / Opmerking:</b> ${esc(aanvraag.opmerking)}</p>` : ''}
     </div>
     ${klantBlok}
     ${kozijnBlokken}
     ${scanBlok}
+    <div style="${S.card}">
+      <h2 style="${S.h2}">Dane zamawiającego / Aanvrager</h2>
+      <table style="${S.table}">
+        <tr><th style="${S.th}">Firma / Bedrijf</th><td style="${S.td}">Creditline B.V.</td></tr>
+        <tr><th style="${S.th}">Adres</th><td style="${S.td}">Torenlaan 5A/5B, Bussum, Nederland</td></tr>
+        <tr><th style="${S.th}">KvK / VAT</th><td style="${S.td}">KvK 59683198 · BTW NL853603108B01</td></tr>
+        <tr><th style="${S.th}">Oferta na adres / Offerte naar</th><td style="${S.td}"><b>${esc(offerteMail)}</b></td></tr>
+      </table>
+    </div>
     <p style="font-size:11px;color:#4a5a68;text-align:center;margin-top:8px">
-      Creditline B.V. · Torenlaan 5A/5B, Bussum · KvK 59683198
+      Creditline B.V. · Torenlaan 5A/5B, Bussum · KvK 59683198 · ${esc(offerteMail)}
     </p>
   </div>
 </body></html>`;

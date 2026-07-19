@@ -88,15 +88,23 @@ services/fabriek-mail.js                       → de mailservice (Resend)
 routes/fabriek-mail-integratie.voorbeeld.js    → kopieerbare integratievoorbeelden
 ```
 
-## Extra env vars (Railway)
+## Env vars (Railway) — allemaal optioneel, defaults staan al goed
 
 ```
-FABRIEK_EMAIL = offerte@fabriek.pl            (meerdere: kommagescheiden)
-FABRIEK_FROM  = Bestelkozijnenopmaat <offerte@bestelkozijnenopmaat.nl>
+FABRIEK_EMAIL = mpanek@drutex.com.pl          (standaard — override mogelijk,
+                                               meerdere: kommagescheiden)
+FABRIEK_REPLY = montage@creditline.nl         (standaard — offerte-/antwoordadres,
+                                               ook als reply-to ingesteld)
+FABRIEK_FROM  = Creditline B.V. <offerte@bestelkozijnenopmaat.nl>
 FABRIEK_CC    = jouw@adres.nl                 (optioneel, kopie naar jezelf)
 FABRIEK_STUUR_KLANTGEGEVENS = true            (optioneel — standaard gaan
                                                klantgegevens NIET mee, AVG)
 ```
+
+De mail is tweetalig Pools/Nederlands, vermeldt expliciet dat de aanvraag
+van Creditline B.V. komt (incl. KvK/BTW-blok) en vraagt de offerte te
+sturen aan montage@creditline.nl. Reply-to staat op datzelfde adres, dus
+een simpele "beantwoorden" bij Drutex komt automatisch goed terecht.
 
 RESEND_API_KEY en DATABASE_URL heb je al.
 
