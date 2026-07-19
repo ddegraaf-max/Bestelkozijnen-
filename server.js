@@ -59,7 +59,7 @@ app.use((req, res, next) => {
     try {
       if (typeof body === 'string'
           && /<a\b[^>]*href=["']\/contact["']/.test(body)
-          && !body.includes('/ai-kozijnenscan')) {
+          && !/<a\b[^>]*href=["']\/ai-kozijnenscan["']/.test(body)) {
         body = body.replace(/(<a\b[^>]*href=["']\/contact["'][^>]*>[\s\S]*?<\/a>)/g, (m, anchor) => {
           const clone = anchor
             .replace(/href=(["'])\/contact\1/, 'href=$1/ai-kozijnenscan$1')
