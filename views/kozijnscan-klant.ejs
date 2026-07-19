@@ -18,14 +18,14 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 <% } %>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 /* Alle scan-styling in eigen kz-naamruimte — botst nooit met de site-CSS */
 .kz-wrap{
   --kz-ink:#161616; --kz-ink-soft:#6b6459; --kz-paper:#f5f2ec; --kz-card:#fcfbf8;
   --kz-line:#e5e0d5; --kz-line-strong:#d8d2c4; --kz-accent:#e8590c; --kz-accent-soft:#fdece1;
   --kz-ok:#2b8a3e; --kz-warn:#e67700; --kz-low:#c92a2a; --kz-mono:'JetBrains Mono',monospace;
-  font-family:'Archivo',sans-serif;color:var(--kz-ink);
+  color:var(--kz-ink);
   max-width:960px;margin:0 auto;padding:36px 20px 90px;box-sizing:border-box;
 }
 .kz-wrap *{box-sizing:border-box}
@@ -49,7 +49,7 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 .kz-thumb img{width:120px;height:92px;object-fit:cover;border:1px solid var(--kz-line-strong);border-radius:8px;display:block}
 .kz-thumb .kz-rm{position:absolute;top:-7px;right:-7px;background:var(--kz-ink);color:#fff;border:none;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:11px;line-height:1}
 .kz-thumb .kz-st{font-family:var(--kz-mono);font-size:9.5px;margin-top:4px;color:var(--kz-ink-soft);display:block}
-.kz-btn{font-family:'Archivo',sans-serif;font-weight:600;font-size:15px;background:var(--kz-ink);color:#fff;
+.kz-btn{font-family:inherit;font-weight:600;font-size:15px;background:var(--kz-ink);color:#fff;
   border:none;border-radius:999px;padding:13px 26px;cursor:pointer;transition:.15s;display:inline-block;text-decoration:none}
 .kz-btn:hover{background:#000;transform:translateY(-1px)}
 .kz-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
@@ -63,7 +63,7 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 .kz-status{font-family:var(--kz-mono);font-size:12px;color:var(--kz-ink-soft)}
 .kz-field{margin-top:16px}
 .kz-field label{display:block;font-family:var(--kz-mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--kz-ink-soft);margin-bottom:6px}
-.kz-field input,.kz-field textarea{width:100%;font-family:'Archivo',sans-serif;font-size:14px;padding:11px 13px;border:1px solid var(--kz-line-strong);border-radius:8px;background:var(--kz-paper);color:var(--kz-ink)}
+.kz-field input,.kz-field textarea{width:100%;font-family:inherit;font-size:14px;padding:11px 13px;border:1px solid var(--kz-line-strong);border-radius:8px;background:var(--kz-paper);color:var(--kz-ink)}
 .kz-field input:focus,.kz-field textarea:focus{outline:2px solid var(--kz-accent);border-color:var(--kz-accent)}
 .kz-hint{font-size:12px;color:var(--kz-ink-soft);margin-top:5px}
 .kz-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
