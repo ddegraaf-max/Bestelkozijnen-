@@ -53,6 +53,87 @@ const mailer = require('./mailer')(company);
 // bestaande Contact-menu-item (inclusief dezelfde CSS-classes, dus de
 // stijl klopt altijd) en zetten er een "AI Scan"-link direct achter.
 // Werkt op alle gerenderde pagina's én op de statische configurator-HTML.
+// ---- "Kozi": AI-scan als persoon op de homepage ----
+// Wordt automatisch tussen de hero en het Materialen-blok geplaatst;
+// home.ejs hoeft niet aangepast te worden. Styling is kzp-genaamruimt.
+const KOZI_HTML = `
+<section id="kozi-intro">
+<style>
+#kozi-intro{max-width:1160px;margin:26px auto 10px;padding:0 20px;box-sizing:border-box}
+#kozi-intro *{box-sizing:border-box;opacity:1 !important;filter:none !important;animation:none !important}
+#kozi-intro .kzp-card{background:#fcfbf8;border:1px solid #e5e0d5;border-radius:16px;padding:28px;display:flex;gap:26px;align-items:flex-start;flex-wrap:wrap}
+#kozi-intro .kzp-avatar{flex:0 0 132px}
+#kozi-intro .kzp-body{flex:1;min-width:280px}
+#kozi-intro .kzp-tag{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#e8590c;background:#fdece1;border-radius:999px;padding:6px 13px;font-weight:600}
+#kozi-intro h2{font-size:clamp(22px,3.2vw,30px);font-weight:800;margin:12px 0 0;color:#161616;line-height:1.1}
+#kozi-intro .kzp-bubble{position:relative;background:#fff;border:1px solid #e5e0d5;border-radius:14px;padding:15px 18px;margin-top:14px;font-size:15px;line-height:1.6;color:#3a362f}
+#kozi-intro .kzp-bubble:before{content:'';position:absolute;left:-9px;top:22px;width:16px;height:16px;background:#fff;border-left:1px solid #e5e0d5;border-bottom:1px solid #e5e0d5;transform:rotate(45deg)}
+#kozi-intro .kzp-tipslabel{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:#6b6459;margin:16px 0 8px;font-weight:600}
+#kozi-intro .kzp-tips{display:flex;gap:8px;flex-wrap:wrap}
+#kozi-intro .kzp-tip{font-size:13px;background:#f5f2ec;border:1px solid #e5e0d5;border-radius:999px;padding:8px 14px;color:#3a362f}
+#kozi-intro .kzp-cta{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:18px}
+#kozi-intro .kzp-btn{display:inline-block;background:#e8590c;color:#fff;text-decoration:none;font-weight:600;font-size:15px;border-radius:12px;padding:13px 24px}
+#kozi-intro .kzp-btn:hover{background:#d14e08}
+#kozi-intro .kzp-sub{font-size:12.5px;color:#6b6459;line-height:1.5;max-width:420px}
+@media(max-width:560px){#kozi-intro .kzp-avatar{flex-basis:96px}#kozi-intro .kzp-bubble:before{display:none}}
+</style>
+<div class="kzp-card">
+  <div class="kzp-avatar">
+    <svg viewBox="0 0 132 148" xmlns="http://www.w3.org/2000/svg" aria-label="Kozi, de AI-inmeetassistent">
+      <line x1="66" y1="6" x2="66" y2="20" stroke="#161616" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="66" cy="6" r="5" fill="#e8590c" stroke="#161616" stroke-width="2.5"/>
+      <rect x="16" y="20" width="100" height="100" rx="24" fill="#e8590c" stroke="#161616" stroke-width="4"/>
+      <line x1="66" y1="26" x2="66" y2="114" stroke="#faf8f4" stroke-width="6"/>
+      <line x1="22" y1="70" x2="110" y2="70" stroke="#faf8f4" stroke-width="6"/>
+      <circle cx="44" cy="50" r="7.5" fill="#161616"/>
+      <circle cx="88" cy="50" r="7.5" fill="#161616"/>
+      <circle cx="46.5" cy="47.5" r="2.5" fill="#faf8f4"/>
+      <circle cx="90.5" cy="47.5" r="2.5" fill="#faf8f4"/>
+      <path d="M46 92 Q66 106 86 92" fill="none" stroke="#161616" stroke-width="5" stroke-linecap="round"/>
+      <g transform="translate(96,110) rotate(-12)">
+        <rect x="0" y="0" width="30" height="22" rx="5" fill="#faf8f4" stroke="#161616" stroke-width="3"/>
+        <circle cx="10" cy="11" r="4.5" fill="none" stroke="#161616" stroke-width="3"/>
+        <path d="M14 11 L34 14" stroke="#161616" stroke-width="3" stroke-linecap="round"/>
+        <path d="M27 9 v4 M31 10 v4" stroke="#161616" stroke-width="2"/>
+      </g>
+    </svg>
+  </div>
+  <div class="kzp-body">
+    <span class="kzp-tag">Nieuw &middot; AI Kozijnenscan</span>
+    <h2>Maak kennis met Kozi, uw AI-inmeetassistent</h2>
+    <div class="kzp-bubble">
+      &ldquo;Hoi! Stuur mij een paar foto&rsquo;s van uw gevel, dan herken ik uw kozijnen en schat ik de afmetingen.
+      <b>Hoe beter uw foto, hoe beter mijn schatting</b> &mdash; en hoe dichter de richtprijs bij de werkelijkheid ligt.
+      Zo weet u binnen een minuut waar u aan toe bent, nog v&oacute;&oacute;r er iemand langskomt.&rdquo;
+    </div>
+    <div class="kzp-tipslabel">Zo helpt u Kozi aan de beste schatting</div>
+    <div class="kzp-tips">
+      <span class="kzp-tip">&#128247; Recht van voren fotograferen</span>
+      <span class="kzp-tip">&#9728;&#65039; Bij daglicht</span>
+      <span class="kzp-tip">&#127968; De hele gevel in beeld</span>
+      <span class="kzp-tip">&#128207; Weet u &eacute;&eacute;n maat? Nog nauwkeuriger!</span>
+    </div>
+    <div class="kzp-cta">
+      <a class="kzp-btn" href="/ai-kozijnenscan">Start de gratis AI-scan &rarr;</a>
+      <span class="kzp-sub">Binnen 1 minuut resultaat &middot; richtprijs geheel vrijblijvend &middot; definitieve offerte volgt na gratis inmeting bij u thuis.</span>
+    </div>
+  </div>
+</div>
+</section>`;
+
+function injectKozi(body) {
+  if (body.includes('id="kozi-intro"')) return body;
+  // Plaats vóór het Materialen-blok; met nette terugvalopties.
+  let anchor = body.indexOf('Kies wat bij je woning past');
+  if (anchor < 0) anchor = body.search(/>\s*Materialen\s*</i) >= 0 ? body.search(/<section[^>]*>(?:(?!<section)[\s\S])*?Materialen/i) : -1;
+  let insertAt = -1;
+  if (anchor > -1) insertAt = body.lastIndexOf('<section', anchor);
+  if (insertAt < 0) insertAt = body.lastIndexOf('</main>');
+  if (insertAt < 0) insertAt = body.lastIndexOf('<footer');
+  if (insertAt < 0) return body;
+  return body.slice(0, insertAt) + KOZI_HTML + '\n' + body.slice(insertAt);
+}
+
 app.use((req, res, next) => {
   const origSend = res.send.bind(res);
   res.send = function (body) {
@@ -68,6 +149,10 @@ app.use((req, res, next) => {
             .replace(/class=(["'])\s*\1/g, '');
           return anchor + clone;
         });
+      }
+      // Kozi-sectie alleen op de homepage
+      if (typeof body === 'string' && req.path === '/' && body.includes('</html>')) {
+        body = injectKozi(body);
       }
     } catch (e) { /* menu-injectie mag een pagina nooit breken */ }
     return origSend(body);
