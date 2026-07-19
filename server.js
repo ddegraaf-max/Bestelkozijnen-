@@ -134,6 +134,87 @@ function injectKozi(body) {
   return body.slice(0, insertAt) + KOZI_HTML + '\n' + body.slice(insertAt);
 }
 
+// ---- Statusfilter + zoekveld op de beheer-aanvragenlijst ----
+// Wordt op /beheer-pagina's met een aanvragenlijst geïnjecteerd. Bouwt
+// tabjes per status (met aantallen) uit wat er werkelijk in de lijst
+// staat, plus een zoekveld — schaalt dus mee met honderden aanvragen
+// en met elke status die je nu of later gebruikt.
+const BEHEER_FILTER_HTML = `
+<div id="kz-status-filter"></div>
+<style>
+#kz-filterbar{max-width:1160px;margin:0 auto 6px;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+#kz-filterbar .kz-fchip{font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;
+  background:#fcfbf8;border:1px solid #d8d2c4;border-radius:999px;padding:8px 14px;cursor:pointer;color:#57534a;user-select:none}
+#kz-filterbar .kz-fchip b{color:#161616;font-weight:600;margin-left:4px}
+#kz-filterbar .kz-fchip.kz-on{background:#fdece1;border-color:#e8590c;color:#e8590c}
+#kz-filterbar .kz-fchip.kz-on b{color:#e8590c}
+#kz-filterbar .kz-fsearch{flex:1;min-width:200px;max-width:320px;margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:12px;
+  padding:9px 13px;border:1px solid #d8d2c4;border-radius:999px;background:#fcfbf8;color:#161616}
+#kz-filterbar .kz-fsearch:focus{outline:2px solid #e8590c;border-color:#e8590c}
+#kz-fempty{max-width:1160px;margin:14px auto;font-size:14px;color:#6b6459;display:none}
+</style>
+<script>
+(function(){try{
+  var KNOWN=['ontvangen','in behandeling','afgewezen','geaccepteerd','offerte verzonden','verzonden','afgerond','gearchiveerd','geannuleerd','wacht op klant'];
+  var scope=document.querySelector('main')||document.body;
+  var leafs=Array.prototype.filter.call(scope.querySelectorAll('*'),function(el){return el.children.length===0;});
+  var badges=leafs.filter(function(el){
+    var t=(el.textContent||'').trim();
+    if(t.length<3||t.length>24||/[@0-9]/.test(t))return false;
+    if(KNOWN.indexOf(t.toLowerCase())>-1)return true;
+    try{return getComputedStyle(el).textTransform==='uppercase';}catch(e){return false;}
+  });
+  function cardOf(b){
+    var el=b;
+    while(el.parentElement&&el.parentElement!==document.body&&el.parentElement!==scope){
+      var p=el.parentElement,n=0;
+      for(var i=0;i<badges.length;i++){if(p.contains(badges[i]))n++;}
+      if(n>1)break;
+      el=p;
+    }
+    return el;
+  }
+  var cards=[],seen=[];
+  badges.forEach(function(b){
+    var c=cardOf(b);
+    if(c===b)return;
+    if(!/@/.test(c.textContent||''))return;           // echte aanvraagkaart bevat een e-mailadres
+    if(seen.indexOf(c)>-1)return;
+    seen.push(c);
+    cards.push({el:c,status:(b.textContent||'').trim(),text:(c.textContent||'').toLowerCase()});
+  });
+  if(cards.length<2)return;                            // niets te filteren
+  // Filterbalk opbouwen en vlak boven de eerste kaart plaatsen
+  var stats={};cards.forEach(function(c){stats[c.status]=(stats[c.status]||0)+1;});
+  var bar=document.createElement('div');bar.id='kz-filterbar';
+  var chips=[],actief='__alle__';
+  function mkChip(label,key,count){
+    var s=document.createElement('span');s.className='kz-fchip'+(key==='__alle__'?' kz-on':'');
+    s.innerHTML=label+' <b>'+count+'</b>';
+    s.addEventListener('click',function(){actief=key;chips.forEach(function(x){x.el.classList.toggle('kz-on',x.key===key);});pas();});
+    chips.push({el:s,key:key});bar.appendChild(s);
+  }
+  mkChip('Alle','__alle__',cards.length);
+  Object.keys(stats).sort().forEach(function(st){mkChip(st,st,stats[st]);});
+  var zoek=document.createElement('input');
+  zoek.className='kz-fsearch';zoek.type='search';zoek.placeholder='Zoek op naam, nummer of e-mail\u2026';
+  zoek.addEventListener('input',pas);bar.appendChild(zoek);
+  var leeg=document.createElement('div');leeg.id='kz-fempty';leeg.textContent='Geen aanvragen gevonden met dit filter.';
+  var eerste=cards[0].el;
+  eerste.parentElement.insertBefore(bar,eerste);
+  eerste.parentElement.insertBefore(leeg,eerste);
+  function pas(){
+    var q=(zoek.value||'').toLowerCase().trim(),zichtbaar=0;
+    cards.forEach(function(c){
+      var ok=(actief==='__alle__'||c.status===actief)&&(!q||c.text.indexOf(q)>-1);
+      c.el.style.display=ok?'':'none';
+      if(ok)zichtbaar++;
+    });
+    leeg.style.display=zichtbaar?'none':'block';
+  }
+}catch(e){/* filter mag de beheerpagina nooit breken */}})();
+</script>`;
+
 app.use((req, res, next) => {
   const origSend = res.send.bind(res);
   res.send = function (body) {
@@ -154,6 +235,12 @@ app.use((req, res, next) => {
       const kzUrl = (req.originalUrl || req.url || '').split('?')[0];
       if (typeof body === 'string' && kzUrl === '/' && body.includes('</html>')) {
         body = injectKozi(body);
+      }
+      // Statusfilter op beheerpagina's met een aanvragenlijst
+      if (typeof body === 'string' && kzUrl.startsWith('/beheer')
+          && /aanvraag/i.test(body) && body.includes('</body>')
+          && !body.includes('id="kz-status-filter"')) {
+        body = body.replace('</body>', BEHEER_FILTER_HTML + '\n</body>');
       }
     } catch (e) { /* menu-injectie mag een pagina nooit breken */ }
     return origSend(body);
