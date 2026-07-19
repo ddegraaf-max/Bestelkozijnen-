@@ -19,17 +19,31 @@ body{
   background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
   background-size:56px 56px;min-height:100vh;
 }
-/* --- Topbar in huisstijl (vervang evt. door je eigen header-partial) --- */
-.topbar{background:var(--paper);border-bottom:1px solid var(--line-strong);padding:14px 0}
-.topbar-in{max-width:1160px;margin:0 auto;padding:0 20px;display:flex;align-items:center;gap:10px}
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
-.logo-mark{width:34px;height:34px;border:2.5px solid var(--ink);border-radius:7px;position:relative;background:var(--accent)}
-.logo-mark::before,.logo-mark::after{content:'';position:absolute;background:var(--ink)}
-.logo-mark::before{left:50%;top:0;bottom:0;width:2.5px;transform:translateX(-50%)}
-.logo-mark::after{top:50%;left:0;right:0;height:2.5px;transform:translateY(-50%)}
-.logo b{font-weight:800;font-size:17px}
+/* --- Header: 1-op-1 opzet van de site --- */
+.topbar{background:#faf8f4;border-bottom:1px solid var(--line-strong);padding:0}
+.topbar-in{max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:28px}
+.logo{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink)}
+.logo-mark{width:36px;height:36px;background:var(--accent);border-radius:9px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px;padding:6px}
+.logo-mark i{background:#faf8f4;border-radius:2px;border:1.5px solid #2a2a2a}
+.logo b{font-weight:800;font-size:17.5px;letter-spacing:-.01em}
 .logo b span{color:var(--accent)}
-.logo small{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.12em;color:var(--ink-soft);text-transform:uppercase}
+.logo small{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase;margin-top:1px}
+.nav{display:flex;align-items:center;gap:22px;font-size:14.5px;font-weight:500}
+.nav a{color:var(--ink);text-decoration:none;padding:6px 0;border-bottom:2px solid transparent}
+.nav a:hover{color:var(--accent)}
+.nav a.actief{color:var(--accent);border-bottom-color:var(--accent)}
+.nav .dd{position:relative}
+.nav .dd>a::after{content:' ▾';font-size:10px;color:var(--ink-soft)}
+.nav .dd-menu{display:none;position:absolute;top:100%;left:-10px;background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:8px;min-width:210px;box-shadow:0 8px 24px rgba(22,22,22,.1);z-index:50}
+.nav .dd:hover .dd-menu{display:block}
+.nav .dd-menu a{display:block;padding:9px 12px;border-radius:7px;border-bottom:none;font-size:14px}
+.nav .dd-menu a:hover{background:var(--paper);color:var(--accent)}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:16px}
+.nav-right .link{color:var(--ink-soft);text-decoration:none;font-size:14px}
+.nav-right .link:hover{color:var(--ink)}
+.pill{background:#1b1b1b;color:#fff;text-decoration:none;font-weight:600;font-size:14px;border-radius:999px;padding:10px 20px}
+.pill:hover{background:#000}
+@media(max-width:880px){.nav{display:none}.nav-right .link{display:none}}
 .wrap{max-width:960px;margin:0 auto;padding:36px 20px 90px}
 .hero h1{font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em}
 .hero h1 span{color:var(--accent)}
@@ -99,9 +113,36 @@ td input:focus,td select:focus{outline:2px solid var(--accent)}
 <div class="topbar">
   <div class="topbar-in">
     <a class="logo" href="/">
-      <span class="logo-mark"></span>
+      <span class="logo-mark"><i></i><i></i><i></i><i></i></span>
       <span><b>bestelkozijnen<span>opmaat</span></b><small>.nl · kozijnen op maat</small></span>
     </a>
+    <nav class="nav">
+      <a href="/">Home</a>
+      <a href="/configurator">Configurator</a>
+      <div class="dd">
+        <a href="#">Materialen</a>
+        <div class="dd-menu">
+          <% if (typeof materials !== 'undefined' && materials) { Object.keys(materials).forEach(function(slug){ %>
+            <a href="/kozijnen/<%= slug %>"><%= materials[slug].title || slug %></a>
+          <% }); } %>
+        </div>
+      </div>
+      <a href="/werkwijze">Werkwijze</a>
+      <a href="/montage">Montage</a>
+      <a href="/veelgestelde-vragen">FAQ</a>
+      <a href="/contact">Contact</a>
+      <a href="/ai-kozijnenscan" class="actief">AI Scan</a>
+    </nav>
+    <div class="nav-right">
+      <% if (typeof currentUser !== 'undefined' && currentUser) { %>
+        <% if (currentUser.role === 'beheer') { %><a class="link" href="/beheer">Beheer</a><% } %>
+        <a class="link" href="/portaal">Mijn portaal</a>
+        <a class="pill" href="/uitloggen">Uitloggen</a>
+      <% } else { %>
+        <a class="link" href="/inloggen">Inloggen</a>
+        <a class="pill" href="/configurator">Stel samen</a>
+      <% } %>
+    </div>
   </div>
 </div>
 
@@ -201,7 +242,7 @@ td input:focus,td select:focus{outline:2px solid var(--accent)}
 <div class="usp">
   <div class="u"><b>Binnen 1 minuut resultaat</b>Geen afspraken of opmeetwerk nodig voor uw eerste prijsindicatie.</div>
   <div class="u"><b>Vrijblijvend &amp; gratis</b>De scan en richtprijs kosten niets. Inmeten doen wij ook gratis.</div>
-  <div class="u"><b>Duitse A-kwaliteit profielen</b>Kunststof kozijnen op maat, geleverd en gemonteerd door één partij.</div>
+  <div class="u"><b>A-merk profielen op maat</b>Drutex &amp; Aluplast kozijnen — geleverd en gemonteerd door één partij.</div>
 </div>
 
 </div>

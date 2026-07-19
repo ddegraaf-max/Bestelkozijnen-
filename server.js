@@ -19,6 +19,10 @@ app.set('trust proxy', 1);
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.urlencoded({ extended: true }));
+// AI Kozijnenscan: foto-uploads (base64) zijn groter dan 1mb, dus deze route
+// krijgt een eigen ruimere parser — MOET vóór de globale 1mb-parser staan,
+// anders strandt de upload daar al.
+app.use('/ai-kozijnenscan', express.json({ limit: '20mb' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -169,6 +173,20 @@ app.post('/api/konf/dims', async (req, res) => {
     res.json(data);
   } catch (e) { res.status(502).json({ ok: false }); }
 });
+
+// ================= AI KOZIJNENSCAN =================
+// Publiek: klant uploadt gevelfoto's, AI herkent kozijnen + schat maten,
+// klant vraagt een richtprijs aan. Aanvraag + scan komen in de database
+// en jij krijgt een notificatiemail (NOTIFY_EMAIL).
+app.use('/ai-kozijnenscan', require('./routes/kozijnscan-public'));
+
+// Intern: beheertool (inmetingen invullen, kalibratie, dataset-export).
+// Alleen toegankelijk voor ingelogde gebruikers met rol 'beheer'; voor
+// anderen gedraagt de URL zich als een gewone 404.
+app.use('/beheer/kozijnscan', (req, res, next) => {
+  if (req.user && req.user.role === 'beheer') return next();
+  return res.status(404).render('404', { active: '', title: 'Niet gevonden' });
+}, require('./routes/kozijnscan'));
 
 // ================= AUTH / PORTAAL / BEHEER / API =================
 app.use('/', require('./routes/auth')(company, mailer));
