@@ -48,6 +48,85 @@
   <script src="/js/drutex-konf.js"></script>
   <script src="/js/drutex-showcase.js"></script>
   <script>
+  /* "Mijn aanvraag": meerdere samengestelde kozijnen in één offerteaanvraag.
+     De configurator (overzicht-stap) roept window.__dxCart.add({model, rows, qty}) aan.
+     Verzenden kan alleen ingelogd (window.__loggedIn). */
+  (function () {
+    var items = [];
+    function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+    function count() { return items.reduce(function (a, i) { return a + (i.qty || 1); }, 0); }
+
+    var fab = document.createElement('button'); fab.className = 'c2-cartfab'; fab.type = 'button'; fab.style.display = 'none';
+    fab.innerHTML = '<span class="material-symbols-outlined">shopping_bag</span> Mijn aanvraag <span class="c2-cartbadge">0</span>';
+    var scrim = document.createElement('div'); scrim.className = 'c2-scrim';
+    var drawer = document.createElement('aside'); drawer.className = 'c2-drawer';
+    drawer.innerHTML = '<div class="c2-dhead"><h3>Mijn aanvraag</h3><button class="c2-dx" type="button" aria-label="Sluiten">&times;</button></div>'
+      + '<div class="c2-dbody"></div><div class="c2-dfoot"></div>';
+    document.body.appendChild(fab); document.body.appendChild(scrim); document.body.appendChild(drawer);
+    var bodyEl = drawer.querySelector('.c2-dbody'), footEl = drawer.querySelector('.c2-dfoot'), badge = fab.querySelector('.c2-cartbadge');
+
+    function openDrawer() { scrim.classList.add('on'); drawer.classList.add('on'); }
+    function closeDrawer() { scrim.classList.remove('on'); drawer.classList.remove('on'); }
+    fab.addEventListener('click', function () { renderBody(); openDrawer(); });
+    scrim.addEventListener('click', closeDrawer);
+    drawer.querySelector('.c2-dx').addEventListener('click', closeDrawer);
+    function refreshFab() { badge.textContent = count(); fab.style.display = items.length ? 'inline-flex' : 'none'; }
+
+    function renderBody() {
+      if (!items.length) { bodyEl.innerHTML = '<p class="c2-empty">Nog niets toegevoegd.<br>Stel een kozijn samen en klik op "Voeg toe aan aanvraag".</p>'; footEl.innerHTML = ''; return; }
+      bodyEl.innerHTML = items.map(function (it, idx) {
+        var spec = it.rows.map(function (r) { return '<span>' + esc(r[0]) + ': ' + esc(r[1]) + '</span>'; }).join('');
+        return '<div class="c2-citem"><div class="c2-citop"><b>' + esc(it.model) + '</b><span class="c2-cqty">' + (it.qty || 1) + '×</span></div>'
+          + '<div class="c2-cspec">' + spec + '</div><button class="c2-cdel" type="button" data-i="' + idx + '">verwijderen</button></div>';
+      }).join('');
+      Array.prototype.forEach.call(bodyEl.querySelectorAll('.c2-cdel'), function (b) {
+        b.addEventListener('click', function () { items.splice(+b.getAttribute('data-i'), 1); refreshFab(); renderBody(); });
+      });
+      renderFoot();
+    }
+    function renderFoot() {
+      if (!window.__loggedIn) {
+        footEl.innerHTML = '<div class="c2-loginprompt"><strong>Log in om de aanvraag te versturen.</strong><br>'
+          + '<a href="/inloggen?next=/configurator2">Inloggen</a> &middot; <a href="/registreren?next=/configurator2">Account aanmaken</a></div>';
+        return;
+      }
+      footEl.innerHTML = '<label class="c2-fld"><span>Naam *</span><input id="c2Naam" type="text"></label>'
+        + '<label class="c2-fld"><span>E-mail *</span><input id="c2Mail" type="email"></label>'
+        + '<label class="c2-fld"><span>Telefoon</span><input id="c2Tel" type="tel"></label>'
+        + '<label class="c2-fld"><span>Opmerking</span><textarea id="c2Opm" rows="2"></textarea></label>'
+        + '<button class="c2-send" type="button">Aanvraag versturen (' + count() + ' stuk' + (count() === 1 ? '' : 's') + ')</button>'
+        + '<p class="c2-status" id="c2Status"></p>';
+      footEl.querySelector('.c2-send').addEventListener('click', send);
+    }
+    function send() {
+      var status = document.getElementById('c2Status');
+      function err(m) { status.className = 'c2-status err'; status.textContent = m; }
+      if (!window.__loggedIn) return err('Log eerst in om te versturen.');
+      var naam = (document.getElementById('c2Naam').value || '').trim();
+      var email = (document.getElementById('c2Mail').value || '').trim();
+      if (!naam || !email) return err('Vul uw naam en e-mailadres in.');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return err('Vul een geldig e-mailadres in.');
+      var sb = footEl.querySelector('.c2-send'); sb.disabled = true; status.className = 'c2-status'; status.textContent = 'Versturen…';
+      var samenvatting = items.map(function (it, idx) {
+        return '#' + (idx + 1) + ' — ' + it.model + ' (' + (it.qty || 1) + '×)\n' + it.rows.map(function (r) { return '  ' + r[0] + ': ' + r[1]; }).join('\n');
+      }).join('\n\n');
+      var models = items.map(function (it) { return it.model + ' (' + (it.qty || 1) + '×)'; }).join(', ');
+      fetch('/api/offerte', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ naam: naam, email: email, telefoon: (document.getElementById('c2Tel').value || '').trim(), opmerking: (document.getElementById('c2Opm').value || '').trim(), samenvatting: samenvatting, model: models, website: '', elapsed: 9999 }) })
+        .then(function (r) { return r.json().catch(function () { return { ok: r.ok }; }); })
+        .then(function (j) {
+          if (j && j.ok) { items = []; refreshFab(); bodyEl.innerHTML = ''; footEl.innerHTML = '<p class="c2-status ok">✓ Bedankt! Uw aanvraag is verzonden — we nemen vrijblijvend contact met u op.</p>'; }
+          else { sb.disabled = false; err((j && j.error) || 'Er ging iets mis. Probeer het later opnieuw.'); }
+        }).catch(function () { sb.disabled = false; err('Geen verbinding. Probeer het later opnieuw.'); });
+    }
+    window.__dxCart = {
+      add: function (it) { items.push(it); refreshFab(); },
+      open: function () { renderBody(); openDrawer(); }
+    };
+    refreshFab();
+  })();
+  </script>
+  <script>
   (function () {
     var MODELS = window.DRUTEX_MODELS || {};
     var app = document.getElementById('app'), stepsEl = document.getElementById('steps');

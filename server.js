@@ -62,6 +62,8 @@ function serveConfigPage(file) {
   return function (req, res) {
     let html = fs.readFileSync(path.join(__dirname, 'public', file), 'utf8');
     html = html.replace(/(["'])(\/(?:js|css)\/[A-Za-z0-9._\-]+\.(?:js|css))\1/g, '$1$2?v=' + ASSET_VER + '$1');
+    // inlogstatus meegeven zodat de configurator pas een aanvraag verstuurt als de bezoeker is ingelogd
+    html = html.replace('<body>', '<body>\n  <script>window.__loggedIn=' + (req.user ? 'true' : 'false') + ';</script>');
     res.type('html').send(html);
   };
 }
