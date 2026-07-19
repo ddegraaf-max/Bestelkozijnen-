@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KozijnScan — Herkenning & Maatvoering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Archivo:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b2733; --ink-soft:#4a5a68; --paper:#f4f1ea; --card:#fff;
+  --line:#d8d2c4; --accent:#e8590c; --accent-soft:#fdece1;
+  --ok:#2b8a3e; --warn:#e67700; --low:#c92a2a; --mono:'JetBrains Mono',monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'Archivo',sans-serif;color:var(--ink);background:var(--paper);
+  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
+  background-size:48px 48px;background-position:-1px -1px;min-height:100vh;
+}
+.wrap{max-width:1150px;margin:0 auto;padding:32px 20px 80px}
+header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:8px}
+h1{font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:clamp(30px,5vw,46px);line-height:1.02;letter-spacing:-.02em}
+h1 .dot{color:var(--accent)}
+.sub{color:var(--ink-soft);margin-top:6px;max-width:600px;font-size:15px}
+.badge{font-family:var(--mono);font-size:11px;background:var(--ink);color:var(--paper);padding:6px 10px;letter-spacing:.08em;text-transform:uppercase}
+.kalib{font-family:var(--mono);font-size:11px;background:#e6f4e8;color:var(--ok);padding:6px 10px;margin-top:6px;display:inline-block}
+.panel{background:var(--card);border:1.5px solid var(--ink);box-shadow:6px 6px 0 rgba(27,39,51,.12);margin-top:26px}
+.panel-h{display:flex;align-items:center;gap:10px;padding:14px 18px;border-bottom:1.5px solid var(--ink);background:linear-gradient(0deg,rgba(232,89,12,.04),transparent);flex-wrap:wrap}
+.panel-h .num{font-family:var(--mono);font-weight:600;font-size:12px;background:var(--accent);color:#fff;width:26px;height:26px;display:flex;align-items:center;justify-content:center}
+.panel-h h2{font-family:'Bricolage Grotesque',sans-serif;font-size:18px;font-weight:600}
+.panel-b{padding:18px}
+.drop{border:2px dashed var(--ink-soft);padding:34px 20px;text-align:center;cursor:pointer;transition:.15s;
+  background:repeating-linear-gradient(45deg,transparent,transparent 12px,rgba(27,39,51,.02) 12px,rgba(27,39,51,.02) 24px)}
+.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop b{font-family:'Bricolage Grotesque',sans-serif;font-size:17px}
+.drop p{color:var(--ink-soft);font-size:13px;margin-top:4px}
+.thumbs{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.thumb{position:relative;width:130px}
+.thumb img{width:130px;height:100px;object-fit:cover;border:1.5px solid var(--ink);display:block}
+.thumb .rm{position:absolute;top:-8px;right:-8px;background:var(--ink);color:#fff;border:none;width:22px;height:22px;cursor:pointer;font-size:12px;line-height:1}
+.thumb .st{font-family:var(--mono);font-size:10px;margin-top:4px;color:var(--ink-soft);display:block}
+.btn{font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:15px;background:var(--accent);color:#fff;
+  border:1.5px solid var(--ink);padding:12px 22px;cursor:pointer;box-shadow:4px 4px 0 var(--ink);transition:.12s}
+.btn:hover{transform:translate(-1px,-1px);box-shadow:5px 5px 0 var(--ink)}
+.btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:4px 4px 0 var(--ink)}
+.btn.ghost{background:var(--card);color:var(--ink)}
+.btn.small{font-size:13px;padding:8px 14px;box-shadow:3px 3px 0 var(--ink)}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.spin{display:inline-block;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.status{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
+.field{margin-top:14px}
+.field label{display:block;font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-soft);margin-bottom:5px}
+.field input,.field select{width:100%;max-width:420px;font-family:var(--mono);font-size:13px;padding:9px 10px;border:1px solid var(--line);background:#fbfaf7;color:var(--ink)}
+.field input:focus,.field select:focus{outline:2px solid var(--accent)}
+.hint{font-size:12px;color:var(--ink-soft);margin-top:4px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;text-align:left;color:var(--ink-soft);padding:8px;border-bottom:1.5px solid var(--ink)}
+td{padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+td input,td select{font-family:var(--mono);font-size:13px;border:1px solid var(--line);background:#fbfaf7;padding:7px 8px;width:100%;color:var(--ink)}
+td input:focus,td select:focus{outline:2px solid var(--accent);border-color:var(--accent)}
+td input.real{background:#eef7ef;border-color:#bcd9bf}
+.conf{font-family:var(--mono);font-size:10px;padding:3px 7px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.conf.hoog{background:#e6f4e8;color:var(--ok)}
+.conf.middel{background:#fff4e0;color:var(--warn)}
+.conf.laag{background:#ffe6e6;color:var(--low)}
+.dev{font-family:var(--mono);font-size:11px;white-space:nowrap}
+.dev.good{color:var(--ok)} .dev.bad{color:var(--low)} .dev.mid{color:var(--warn)}
+.opm{font-size:12px;color:var(--ink-soft);margin-top:2px}
+.delrow{background:none;border:1px solid var(--line);color:var(--low);cursor:pointer;padding:5px 9px;font-size:12px}
+.note{background:var(--accent-soft);border-left:4px solid var(--accent);padding:12px 14px;font-size:13px;margin-top:16px;line-height:1.5}
+.err{background:#ffe6e6;border-left:4px solid var(--low);padding:12px 14px;font-size:13px;margin-top:14px;font-family:var(--mono);white-space:pre-wrap}
+.oksave{background:#e6f4e8;border-left:4px solid var(--ok);padding:12px 14px;font-size:13px;margin-top:14px}
+.hidden{display:none!important}
+.stat{display:inline-block;background:var(--ink);color:var(--paper);font-family:var(--mono);font-size:12px;padding:8px 12px;margin-right:8px;margin-top:8px}
+.stat b{color:var(--accent)}
+@media(max-width:640px){.wrap{padding:20px 12px 60px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>Kozijn<span class="dot">Scan</span></h1>
+    <p class="sub">Upload gevelfoto's — de AI herkent elk kozijn en schat breedte × hoogte via referentiematen. Vul na inmeting de werkelijke maten in: elke meting verbetert automatisch de kalibratie van toekomstige scans.</p>
+    <% if (typeof kalibratie !== 'undefined' && kalibratie) { %>
+      <span class="kalib">✓ Kalibratie actief op basis van <%= kalibratie.n %> inmetingen (b: <%= kalibratie.devB %>%, h: <%= kalibratie.devH %>%)</span>
+    <% } %>
+  </div>
+  <span class="badge">bestelkozijnenopmaat.nl</span>
+</header>
+
+<!-- STAP 1: UPLOAD -->
+<section class="panel">
+  <div class="panel-h"><span class="num">1</span><h2>Foto's uploaden</h2></div>
+  <div class="panel-b">
+    <div class="drop" id="drop">
+      <b>Sleep foto's hierheen of klik om te kiezen</b>
+      <p>Gevelfoto's recht van voren werken het best. Meerdere foto's mogelijk (JPG/PNG, max 5).</p>
+    </div>
+    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple class="hidden">
+    <div class="thumbs" id="thumbs"></div>
+
+    <div class="field">
+      <label>Projectnaam / adres</label>
+      <input type="text" id="project" placeholder='bv. "Torenlaan 12, Bussum — achtergevel"'>
+    </div>
+    <div class="field">
+      <label>Bekende referentiemaat (optioneel — verhoogt nauwkeurigheid flink)</label>
+      <input type="text" id="refMaat" placeholder='bv. "de voordeur is 2315 mm hoog"'>
+      <div class="hint">Ken je één maat in beeld? De AI schaalt dan alle overige kozijnen daaraan.</div>
+    </div>
+
+    <div class="row">
+      <button class="btn" id="analyzeBtn" disabled>Analyseer foto's</button>
+      <span class="status" id="status"></span>
+    </div>
+    <div class="err hidden" id="errBox"></div>
+  </div>
+</section>
+
+<!-- EERDERE SCANS -->
+<section class="panel">
+  <div class="panel-h"><span class="num">↺</span><h2>Eerdere scans (inmeting invullen)</h2>
+    <button class="btn ghost small" id="loadScansBtn" style="margin-left:auto">Laad recente scans</button>
+  </div>
+  <div class="panel-b" id="scanList" style="display:none"></div>
+</section>
+
+<!-- STAP 2: RESULTATEN + INMEET-FEEDBACK -->
+<section class="panel hidden" id="resultsPanel">
+  <div class="panel-h"><span class="num">2</span><h2>Herkende kozijnen — schatting vs. inmeting</h2></div>
+  <div class="panel-b">
+    <div style="overflow-x:auto">
+    <table>
+      <thead>
+        <tr>
+          <th style="min-width:180px">Omschrijving</th>
+          <th style="min-width:120px">Type</th>
+          <th style="width:95px">Schatting<br>breedte (mm)</th>
+          <th style="width:95px">Schatting<br>hoogte (mm)</th>
+          <th style="width:95px">Zekerheid</th>
+          <th style="width:95px">Werkelijk<br>breedte (mm)</th>
+          <th style="width:95px">Werkelijk<br>hoogte (mm)</th>
+          <th style="width:95px">Afwijking</th>
+          <th style="width:44px"></th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody"></tbody>
+    </table>
+    </div>
+    <div class="row">
+      <button class="btn" id="saveBtn">💾 Opslaan in database</button>
+      <button class="btn ghost small" id="addRowBtn">+ Kozijn handmatig toevoegen</button>
+      <a class="btn ghost small" href="export.csv" style="text-decoration:none">⬇ Dataset (CSV)</a>
+    </div>
+    <div id="stats"></div>
+    <div class="oksave hidden" id="saveOk"></div>
+    <div class="note" id="aiNote"></div>
+  </div>
+</section>
+
+</div>
+
+<script>
+/* ================= STATE ================= */
+let photos = [];
+let kozijnen = [];
+let aiAlgemeen = '';
+let currentScanId = null;
+const $ = id => document.getElementById(id);
+const BASE = window.location.pathname.replace(/\/$/, '');
+
+/* ================= UPLOAD ================= */
+const drop = $('drop'), fileInput = $('fileInput');
+drop.addEventListener('click', () => fileInput.click());
+drop.addEventListener('dragover', e => {e.preventDefault(); drop.classList.add('over');});
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {e.preventDefault(); drop.classList.remove('over'); addFiles(e.dataTransfer.files);});
+fileInput.addEventListener('change', e => addFiles(e.target.files));
+
+function addFiles(list){
+  [...list].slice(0, 5 - photos.length).forEach(f => {
+    if(!/image\/(jpeg|png|webp)/.test(f.type)) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      photos.push({name:f.name, dataUrl:reader.result, base64:reader.result.split(',')[1], mediaType:f.type, status:'wachtend'});
+      renderThumbs();
+    };
+    reader.readAsDataURL(f);
+  });
+}
+function renderThumbs(){
+  $('thumbs').innerHTML = photos.map((p,i) => `
+    <div class="thumb">
+      <img src="${p.dataUrl}" alt="${p.name}">
+      <button class="rm" onclick="removePhoto(${i})">✕</button>
+      <span class="st">${p.name.slice(0,18)} · ${p.status}</span>
+    </div>`).join('');
+  $('analyzeBtn').disabled = photos.length === 0;
+}
+function removePhoto(i){ photos.splice(i,1); renderThumbs(); }
+
+/* ================= AI ANALYSE (via eigen backend) ================= */
+$('analyzeBtn').addEventListener('click', analyzeAll);
+
+async function analyzeAll(){
+  const btn = $('analyzeBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Analyseren…';
+  $('errBox').classList.add('hidden');
+  $('saveOk').classList.add('hidden');
+  currentScanId = null;
+  photos.forEach(p => p.status = 'analyseren…'); renderThumbs();
+  $('status').textContent = 'Foto\'s analyseren…';
+
+  try{
+    const res = await fetch(BASE + '/analyse', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        images: photos.map(p => ({ base64: p.base64, mediaType: p.mediaType })),
+        refMaat: $('refMaat').value.trim()
+      })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    kozijnen = (data.kozijnen || []).map(k => ({...k, rb:'', rh:''}));
+    aiAlgemeen = data.algemeen || '';
+    photos.forEach(p => p.status = 'klaar ✓');
+    $('status').textContent = kozijnen.length ? kozijnen.length + ' kozijn(en) herkend' : 'Geen kozijnen herkend — voeg handmatig toe';
+  }catch(e){
+    photos.forEach(p => p.status = 'fout ✕');
+    $('errBox').textContent = e.message;
+    $('errBox').classList.remove('hidden');
+    $('status').textContent = '';
+  }
+  renderThumbs();
+  btn.disabled = false;
+  btn.textContent = 'Analyseer opnieuw';
+  $('resultsPanel').classList.remove('hidden');
+  $('aiNote').innerHTML = '<b>AI-observatie:</b> ' + (aiAlgemeen || 'geen bijzonderheden.') +
+    '<br><b>Tip:</b> sla de scan op, en vul na inmeting de werkelijke maten in (groene velden). Elke meting scherpt de kalibratie aan.';
+  renderRows();
+}
+
+/* ================= TABEL ================= */
+function renderRows(){
+  $('resultsBody').innerHTML = kozijnen.map((k,i) => `
+    <tr>
+      <td><input value="${esc(k.oms)}" onchange="upd(${i},'oms',this.value)">
+          ${k.opm?`<div class="opm">${esc(k.opm)}</div>`:''}</td>
+      <td><select onchange="upd(${i},'type',this.value)">
+        ${['vast','draai','draaikiep','klep','deur','pui','combinatie'].map(t=>`<option ${k.type===t?'selected':''}>${t}</option>`).join('')}
+      </select></td>
+      <td><input type="number" step="50" value="${k.b}" onchange="upd(${i},'b',+this.value)"></td>
+      <td><input type="number" step="50" value="${k.h}" onchange="upd(${i},'h',+this.value)"></td>
+      <td><span class="conf ${k.conf}">${k.conf}</span></td>
+      <td><input class="real" type="number" step="10" value="${k.rb}" placeholder="—" onchange="upd(${i},'rb',this.value);renderRows()"></td>
+      <td><input class="real" type="number" step="10" value="${k.rh}" placeholder="—" onchange="upd(${i},'rh',this.value);renderRows()"></td>
+      <td>${devCell(k)}</td>
+      <td><button class="delrow" onclick="delRow(${i})">✕</button></td>
+    </tr>`).join('');
+  renderStats();
+}
+function devCell(k){
+  if(!k.rb && !k.rh) return '<span class="dev" style="color:var(--ink-soft)">—</span>';
+  const parts = [];
+  if(k.rb) parts.push(pct(k.b, +k.rb, 'b'));
+  if(k.rh) parts.push(pct(k.h, +k.rh, 'h'));
+  return parts.join('<br>');
+}
+function pct(est, real, lbl){
+  if(!real) return '';
+  const d = ((est - real) / real * 100);
+  const cls = Math.abs(d) <= 5 ? 'good' : Math.abs(d) <= 12 ? 'mid' : 'bad';
+  return `<span class="dev ${cls}">${lbl}: ${d>0?'+':''}${d.toFixed(1)}%</span>`;
+}
+function upd(i,f,v){ kozijnen[i][f]=v; }
+function delRow(i){ kozijnen.splice(i,1); renderRows(); }
+$('addRowBtn').addEventListener('click', () => {
+  kozijnen.push({oms:'Kozijn '+(kozijnen.length+1),type:'vast',b:1000,h:1200,conf:'laag',opm:'handmatig',rb:'',rh:''});
+  renderRows();
+  $('resultsPanel').classList.remove('hidden');
+});
+function esc(s){ return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+/* ================= STATISTIEK ================= */
+function renderStats(){
+  const meas = kozijnen.filter(k => k.rb || k.rh);
+  if(!meas.length){ $('stats').innerHTML=''; return; }
+  const devs = [];
+  meas.forEach(k => {
+    if(k.rb) devs.push(Math.abs((k.b - +k.rb)/+k.rb*100));
+    if(k.rh) devs.push(Math.abs((k.h - +k.rh)/+k.rh*100));
+  });
+  const avg = devs.reduce((s,d)=>s+d,0)/devs.length;
+  const max = Math.max(...devs);
+  $('stats').innerHTML = `
+    <span class="stat">Ingemeten: <b>${meas.length}/${kozijnen.length}</b></span>
+    <span class="stat">Gem. afwijking: <b>${avg.toFixed(1)}%</b></span>
+    <span class="stat">Max. afwijking: <b>${max.toFixed(1)}%</b></span>`;
+}
+
+/* ================= OPSLAAN ================= */
+$('saveBtn').addEventListener('click', async () => {
+  if(!kozijnen.length){ alert('Geen kozijnen om op te slaan.'); return; }
+  const btn = $('saveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin"></span>Opslaan…';
+  try{
+    const res = await fetch(BASE + '/opslaan', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        project: $('project').value.trim(),
+        refMaat: $('refMaat').value.trim(),
+        algemeen: aiAlgemeen,
+        items: kozijnen,
+        scanId: currentScanId
+      })
+    });
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    currentScanId = data.scanId;
+    $('saveOk').textContent = '✓ Opgeslagen als scan #' + data.scanId + '. Kom hier na de inmeting terug via "Laad recente scans" om de werkelijke maten in te vullen.';
+    $('saveOk').classList.remove('hidden');
+  }catch(e){
+    $('errBox').textContent = 'Opslaan mislukt: ' + e.message;
+    $('errBox').classList.remove('hidden');
+  }
+  btn.disabled = false;
+  btn.textContent = '💾 Opslaan in database';
+});
+
+/* ================= EERDERE SCANS ================= */
+$('loadScansBtn').addEventListener('click', async () => {
+  const el = $('scanList');
+  el.style.display = 'block';
+  el.innerHTML = '<span class="status">Laden…</span>';
+  try{
+    const res = await fetch(BASE + '/scans');
+    const scans = await res.json();
+    if(!scans.length){ el.innerHTML = '<span class="status">Nog geen scans opgeslagen.</span>'; return; }
+    el.innerHTML = `<div style="overflow-x:auto"><table>
+      <thead><tr><th>#</th><th>Project</th><th>Datum</th><th>Kozijnen</th><th>Ingemeten</th><th></th></tr></thead>
+      <tbody>${scans.map(s => `<tr>
+        <td style="font-family:var(--mono)">${s.id}</td>
+        <td>${esc(s.project || '—')}</td>
+        <td style="font-family:var(--mono)">${new Date(s.created_at).toLocaleDateString('nl-NL')}</td>
+        <td style="font-family:var(--mono)">${s.aantal}</td>
+        <td style="font-family:var(--mono)">${s.ingemeten}/${s.aantal}</td>
+        <td><button class="btn ghost small" onclick="loadScan(${s.id})">Openen</button></td>
+      </tr>`).join('')}</tbody></table></div>`;
+  }catch(e){ el.innerHTML = '<span class="status">Fout: ' + e.message + '</span>'; }
+});
+
+async function loadScan(id){
+  try{
+    const res = await fetch(BASE + '/scans/' + id);
+    const data = await res.json();
+    if(data.error) throw new Error(data.error);
+    currentScanId = id;
+    $('project').value = data.scan.project || '';
+    $('refMaat').value = data.scan.referentie || '';
+    aiAlgemeen = data.scan.algemeen || '';
+    kozijnen = data.items.map(it => ({
+      oms: it.omschrijving, type: it.type,
+      b: it.schatting_b, h: it.schatting_h,
+      conf: it.zekerheid, opm: it.opmerking || '',
+      rb: it.werkelijk_b || '', rh: it.werkelijk_h || ''
+    }));
+    $('resultsPanel').classList.remove('hidden');
+    $('saveOk').classList.add('hidden');
+    $('aiNote').innerHTML = '<b>Scan #' + id + ' geladen.</b> Vul de werkelijke maten in (groene velden) en klik op Opslaan — de meting telt dan mee in de kalibratie.';
+    renderRows();
+    $('resultsPanel').scrollIntoView({behavior:'smooth'});
+  }catch(e){ alert('Laden mislukt: ' + e.message); }
+}
+</script>
+</body>
+</html>
