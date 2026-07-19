@@ -1,192 +1,138 @@
+<%
+// Echte site-header/footer als die gedetecteerd zijn; anders standalone fallback.
+var hp = (typeof headerPartials !== 'undefined' && headerPartials && headerPartials.length) ? headerPartials : null;
+var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerPartials.length) ? footerPartials : null;
+%>
+<% if (hp) { hp.forEach(function(p){ %><%- include(p) %><% }); } else { %>
 <!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Kozijnenscan — bestelkozijnenopmaat.nl</title>
-<meta name="description" content="Upload een foto van uw gevel en ontvang binnen een minuut een overzicht van uw kozijnen met geschatte afmetingen — de snelste weg naar een richtprijs.">
+</head>
+<body>
+<div style="background:#faf8f4;border-bottom:1px solid #d8d2c4;padding:14px 24px;font-family:sans-serif">
+  <a href="/" style="text-decoration:none;color:#161616;font-weight:800;font-size:17px">bestelkozijnen<span style="color:#e8590c">opmaat</span>.nl</a>
+</div>
+<% } %>
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
-:root{
-  --ink:#161616; --ink-soft:#6b6459; --paper:#f5f2ec; --card:#fcfbf8;
-  --line:#e5e0d5; --line-strong:#d8d2c4; --accent:#e8590c; --accent-soft:#fdece1;
-  --ok:#2b8a3e; --warn:#e67700; --low:#c92a2a; --mono:'JetBrains Mono',monospace;
+/* Alle scan-styling in eigen kz-naamruimte — botst nooit met de site-CSS */
+.kz-wrap{
+  --kz-ink:#161616; --kz-ink-soft:#6b6459; --kz-paper:#f5f2ec; --kz-card:#fcfbf8;
+  --kz-line:#e5e0d5; --kz-line-strong:#d8d2c4; --kz-accent:#e8590c; --kz-accent-soft:#fdece1;
+  --kz-ok:#2b8a3e; --kz-warn:#e67700; --kz-low:#c92a2a; --kz-mono:'JetBrains Mono',monospace;
+  font-family:'Archivo',sans-serif;color:var(--kz-ink);
+  max-width:960px;margin:0 auto;padding:36px 20px 90px;box-sizing:border-box;
 }
-*{box-sizing:border-box;margin:0;padding:0}
-body{
-  font-family:'Archivo',sans-serif;color:var(--ink);background:var(--paper);
-  background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
-  background-size:56px 56px;min-height:100vh;
-}
-/* --- Header: 1-op-1 opzet van de site --- */
-.topbar{background:#faf8f4;border-bottom:1px solid var(--line-strong);padding:0}
-.topbar-in{max-width:1280px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:28px}
-.logo{display:flex;align-items:center;gap:11px;text-decoration:none;color:var(--ink)}
-.logo-mark{width:36px;height:36px;background:var(--accent);border-radius:9px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px;padding:6px}
-.logo-mark i{background:#faf8f4;border-radius:2px;border:1.5px solid #2a2a2a}
-.logo b{font-weight:800;font-size:17.5px;letter-spacing:-.01em}
-.logo b span{color:var(--accent)}
-.logo small{display:block;font-family:var(--mono);font-size:8.5px;letter-spacing:.14em;color:var(--ink-soft);text-transform:uppercase;margin-top:1px}
-.nav{display:flex;align-items:center;gap:22px;font-size:14.5px;font-weight:500}
-.nav a{color:var(--ink);text-decoration:none;padding:6px 0;border-bottom:2px solid transparent}
-.nav a:hover{color:var(--accent)}
-.nav a.actief{color:var(--accent);border-bottom-color:var(--accent)}
-.nav .dd{position:relative}
-.nav .dd>a::after{content:' ▾';font-size:10px;color:var(--ink-soft)}
-.nav .dd-menu{display:none;position:absolute;top:100%;left:-10px;background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:8px;min-width:210px;box-shadow:0 8px 24px rgba(22,22,22,.1);z-index:50}
-.nav .dd:hover .dd-menu{display:block}
-.nav .dd-menu a{display:block;padding:9px 12px;border-radius:7px;border-bottom:none;font-size:14px}
-.nav .dd-menu a:hover{background:var(--paper);color:var(--accent)}
-.nav-right{margin-left:auto;display:flex;align-items:center;gap:16px}
-.nav-right .link{color:var(--ink-soft);text-decoration:none;font-size:14px}
-.nav-right .link:hover{color:var(--ink)}
-.pill{background:#1b1b1b;color:#fff;text-decoration:none;font-weight:600;font-size:14px;border-radius:999px;padding:10px 20px}
-.pill:hover{background:#000}
-@media(max-width:880px){.nav{display:none}.nav-right .link{display:none}}
-.wrap{max-width:960px;margin:0 auto;padding:36px 20px 90px}
-.hero h1{font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em}
-.hero h1 span{color:var(--accent)}
-.hero p{color:var(--ink-soft);margin-top:10px;max-width:620px;font-size:16px;line-height:1.55}
-.steps{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
-.step{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-soft);
-  background:var(--card);border:1px solid var(--line-strong);border-radius:999px;padding:7px 13px}
-.step b{color:var(--accent)}
-.panel{background:var(--card);border:1px solid var(--line-strong);border-radius:12px;margin-top:26px;overflow:hidden;box-shadow:0 1px 0 rgba(22,22,22,.04)}
-.panel-h{padding:16px 22px;border-bottom:1px solid var(--line)}
-.panel-h h2{font-size:12px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.1em;color:var(--ink-soft);font-weight:400}
-.panel-b{padding:22px}
-.drop{border:2px dashed var(--line-strong);border-radius:10px;padding:38px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--paper)}
-.drop:hover,.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-.drop b{font-size:17px;font-weight:600}
-.drop p{color:var(--ink-soft);font-size:13px;margin-top:5px}
-.thumbs{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
-.thumb{position:relative;width:120px}
-.thumb img{width:120px;height:92px;object-fit:cover;border:1px solid var(--line-strong);border-radius:8px;display:block}
-.thumb .rm{position:absolute;top:-7px;right:-7px;background:var(--ink);color:#fff;border:none;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:11px;line-height:1}
-.thumb .st{font-family:var(--mono);font-size:9.5px;margin-top:4px;color:var(--ink-soft);display:block}
-.btn{font-family:'Archivo',sans-serif;font-weight:600;font-size:15px;background:var(--ink);color:#fff;
-  border:none;border-radius:999px;padding:13px 26px;cursor:pointer;transition:.15s}
-.btn:hover{background:#000;transform:translateY(-1px)}
-.btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
-.btn.accent{background:var(--accent)}
-.btn.accent:hover{background:#d14e08}
-.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid var(--ink)}
-.btn.small{font-size:13px;padding:9px 16px}
-.row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px}
-.spin{display:inline-block;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite;vertical-align:-3px;margin-right:8px}
-@keyframes sp{to{transform:rotate(360deg)}}
-.status{font-family:var(--mono);font-size:12px;color:var(--ink-soft)}
-.field{margin-top:16px}
-.field label{display:block;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-soft);margin-bottom:6px}
-.field input,.field textarea{width:100%;font-family:'Archivo',sans-serif;font-size:14px;padding:11px 13px;border:1px solid var(--line-strong);border-radius:8px;background:var(--paper);color:var(--ink)}
-.field input:focus,.field textarea:focus{outline:2px solid var(--accent);border-color:var(--accent)}
-.hint{font-size:12px;color:var(--ink-soft);margin-top:5px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:600px){.grid2{grid-template-columns:1fr}}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;text-align:left;color:var(--ink-soft);padding:9px 8px;border-bottom:1px solid var(--line-strong);font-weight:400}
-td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
-td input,td select{font-family:var(--mono);font-size:13px;border:1px solid var(--line-strong);border-radius:6px;background:var(--paper);padding:8px;width:100%;color:var(--ink)}
-td input:focus,td select:focus{outline:2px solid var(--accent)}
-.conf{font-family:var(--mono);font-size:9.5px;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
-.conf.hoog{background:#e6f4e8;color:var(--ok)}
-.conf.middel{background:#fff4e0;color:var(--warn)}
-.conf.laag{background:#ffe6e6;color:var(--low)}
-.opm{font-size:12px;color:var(--ink-soft);margin-top:2px}
-.delrow{background:none;border:1px solid var(--line-strong);border-radius:6px;color:var(--low);cursor:pointer;padding:6px 9px;font-size:12px}
-.note{background:var(--accent-soft);border-radius:8px;padding:13px 15px;font-size:13px;margin-top:16px;line-height:1.55}
-.err{background:#ffe6e6;border-radius:8px;padding:13px 15px;font-size:13px;margin-top:14px;color:var(--low)}
-.hidden{display:none!important}
-.done{text-align:center;padding:50px 20px}
-.done .check{width:66px;height:66px;border-radius:50%;background:var(--ok);color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
-.done h2{font-size:26px;font-weight:800}
-.done p{color:var(--ink-soft);margin-top:10px;max-width:480px;margin-left:auto;margin-right:auto;line-height:1.55}
-.done .nr{font-family:var(--mono);background:var(--paper);border:1px solid var(--line-strong);border-radius:8px;padding:8px 16px;display:inline-block;margin-top:14px;font-size:14px}
-.usp{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:26px}
-.usp .u{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.5;color:var(--ink-soft)}
-.usp .u b{display:block;color:var(--ink);font-size:14px;margin-bottom:4px}
+.kz-wrap *{box-sizing:border-box}
+.kz-hero h1{font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em;margin:0}
+.kz-hero h1 span{color:var(--kz-accent)}
+.kz-hero p{color:var(--kz-ink-soft);margin:10px 0 0;max-width:620px;font-size:16px;line-height:1.55}
+.kz-steps{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
+.kz-step{font-family:var(--kz-mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--kz-ink-soft);
+  background:var(--kz-card);border:1px solid var(--kz-line-strong);border-radius:999px;padding:7px 13px}
+.kz-step b{color:var(--kz-accent)}
+.kz-panel{background:var(--kz-card);border:1px solid var(--kz-line-strong);border-radius:12px;margin-top:26px;overflow:hidden;box-shadow:0 1px 0 rgba(22,22,22,.04)}
+.kz-panel-h{padding:16px 22px;border-bottom:1px solid var(--kz-line)}
+.kz-panel-h h2{font-size:12px;font-family:var(--kz-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--kz-ink-soft);font-weight:400;margin:0}
+.kz-panel-b{padding:22px}
+.kz-drop{border:2px dashed var(--kz-line-strong);border-radius:10px;padding:38px 20px;text-align:center;cursor:pointer;transition:.15s;background:var(--kz-paper)}
+.kz-drop:hover,.kz-drop.kz-over{border-color:var(--kz-accent);background:var(--kz-accent-soft)}
+.kz-drop b{font-size:17px;font-weight:600}
+.kz-drop p{color:var(--kz-ink-soft);font-size:13px;margin:5px 0 0}
+.kz-thumbs{display:flex;gap:12px;flex-wrap:wrap;margin-top:16px}
+.kz-thumb{position:relative;width:120px}
+.kz-thumb img{width:120px;height:92px;object-fit:cover;border:1px solid var(--kz-line-strong);border-radius:8px;display:block}
+.kz-thumb .kz-rm{position:absolute;top:-7px;right:-7px;background:var(--kz-ink);color:#fff;border:none;width:22px;height:22px;border-radius:50%;cursor:pointer;font-size:11px;line-height:1}
+.kz-thumb .kz-st{font-family:var(--kz-mono);font-size:9.5px;margin-top:4px;color:var(--kz-ink-soft);display:block}
+.kz-btn{font-family:'Archivo',sans-serif;font-weight:600;font-size:15px;background:var(--kz-ink);color:#fff;
+  border:none;border-radius:999px;padding:13px 26px;cursor:pointer;transition:.15s;display:inline-block;text-decoration:none}
+.kz-btn:hover{background:#000;transform:translateY(-1px)}
+.kz-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+.kz-btn.kz-accent{background:var(--kz-accent)}
+.kz-btn.kz-accent:hover{background:#d14e08}
+.kz-btn.kz-ghost{background:transparent;color:var(--kz-ink);border:1.5px solid var(--kz-ink)}
+.kz-btn.kz-small{font-size:13px;padding:9px 16px}
+.kz-row{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-top:18px}
+.kz-spin{display:inline-block;width:15px;height:15px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:kzsp .7s linear infinite;vertical-align:-3px;margin-right:8px}
+@keyframes kzsp{to{transform:rotate(360deg)}}
+.kz-status{font-family:var(--kz-mono);font-size:12px;color:var(--kz-ink-soft)}
+.kz-field{margin-top:16px}
+.kz-field label{display:block;font-family:var(--kz-mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--kz-ink-soft);margin-bottom:6px}
+.kz-field input,.kz-field textarea{width:100%;font-family:'Archivo',sans-serif;font-size:14px;padding:11px 13px;border:1px solid var(--kz-line-strong);border-radius:8px;background:var(--kz-paper);color:var(--kz-ink)}
+.kz-field input:focus,.kz-field textarea:focus{outline:2px solid var(--kz-accent);border-color:var(--kz-accent)}
+.kz-hint{font-size:12px;color:var(--kz-ink-soft);margin-top:5px}
+.kz-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.kz-grid2{grid-template-columns:1fr}}
+.kz-wrap table{width:100%;border-collapse:collapse;font-size:14px}
+.kz-wrap th{font-family:var(--kz-mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;text-align:left;color:var(--kz-ink-soft);padding:9px 8px;border-bottom:1px solid var(--kz-line-strong);font-weight:400}
+.kz-wrap td{padding:9px 8px;border-bottom:1px solid var(--kz-line);vertical-align:middle}
+.kz-wrap td input,.kz-wrap td select{font-family:var(--kz-mono);font-size:13px;border:1px solid var(--kz-line-strong);border-radius:6px;background:var(--kz-paper);padding:8px;width:100%;color:var(--kz-ink)}
+.kz-wrap td input:focus,.kz-wrap td select:focus{outline:2px solid var(--kz-accent)}
+.kz-conf{font-family:var(--kz-mono);font-size:9.5px;padding:3px 9px;border-radius:999px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap}
+.kz-conf.hoog{background:#e6f4e8;color:var(--kz-ok)}
+.kz-conf.middel{background:#fff4e0;color:var(--kz-warn)}
+.kz-conf.laag{background:#ffe6e6;color:var(--kz-low)}
+.kz-opm{font-size:12px;color:var(--kz-ink-soft);margin-top:2px}
+.kz-delrow{background:none;border:1px solid var(--kz-line-strong);border-radius:6px;color:var(--kz-low);cursor:pointer;padding:6px 9px;font-size:12px}
+.kz-note{background:var(--kz-accent-soft);border-radius:8px;padding:13px 15px;font-size:13px;margin-top:16px;line-height:1.55}
+.kz-err{background:#ffe6e6;border-radius:8px;padding:13px 15px;font-size:13px;margin-top:14px;color:var(--kz-low)}
+.kz-hidden{display:none!important}
+.kz-done{text-align:center;padding:50px 20px}
+.kz-done .kz-check{width:66px;height:66px;border-radius:50%;background:var(--kz-ok);color:#fff;font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 18px}
+.kz-done h2{font-size:26px;font-weight:800;margin:0}
+.kz-done p{color:var(--kz-ink-soft);margin:10px auto 0;max-width:480px;line-height:1.55}
+.kz-done .kz-nr{font-family:var(--kz-mono);background:var(--kz-paper);border:1px solid var(--kz-line-strong);border-radius:8px;padding:8px 16px;display:inline-block;margin-top:14px;font-size:14px}
+.kz-usp{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:26px}
+.kz-usp .kz-u{background:var(--kz-card);border:1px solid var(--kz-line);border-radius:10px;padding:16px 18px;font-size:13px;line-height:1.5;color:var(--kz-ink-soft)}
+.kz-usp .kz-u b{display:block;color:var(--kz-ink);font-size:14px;margin-bottom:4px}
 </style>
-</head>
-<body>
 
-<div class="topbar">
-  <div class="topbar-in">
-    <a class="logo" href="/">
-      <span class="logo-mark"><i></i><i></i><i></i><i></i></span>
-      <span><b>bestelkozijnen<span>opmaat</span></b><small>.nl · kozijnen op maat</small></span>
-    </a>
-    <nav class="nav">
-      <a href="/">Home</a>
-      <a href="/configurator">Configurator</a>
-      <div class="dd">
-        <a href="#">Materialen</a>
-        <div class="dd-menu">
-          <% if (typeof materials !== 'undefined' && materials) { Object.keys(materials).forEach(function(slug){ %>
-            <a href="/kozijnen/<%= slug %>"><%= materials[slug].title || slug %></a>
-          <% }); } %>
-        </div>
-      </div>
-      <a href="/werkwijze">Werkwijze</a>
-      <a href="/montage">Montage</a>
-      <a href="/veelgestelde-vragen">FAQ</a>
-      <a href="/contact">Contact</a>
-      <a href="/ai-kozijnenscan" class="actief">AI Scan</a>
-    </nav>
-    <div class="nav-right">
-      <% if (typeof currentUser !== 'undefined' && currentUser) { %>
-        <% if (currentUser.role === 'beheer') { %><a class="link" href="/beheer">Beheer</a><% } %>
-        <a class="link" href="/portaal">Mijn portaal</a>
-        <a class="pill" href="/uitloggen">Uitloggen</a>
-      <% } else { %>
-        <a class="link" href="/inloggen">Inloggen</a>
-        <a class="pill" href="/configurator">Stel samen</a>
-      <% } %>
-    </div>
-  </div>
-</div>
+<div class="kz-wrap">
 
-<div class="wrap">
-
-<div class="hero">
+<div class="kz-hero">
   <h1>AI Kozijnen<span>scan</span></h1>
   <p>Upload een foto van uw gevel en onze AI herkent binnen een minuut al uw kozijnen — inclusief geschatte afmetingen. U ontvangt daarna snel een richtprijs, geheel vrijblijvend.</p>
-  <div class="steps">
-    <span class="step"><b>1</b> Foto uploaden</span>
-    <span class="step"><b>2</b> AI herkent kozijnen</span>
-    <span class="step"><b>3</b> Controleer maten</span>
-    <span class="step"><b>4</b> Ontvang richtprijs</span>
+  <div class="kz-steps">
+    <span class="kz-step"><b>1</b> Foto uploaden</span>
+    <span class="kz-step"><b>2</b> AI herkent kozijnen</span>
+    <span class="kz-step"><b>3</b> Controleer maten</span>
+    <span class="kz-step"><b>4</b> Ontvang richtprijs</span>
   </div>
 </div>
 
 <!-- STAP 1: UPLOAD -->
-<section class="panel" id="uploadPanel">
-  <div class="panel-h"><h2>Stap 1 — Foto's van uw gevel</h2></div>
-  <div class="panel-b">
-    <div class="drop" id="drop">
+<section class="kz-panel" id="kzUploadPanel">
+  <div class="kz-panel-h"><h2>Stap 1 — Foto's van uw gevel</h2></div>
+  <div class="kz-panel-b">
+    <div class="kz-drop" id="kzDrop">
       <b>Sleep foto's hierheen of klik om te kiezen</b>
       <p>Fotografeer de gevel recht van voren, bij daglicht. Maximaal 3 foto's (JPG/PNG).</p>
     </div>
-    <input type="file" id="fileInput" accept="image/jpeg,image/png,image/webp" multiple class="hidden">
-    <div class="thumbs" id="thumbs"></div>
+    <input type="file" id="kzFileInput" accept="image/jpeg,image/png,image/webp" multiple class="kz-hidden">
+    <div class="kz-thumbs" id="kzThumbs"></div>
 
-    <div class="field">
+    <div class="kz-field">
       <label>Weet u toevallig één maat? (niet verplicht, wel nauwkeuriger)</label>
-      <input type="text" id="refMaat" placeholder='Bijvoorbeeld: "de voordeur is 231 cm hoog" of "het raam links is 180 cm breed"'>
+      <input type="text" id="kzRefMaat" placeholder='Bijvoorbeeld: "de voordeur is 231 cm hoog" of "het raam links is 180 cm breed"'>
     </div>
 
-    <div class="row">
-      <button class="btn accent" id="analyzeBtn" disabled>Start de scan →</button>
-      <span class="status" id="status"></span>
+    <div class="kz-row">
+      <button class="kz-btn kz-accent" id="kzAnalyzeBtn" disabled>Start de scan &rarr;</button>
+      <span class="kz-status" id="kzStatus"></span>
     </div>
-    <div class="err hidden" id="errBox"></div>
+    <div class="kz-err kz-hidden" id="kzErrBox"></div>
   </div>
 </section>
 
 <!-- STAP 2: RESULTATEN -->
-<section class="panel hidden" id="resultsPanel">
-  <div class="panel-h"><h2>Stap 2 — Uw herkende kozijnen (pas gerust aan)</h2></div>
-  <div class="panel-b">
+<section class="kz-panel kz-hidden" id="kzResultsPanel">
+  <div class="kz-panel-h"><h2>Stap 2 — Uw herkende kozijnen (pas gerust aan)</h2></div>
+  <div class="kz-panel-b">
     <div style="overflow-x:auto">
     <table>
       <thead>
@@ -199,155 +145,155 @@ td input:focus,td select:focus{outline:2px solid var(--accent)}
           <th style="width:44px"></th>
         </tr>
       </thead>
-      <tbody id="resultsBody"></tbody>
+      <tbody id="kzResultsBody"></tbody>
     </table>
     </div>
-    <div class="row">
-      <button class="btn ghost small" id="addRowBtn">+ Kozijn toevoegen</button>
+    <div class="kz-row">
+      <button class="kz-btn kz-ghost kz-small" id="kzAddRowBtn">+ Kozijn toevoegen</button>
     </div>
-    <div class="note">De afmetingen zijn een <b>schatting op basis van uw foto</b>. Klopt een maat niet helemaal? Pas hem gerust aan — of laat het zo, wij meten vóór de definitieve offerte altijd gratis bij u in.</div>
+    <div class="kz-note">De afmetingen zijn een <b>schatting op basis van uw foto</b>. Klopt een maat niet helemaal? Pas hem gerust aan — of laat het zo, wij meten vóór de definitieve offerte altijd gratis bij u in.</div>
   </div>
 </section>
 
 <!-- STAP 3: GEGEVENS -->
-<section class="panel hidden" id="formPanel">
-  <div class="panel-h"><h2>Stap 3 — Uw gegevens voor de richtprijs</h2></div>
-  <div class="panel-b">
-    <div class="grid2">
-      <div class="field"><label>Naam *</label><input type="text" id="f_naam" autocomplete="name"></div>
-      <div class="field"><label>E-mailadres *</label><input type="email" id="f_email" autocomplete="email"></div>
-      <div class="field"><label>Telefoon</label><input type="tel" id="f_tel" autocomplete="tel"></div>
-      <div class="field"><label>Adres / plaats</label><input type="text" id="f_adres" autocomplete="street-address"></div>
+<section class="kz-panel kz-hidden" id="kzFormPanel">
+  <div class="kz-panel-h"><h2>Stap 3 — Uw gegevens voor de richtprijs</h2></div>
+  <div class="kz-panel-b">
+    <div class="kz-grid2">
+      <div class="kz-field"><label>Naam *</label><input type="text" id="kzNaam" autocomplete="name"></div>
+      <div class="kz-field"><label>E-mailadres *</label><input type="email" id="kzEmail" autocomplete="email"></div>
+      <div class="kz-field"><label>Telefoon</label><input type="tel" id="kzTel" autocomplete="tel"></div>
+      <div class="kz-field"><label>Adres / plaats</label><input type="text" id="kzAdres" autocomplete="street-address"></div>
     </div>
-    <div class="field"><label>Opmerkingen (kleurwens, beglazing, planning…)</label><textarea id="f_opm" rows="3"></textarea></div>
-    <div class="row">
-      <button class="btn accent" id="submitBtn">Vraag richtprijs aan →</button>
-      <span class="status">Vrijblijvend · reactie meestal binnen 1 werkdag</span>
+    <div class="kz-field"><label>Opmerkingen (kleurwens, beglazing, planning…)</label><textarea id="kzOpm" rows="3"></textarea></div>
+    <div class="kz-row">
+      <button class="kz-btn kz-accent" id="kzSubmitBtn">Vraag richtprijs aan &rarr;</button>
+      <span class="kz-status">Vrijblijvend · reactie meestal binnen 1 werkdag</span>
     </div>
-    <div class="err hidden" id="formErr"></div>
-    <p class="hint" style="margin-top:14px">Wij gebruiken uw gegevens uitsluitend voor deze aanvraag. Zie onze privacyverklaring.</p>
+    <div class="kz-err kz-hidden" id="kzFormErr"></div>
+    <p class="kz-hint" style="margin-top:14px">Wij gebruiken uw gegevens uitsluitend voor deze aanvraag. Zie ons <a href="/privacybeleid" style="color:inherit">privacybeleid</a>.</p>
   </div>
 </section>
 
 <!-- KLAAR -->
-<section class="panel hidden" id="donePanel">
-  <div class="done">
-    <div class="check">✓</div>
+<section class="kz-panel kz-hidden" id="kzDonePanel">
+  <div class="kz-done">
+    <div class="kz-check">&#10003;</div>
     <h2>Aanvraag ontvangen!</h2>
     <p>Bedankt! Wij bekijken uw scan en sturen u zo snel mogelijk een richtprijs op basis van de geschatte afmetingen. De definitieve offerte volgt na een gratis en vrijblijvende inmeting bij u thuis.</p>
-    <div class="nr" id="doneNr"></div>
+    <div class="kz-nr" id="kzDoneNr"></div>
   </div>
 </section>
 
-<div class="usp">
-  <div class="u"><b>Binnen 1 minuut resultaat</b>Geen afspraken of opmeetwerk nodig voor uw eerste prijsindicatie.</div>
-  <div class="u"><b>Vrijblijvend &amp; gratis</b>De scan en richtprijs kosten niets. Inmeten doen wij ook gratis.</div>
-  <div class="u"><b>A-merk profielen op maat</b>Drutex &amp; Aluplast kozijnen — geleverd en gemonteerd door één partij.</div>
+<div class="kz-usp">
+  <div class="kz-u"><b>Binnen 1 minuut resultaat</b>Geen afspraken of opmeetwerk nodig voor uw eerste prijsindicatie.</div>
+  <div class="kz-u"><b>Vrijblijvend &amp; gratis</b>De scan en richtprijs kosten niets. Inmeten doen wij ook gratis.</div>
+  <div class="kz-u"><b>A-merk profielen op maat</b>Drutex &amp; Aluplast kozijnen — geleverd en gemonteerd door één partij.</div>
 </div>
 
 </div>
 
 <script>
+(function(){
 /* ================= STATE ================= */
-let photos = [];
-let kozijnen = [];
-let aiAlgemeen = '';
-const $ = id => document.getElementById(id);
-const BASE = window.location.pathname.replace(/\/$/, '');
-const MAX_FOTO = 3;
-const MAX_PX = 1600; // client-side resize: scheelt data én API-kosten
+var photos = [];
+var kozijnen = [];
+var aiAlgemeen = '';
+function $(id){ return document.getElementById(id); }
+var BASE = '/ai-kozijnenscan';
+var MAX_FOTO = 3;
+var MAX_PX = 1600; // client-side resize: scheelt data én API-kosten
 
 /* ================= UPLOAD + RESIZE ================= */
-const drop = $('drop'), fileInput = $('fileInput');
-drop.addEventListener('click', () => fileInput.click());
-drop.addEventListener('dragover', e => {e.preventDefault(); drop.classList.add('over');});
-drop.addEventListener('dragleave', () => drop.classList.remove('over'));
-drop.addEventListener('drop', e => {e.preventDefault(); drop.classList.remove('over'); addFiles(e.dataTransfer.files);});
-fileInput.addEventListener('change', e => addFiles(e.target.files));
+var drop = $('kzDrop'), fileInput = $('kzFileInput');
+drop.addEventListener('click', function(){ fileInput.click(); });
+drop.addEventListener('dragover', function(e){ e.preventDefault(); drop.classList.add('kz-over'); });
+drop.addEventListener('dragleave', function(){ drop.classList.remove('kz-over'); });
+drop.addEventListener('drop', function(e){ e.preventDefault(); drop.classList.remove('kz-over'); addFiles(e.dataTransfer.files); });
+fileInput.addEventListener('change', function(e){ addFiles(e.target.files); });
 
 function addFiles(list){
-  [...list].slice(0, MAX_FOTO - photos.length).forEach(async f => {
+  Array.prototype.slice.call(list, 0, MAX_FOTO - photos.length).forEach(function(f){
     if(!/image\/(jpeg|png|webp)/.test(f.type)) return;
-    const resized = await resizeImage(f);
-    photos.push(resized);
-    renderThumbs();
+    resizeImage(f).then(function(resized){
+      if(resized && resized.base64){ photos.push(resized); renderThumbs(); }
+    });
   });
 }
 
 function resizeImage(file){
-  return new Promise(resolve => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const scale = Math.min(1, MAX_PX / Math.max(img.width, img.height));
-      const w = Math.round(img.width * scale), h = Math.round(img.height * scale);
-      const canvas = document.createElement('canvas');
+  return new Promise(function(resolve){
+    var img = new Image();
+    var url = URL.createObjectURL(file);
+    img.onload = function(){
+      var scale = Math.min(1, MAX_PX / Math.max(img.width, img.height));
+      var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+      var canvas = document.createElement('canvas');
       canvas.width = w; canvas.height = h;
       canvas.getContext('2d').drawImage(img, 0, 0, w, h);
       URL.revokeObjectURL(url);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      resolve({
-        name: file.name, dataUrl,
-        base64: dataUrl.split(',')[1],
-        mediaType: 'image/jpeg',
-        status: 'gereed'
-      });
+      var dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      resolve({ name:file.name, dataUrl:dataUrl, base64:dataUrl.split(',')[1], mediaType:'image/jpeg', status:'gereed' });
     };
-    img.onerror = () => { URL.revokeObjectURL(url); resolve(null); };
+    img.onerror = function(){ URL.revokeObjectURL(url); resolve(null); };
     img.src = url;
-  }).then(r => r || { name:file.name, dataUrl:'', base64:'', mediaType:'', status:'fout' });
+  });
 }
 
 function renderThumbs(){
-  photos = photos.filter(p => p && p.base64);
-  $('thumbs').innerHTML = photos.map((p,i) => `
-    <div class="thumb">
-      <img src="${p.dataUrl}" alt="Foto ${i+1}">
-      <button class="rm" onclick="removePhoto(${i})">✕</button>
-      <span class="st">${p.name.slice(0,16)} · ${p.status}</span>
-    </div>`).join('');
-  $('analyzeBtn').disabled = photos.length === 0;
+  $('kzThumbs').innerHTML = photos.map(function(p,i){ return '' +
+    '<div class="kz-thumb">' +
+      '<img src="'+p.dataUrl+'" alt="Foto '+(i+1)+'">' +
+      '<button class="kz-rm" data-i="'+i+'">&#10005;</button>' +
+      '<span class="kz-st">'+esc(p.name.slice(0,16))+' &middot; '+p.status+'</span>' +
+    '</div>'; }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#kzThumbs .kz-rm'), function(btn){
+    btn.addEventListener('click', function(){ photos.splice(+btn.getAttribute('data-i'),1); renderThumbs(); });
+  });
+  $('kzAnalyzeBtn').disabled = photos.length === 0;
 }
-function removePhoto(i){ photos.splice(i,1); renderThumbs(); }
 
 /* ================= AI ANALYSE ================= */
-$('analyzeBtn').addEventListener('click', analyzeAll);
+$('kzAnalyzeBtn').addEventListener('click', analyzeAll);
 
-async function analyzeAll(){
-  const btn = $('analyzeBtn');
+function analyzeAll(){
+  var btn = $('kzAnalyzeBtn');
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Uw gevel wordt gescand…';
-  $('errBox').classList.add('hidden');
-  photos.forEach(p => p.status = 'scannen…'); renderThumbs();
-  $('status').textContent = 'Dit duurt ongeveer 20-30 seconden…';
+  btn.innerHTML = '<span class="kz-spin"></span>Uw gevel wordt gescand&hellip;';
+  $('kzErrBox').classList.add('kz-hidden');
+  photos.forEach(function(p){ p.status = 'scannen&hellip;'; }); renderThumbs();
+  $('kzAnalyzeBtn').disabled = true;
+  $('kzStatus').textContent = 'Dit duurt ongeveer 20-30 seconden…';
 
-  try{
-    const res = await fetch(BASE + '/analyse', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        images: photos.map(p => ({ base64: p.base64, mediaType: p.mediaType })),
-        refMaat: $('refMaat').value.trim()
-      })
-    });
-    const data = await res.json();
+  fetch(BASE + '/analyse', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      images: photos.map(function(p){ return { base64: p.base64, mediaType: p.mediaType }; }),
+      refMaat: $('kzRefMaat').value.trim()
+    })
+  }).then(function(r){ return r.json(); }).then(function(data){
     if(data.error) throw new Error(data.error);
     kozijnen = data.kozijnen || [];
     aiAlgemeen = data.algemeen || '';
-    photos.forEach(p => p.status = 'klaar ✓');
-    $('status').textContent = kozijnen.length
-      ? '✓ ' + kozijnen.length + ' kozijn(en) herkend'
+    photos.forEach(function(p){ p.status = 'klaar &#10003;'; });
+    $('kzStatus').textContent = kozijnen.length
+      ? '\u2713 ' + kozijnen.length + ' kozijn(en) herkend'
       : 'Geen kozijnen herkend — probeer een duidelijkere foto of voeg ze handmatig toe';
-    $('resultsPanel').classList.remove('hidden');
-    $('formPanel').classList.remove('hidden');
+    $('kzResultsPanel').classList.remove('kz-hidden');
+    $('kzFormPanel').classList.remove('kz-hidden');
     renderRows();
-    $('resultsPanel').scrollIntoView({behavior:'smooth'});
-  }catch(e){
-    photos.forEach(p => p.status = 'fout');
-    $('errBox').textContent = e.message;
-    $('errBox').classList.remove('hidden');
-    $('status').textContent = '';
-  }
+    $('kzResultsPanel').scrollIntoView({behavior:'smooth'});
+    afterAnalyze(btn);
+  }).catch(function(e){
+    photos.forEach(function(p){ p.status = 'fout'; });
+    $('kzErrBox').textContent = e.message;
+    $('kzErrBox').classList.remove('kz-hidden');
+    $('kzStatus').textContent = '';
+    afterAnalyze(btn);
+  });
+}
+function afterAnalyze(btn){
   renderThumbs();
   btn.disabled = false;
   btn.textContent = 'Scan opnieuw';
@@ -355,71 +301,81 @@ async function analyzeAll(){
 
 /* ================= TABEL ================= */
 function renderRows(){
-  $('resultsBody').innerHTML = kozijnen.map((k,i) => `
-    <tr>
-      <td><input value="${esc(k.oms)}" onchange="upd(${i},'oms',this.value)">
-          ${k.opm?`<div class="opm">${esc(k.opm)}</div>`:''}</td>
-      <td><select onchange="upd(${i},'type',this.value)">
-        ${['vast','draai','draaikiep','klep','deur','pui','combinatie'].map(t=>`<option ${k.type===t?'selected':''}>${t}</option>`).join('')}
-      </select></td>
-      <td><input type="number" step="10" value="${k.b}" onchange="upd(${i},'b',+this.value)"></td>
-      <td><input type="number" step="10" value="${k.h}" onchange="upd(${i},'h',+this.value)"></td>
-      <td><span class="conf ${k.conf}">${k.conf}</span></td>
-      <td><button class="delrow" onclick="delRow(${i})" title="Verwijderen">✕</button></td>
-    </tr>`).join('');
+  var types = ['vast','draai','draaikiep','klep','deur','pui','combinatie'];
+  $('kzResultsBody').innerHTML = kozijnen.map(function(k,i){ return '' +
+    '<tr>' +
+      '<td><input data-i="'+i+'" data-f="oms" value="'+esc(k.oms)+'">' +
+        (k.opm ? '<div class="kz-opm">'+esc(k.opm)+'</div>' : '') + '</td>' +
+      '<td><select data-i="'+i+'" data-f="type">' +
+        types.map(function(t){ return '<option'+(k.type===t?' selected':'')+'>'+t+'</option>'; }).join('') +
+      '</select></td>' +
+      '<td><input data-i="'+i+'" data-f="b" type="number" step="10" value="'+k.b+'"></td>' +
+      '<td><input data-i="'+i+'" data-f="h" type="number" step="10" value="'+k.h+'"></td>' +
+      '<td><span class="kz-conf '+k.conf+'">'+k.conf+'</span></td>' +
+      '<td><button class="kz-delrow" data-i="'+i+'" title="Verwijderen">&#10005;</button></td>' +
+    '</tr>'; }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#kzResultsBody [data-f]'), function(el){
+    el.addEventListener('change', function(){
+      var i = +el.getAttribute('data-i'), f = el.getAttribute('data-f');
+      kozijnen[i][f] = (f==='b'||f==='h') ? +el.value : el.value;
+    });
+  });
+  Array.prototype.forEach.call(document.querySelectorAll('#kzResultsBody .kz-delrow'), function(btn){
+    btn.addEventListener('click', function(){ kozijnen.splice(+btn.getAttribute('data-i'),1); renderRows(); });
+  });
 }
-function upd(i,f,v){ kozijnen[i][f]=v; }
-function delRow(i){ kozijnen.splice(i,1); renderRows(); }
-$('addRowBtn').addEventListener('click', () => {
+$('kzAddRowBtn').addEventListener('click', function(){
   kozijnen.push({oms:'Kozijn '+(kozijnen.length+1),type:'vast',b:1000,h:1200,conf:'laag',opm:'zelf toegevoegd'});
   renderRows();
-  $('formPanel').classList.remove('hidden');
+  $('kzFormPanel').classList.remove('kz-hidden');
 });
-function esc(s){ return String(s).replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
 /* ================= AANVRAAG VERSTUREN ================= */
-$('submitBtn').addEventListener('click', async () => {
-  const btn = $('submitBtn');
-  $('formErr').classList.add('hidden');
+$('kzSubmitBtn').addEventListener('click', function(){
+  var btn = $('kzSubmitBtn');
+  $('kzFormErr').classList.add('kz-hidden');
   if(!kozijnen.length){ showFormErr('Er zijn geen kozijnen in uw scan.'); return; }
-  if(!$('f_naam').value.trim() || !$('f_email').value.trim()){
+  if(!$('kzNaam').value.trim() || !$('kzEmail').value.trim()){
     showFormErr('Vul in ieder geval uw naam en e-mailadres in.'); return;
   }
   btn.disabled = true;
-  btn.innerHTML = '<span class="spin"></span>Versturen…';
-  try{
-    const res = await fetch(BASE + '/aanvraag', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({
-        naam: $('f_naam').value.trim(),
-        email: $('f_email').value.trim(),
-        telefoon: $('f_tel').value.trim(),
-        adres: $('f_adres').value.trim(),
-        opmerking: $('f_opm').value.trim(),
-        refMaat: $('refMaat').value.trim(),
-        algemeen: aiAlgemeen,
-        items: kozijnen
-      })
-    });
-    const data = await res.json();
+  btn.innerHTML = '<span class="kz-spin"></span>Versturen&hellip;';
+  fetch(BASE + '/aanvraag', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      naam: $('kzNaam').value.trim(),
+      email: $('kzEmail').value.trim(),
+      telefoon: $('kzTel').value.trim(),
+      adres: $('kzAdres').value.trim(),
+      opmerking: $('kzOpm').value.trim(),
+      refMaat: $('kzRefMaat').value.trim(),
+      algemeen: aiAlgemeen,
+      items: kozijnen
+    })
+  }).then(function(r){ return r.json(); }).then(function(data){
     if(data.error) throw new Error(data.error);
-    $('uploadPanel').classList.add('hidden');
-    $('resultsPanel').classList.add('hidden');
-    $('formPanel').classList.add('hidden');
-    $('doneNr').textContent = 'Aanvraagnummer: ' + data.nummer;
-    $('donePanel').classList.remove('hidden');
-    $('donePanel').scrollIntoView({behavior:'smooth'});
-  }catch(e){
+    $('kzUploadPanel').classList.add('kz-hidden');
+    $('kzResultsPanel').classList.add('kz-hidden');
+    $('kzFormPanel').classList.add('kz-hidden');
+    $('kzDoneNr').textContent = 'Aanvraagnummer: ' + data.nummer;
+    $('kzDonePanel').classList.remove('kz-hidden');
+    $('kzDonePanel').scrollIntoView({behavior:'smooth'});
+  }).catch(function(e){
     showFormErr(e.message);
     btn.disabled = false;
-    btn.textContent = 'Vraag richtprijs aan →';
-  }
+    btn.innerHTML = 'Vraag richtprijs aan &rarr;';
+  });
 });
 function showFormErr(msg){
-  $('formErr').textContent = msg;
-  $('formErr').classList.remove('hidden');
+  $('kzFormErr').textContent = msg;
+  $('kzFormErr').classList.remove('kz-hidden');
 }
+})();
 </script>
+
+<% if (fp) { fp.forEach(function(p){ %><%- include(p) %><% }); } else { %>
 </body>
 </html>
+<% } %>

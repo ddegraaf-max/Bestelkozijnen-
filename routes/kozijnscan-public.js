@@ -135,10 +135,47 @@ Wees compact in tekstvelden.`;
 }
 
 // ---------------------------------------------------------------------
-// GET / — de klantpagina
+// GET / — de klantpagina, met de ECHTE header/footer van de site.
+// We lezen views/home.ejs en detecteren welke partials daar als header
+// (vóór de content) en footer (na de content) worden ge-include't.
+// De scanpagina gebruikt exact diezelfde partials → logo, menu en stijl
+// zijn altijd 1-op-1 die van de hoofdsite. Lukt detectie niet, dan valt
+// de pagina terug op een eigen eenvoudige header.
 // ---------------------------------------------------------------------
+const path = require('path');
+const fsMod = require('fs');
+let _partialsCache = null;
+
+function detectSitePartials() {
+  if (_partialsCache) return _partialsCache;
+  try {
+    const viewsDir = path.join(__dirname, '..', 'views');
+    const src = fsMod.readFileSync(path.join(viewsDir, 'home.ejs'), 'utf8');
+    const incs = [...src.matchAll(/include\(\s*['"]([^'"]+)['"]/g)]
+      .map(m => ({ name: m[1], idx: m.index }));
+    // contentgrens: eerste echte pagina-inhoud in home.ejs
+    const startMarkers = ['<main', '<section', '<h1'];
+    const contentStart = Math.min(...startMarkers.map(t => {
+      const i = src.indexOf(t); return i < 0 ? Infinity : i;
+    }));
+    const endMarkers = ['</main>', '</section>'];
+    const contentEnd = Math.max(...endMarkers.map(t => src.lastIndexOf(t)));
+    const headerPartials = incs.filter(x => x.idx < contentStart).map(x => x.name);
+    const footerPartials = incs.filter(x => contentEnd > 0 && x.idx > contentEnd).map(x => x.name);
+    _partialsCache = { headerPartials, footerPartials };
+  } catch (e) {
+    _partialsCache = { headerPartials: [], footerPartials: [] };
+  }
+  return _partialsCache;
+}
+
 router.get('/', (req, res) => {
-  res.render('kozijnscan-klant');
+  const { headerPartials, footerPartials } = detectSitePartials();
+  res.render('kozijnscan-klant', {
+    headerPartials, footerPartials,
+    title: 'AI Kozijnenscan – richtprijs op basis van een gevelfoto',
+    active: 'ai-scan'
+  });
 });
 
 // ---------------------------------------------------------------------

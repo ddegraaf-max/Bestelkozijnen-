@@ -33,6 +33,12 @@ Optioneel:    NOTIFY_FROM, KLANT_BEVESTIGING=true,
 
 ## Nieuw in deze versie
 
+- De scanpagina gebruikt nu de ECHTE header en footer van de site: de
+  route detecteert automatisch welke partials home.ejs gebruikt en laadt
+  exact diezelfde. Jouw logo, menu, stijl en footer — 1-op-1, want het
+  zijn letterlijk jouw eigen bestanden. Alle scan-styling is bovendien
+  kz-genaamruimt zodat hij nooit botst met de site-CSS.
+
 - "AI Scan" verschijnt nu AUTOMATISCH in het menu van elke pagina
   (home, configurator, alles). De server kloont je bestaande
   Contact-menu-item inclusief CSS-classes, dus de stijl klopt vanzelf.
