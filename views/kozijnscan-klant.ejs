@@ -31,9 +31,11 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 .kz-wrap *{box-sizing:border-box}
 /* Site-CSS heeft fade/reveal-effecten op algemene elementen; die laten de
    scan-onderdelen half doorzichtig hangen. Forceer volle dekking. */
-.kz-wrap, .kz-wrap *:not(.kz-spin){opacity:1 !important;filter:none !important;animation:none !important}
-.kz-hero h1{color:var(--kz-ink)}
-.kz-hero h1 span{color:var(--kz-accent)}
+#kz-scan, #kz-scan *:not(.kz-spin){opacity:1 !important;filter:none !important;animation:none !important}
+#kz-scan .kz-hero h1{color:#161616 !important}
+#kz-scan .kz-hero h1 span{color:#e8590c !important}
+#kz-scan .kz-hero p{color:#57534a !important}
+#kz-scan .kz-step{color:#6b6459 !important}
 .kz-hero h1{font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em;margin:0}
 .kz-hero h1 span{color:var(--kz-accent)}
 .kz-hero p{color:var(--kz-ink-soft);margin:10px 0 0;max-width:620px;font-size:16px;line-height:1.55}
@@ -97,7 +99,7 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 .kz-usp .kz-u b{display:block;color:var(--kz-ink);font-size:14px;margin-bottom:4px}
 </style>
 
-<div class="kz-wrap">
+<div class="kz-wrap" id="kz-scan">
 
 <div class="kz-hero">
   <h1>AI Kozijnen<span>scan</span></h1>

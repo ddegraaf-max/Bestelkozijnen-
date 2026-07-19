@@ -151,7 +151,8 @@ app.use((req, res, next) => {
         });
       }
       // Kozi-sectie alleen op de homepage
-      if (typeof body === 'string' && req.path === '/' && body.includes('</html>')) {
+      const kzUrl = (req.originalUrl || req.url || '').split('?')[0];
+      if (typeof body === 'string' && kzUrl === '/' && body.includes('</html>')) {
         body = injectKozi(body);
       }
     } catch (e) { /* menu-injectie mag een pagina nooit breken */ }
