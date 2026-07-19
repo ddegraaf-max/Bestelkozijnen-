@@ -29,6 +29,11 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
   max-width:960px;margin:0 auto;padding:36px 20px 90px;box-sizing:border-box;
 }
 .kz-wrap *{box-sizing:border-box}
+/* Site-CSS heeft fade/reveal-effecten op algemene elementen; die laten de
+   scan-onderdelen half doorzichtig hangen. Forceer volle dekking. */
+.kz-wrap, .kz-wrap *:not(.kz-spin){opacity:1 !important;filter:none !important;animation:none !important}
+.kz-hero h1{color:var(--kz-ink)}
+.kz-hero h1 span{color:var(--kz-accent)}
 .kz-hero h1{font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em;margin:0}
 .kz-hero h1 span{color:var(--kz-accent)}
 .kz-hero p{color:var(--kz-ink-soft);margin:10px 0 0;max-width:620px;font-size:16px;line-height:1.55}
