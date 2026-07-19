@@ -32,13 +32,9 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 /* Site-CSS heeft fade/reveal-effecten op algemene elementen; die laten de
    scan-onderdelen half doorzichtig hangen. Forceer volle dekking. */
 #kz-scan, #kz-scan *:not(.kz-spin){opacity:1 !important;filter:none !important;animation:none !important}
-#kz-scan .kz-hero h1{color:#161616 !important}
-#kz-scan .kz-hero h1 span{color:#e8590c !important}
-#kz-scan .kz-hero p{color:#57534a !important}
 #kz-scan .kz-step{color:#6b6459 !important}
-.kz-hero h1{font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em;margin:0}
-.kz-hero h1 span{color:var(--kz-accent)}
-.kz-hero p{color:var(--kz-ink-soft);margin:10px 0 0;max-width:620px;font-size:16px;line-height:1.55}
+.kz-h1{font-family:'Archivo','Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em;margin:0}
+.kz-intro{margin:10px 0 0;max-width:620px;font-size:16px;line-height:1.55}
 .kz-steps{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
 .kz-step{font-family:var(--kz-mono);font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--kz-ink-soft);
   background:var(--kz-card);border:1px solid var(--kz-line-strong);border-radius:999px;padding:7px 13px}
@@ -102,8 +98,8 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 <div class="kz-wrap" id="kz-scan">
 
 <div class="kz-hero" style="opacity:1 !important;filter:none !important">
-  <h1 style="color:#161616 !important;opacity:1 !important;filter:none !important">AI Kozijnen<span style="color:#e8590c !important">scan</span></h1>
-  <p style="color:#4a463d !important;opacity:1 !important;filter:none !important">Upload een foto van uw gevel en onze AI herkent binnen een minuut al uw kozijnen — inclusief geschatte afmetingen. U ontvangt daarna snel een richtprijs, geheel vrijblijvend.</p>
+  <div role="heading" aria-level="1" class="kz-h1" style="color:#161616 !important;-webkit-text-fill-color:#161616 !important;text-shadow:none !important;background:none !important;opacity:1 !important;filter:none !important">AI Kozijnen<span style="color:#e8590c !important;-webkit-text-fill-color:#e8590c !important">scan</span></div>
+  <div class="kz-intro" style="color:#4a463d !important;-webkit-text-fill-color:#4a463d !important;text-shadow:none !important;opacity:1 !important;filter:none !important">Upload een foto van uw gevel en onze AI herkent binnen een minuut al uw kozijnen — inclusief geschatte afmetingen. U ontvangt daarna snel een richtprijs, geheel vrijblijvend.</div>
   <div class="kz-steps">
     <span class="kz-step"><b>1</b> Foto uploaden</span>
     <span class="kz-step"><b>2</b> AI herkent kozijnen</span>
