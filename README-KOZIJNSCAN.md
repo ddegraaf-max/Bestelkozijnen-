@@ -74,3 +74,111 @@ Elke analyse is één Vision-call per foto naar claude-sonnet-4-6. Reken grofweg
 - Schattingen zijn indicatief: goede frontale foto met referentie ±5-10%, schuine foto's of zonder referentie kan flink meer afwijken. De zekerheidsbadge (hoog/middel/laag) geeft dit aan.
 - Gebruik het veld "bekende referentiemaat" waar mogelijk — dat geeft de grootste nauwkeurigheidswinst.
 - Offertes altijd onder voorbehoud van inmeting.
+
+---
+
+# Fabriekmail — installatie
+
+Stuurt aanvragen automatisch (of via een beheer-knop) als specificatiemail naar de fabriek, optioneel met de KozijnScan foto-analyse erbij.
+
+## Bestanden
+
+```
+services/fabriek-mail.js                       → de mailservice (Resend)
+routes/fabriek-mail-integratie.voorbeeld.js    → kopieerbare integratievoorbeelden
+```
+
+## Extra env vars (Railway)
+
+```
+FABRIEK_EMAIL = offerte@fabriek.pl            (meerdere: kommagescheiden)
+FABRIEK_FROM  = Bestelkozijnenopmaat <offerte@bestelkozijnenopmaat.nl>
+FABRIEK_CC    = jouw@adres.nl                 (optioneel, kopie naar jezelf)
+FABRIEK_STUUR_KLANTGEGEVENS = true            (optioneel — standaard gaan
+                                               klantgegevens NIET mee, AVG)
+```
+
+RESEND_API_KEY en DATABASE_URL heb je al.
+
+## Drie manieren van gebruik
+
+1. **Automatisch bij nieuwe aanvraag** — roep na het opslaan `stuurFabriekMail()` aan
+   (voorbeeld A in het integratiebestand). Mailfouten blokkeren de aanvraag nooit.
+2. **Handmatige knop in beheer** — route + knop-snippet staan als voorbeeld B.
+3. **Met KozijnScan-data** — geef `scanId` mee; de geschatte maten verschijnen als
+   aparte sectie in de mail met NL/PL-disclaimer "schatting, productiemaat na inmeting".
+   Ingemeten maten worden automatisch als definitief gemarkeerd.
+
+## Wat de fabriek ontvangt
+
+Per kozijn een spectabel (profiel, indeling, vakken, afmetingen, kleur, afdichting —
+het `specs`-object is vrij, dus elk veld uit jouw configurator kan mee), het
+aanvraagnummer als referentie, en optioneel de configurator-afbeelding als bijlage
+(`attachments`). Klantgegevens gaan standaard niet mee.
+
+---
+
+# AI Kozijnenscan — publieke klantpagina
+
+Klantgerichte versie van de scan in de huisstijl van bestelkozijnenopmaat.nl.
+Flow: klant uploadt gevelfoto's → AI herkent kozijnen + schat maten → klant
+controleert en past aan → vult gegevens in → aanvraag komt binnen bij jou.
+
+## Bestanden
+
+```
+routes/kozijnscan-public.js    → publieke router (rate-limited)
+views/kozijnscan-klant.ejs     → klantpagina in huisstijl
+```
+
+## Mounten (server.js)
+
+```js
+// Publiek — GEEN admin-middleware:
+app.use('/ai-kozijnenscan', require('./routes/kozijnscan-public'));
+
+// Beheertool — WEL achter je admin-middleware:
+app.use('/beheer/kozijnscan', requireAdmin, require('./routes/kozijnscan'));
+```
+
+Voeg "AI Kozijnenscan" toe aan je navigatie met link naar /ai-kozijnenscan.
+Tip: dit is ook een sterke homepage-CTA ("Foto uploaden → richtprijs").
+
+## Extra env vars
+
+```
+NOTIFY_EMAIL      = jouw@adres.nl        → notificatie bij nieuwe aanvraag
+NOTIFY_FROM       = Bestelkozijnenopmaat <noreply@bestelkozijnenopmaat.nl>
+KLANT_BEVESTIGING = true                 → optioneel: klant krijgt bevestigingsmail
+```
+
+## Ingebouwde bescherming (publiek endpoint = jouw API-tegoed)
+
+- Rate limit: max 3 analyses per IP per uur (429 met nette melding)
+- Max 3 foto's per scan, client-side verkleind naar max 1600px JPEG
+  (scheelt fors in Anthropic-kosten én uploadtijd op mobiel)
+- Servervalidatie op alle invoer, veldlengtes begrensd
+- Klantfoutmeldingen zonder technische details
+
+## Wat er gebeurt bij een aanvraag
+
+1. Scan + items worden opgeslagen (kozijn_scans / kozijn_scan_items) —
+   dezelfde tabellen als de beheertool, dus klantscans tellen mee in de
+   kalibratie zodra jij ze na inmeting aanvult.
+2. Aanvraag komt in nieuwe tabel kozijn_scan_aanvragen (nummer, klant,
+   status 'ontvangen', gekoppeld scan_id).
+3. Jij krijgt een notificatiemail met alle kozijnen + het scan_id, klaar
+   om via stuurFabriekMail({ scanId }) door te sturen naar de fabriek.
+4. Optioneel krijgt de klant direct een bevestiging.
+
+## Aanvragen bekijken
+
+De aanvragen staan in kozijn_scan_aanvragen. Wil je ze in je bestaande
+beheer-lijst tonen, join dan op scan_id:
+
+```sql
+SELECT a.*, COUNT(i.id) AS kozijnen
+FROM kozijn_scan_aanvragen a
+LEFT JOIN kozijn_scan_items i ON i.scan_id = a.scan_id
+GROUP BY a.id ORDER BY a.created_at DESC;
+```
