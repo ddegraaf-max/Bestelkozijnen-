@@ -31,6 +31,13 @@ Optioneel:    NOTIFY_FROM, KLANT_BEVESTIGING=true,
               FABRIEK_EMAIL (staat standaard op mpanek@drutex.com.pl),
               FABRIEK_REPLY (staat standaard op montage@creditline.nl)
 
+## Nieuw in deze versie
+
+- "AI Scan" verschijnt nu AUTOMATISCH in het menu van elke pagina
+  (home, configurator, alles). De server kloont je bestaande
+  Contact-menu-item inclusief CSS-classes, dus de stijl klopt vanzelf.
+  Geen header-bestand aanpassen nodig.
+
 ## Wat zit erin
 
 - /ai-kozijnenscan          Publieke klantpagina in de huisstijl van de site

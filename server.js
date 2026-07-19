@@ -48,6 +48,33 @@ app.use(async (req, res, next) => {
 
 const mailer = require('./mailer')(company);
 
+// ---- "AI Scan" automatisch in het menu van ELKE pagina ----
+// We passen de header-partial niet aan; in plaats daarvan klonen we het
+// bestaande Contact-menu-item (inclusief dezelfde CSS-classes, dus de
+// stijl klopt altijd) en zetten er een "AI Scan"-link direct achter.
+// Werkt op alle gerenderde pagina's én op de statische configurator-HTML.
+app.use((req, res, next) => {
+  const origSend = res.send.bind(res);
+  res.send = function (body) {
+    try {
+      if (typeof body === 'string'
+          && /<a\b[^>]*href=["']\/contact["']/.test(body)
+          && !body.includes('/ai-kozijnenscan')) {
+        body = body.replace(/(<a\b[^>]*href=["']\/contact["'][^>]*>[\s\S]*?<\/a>)/g, (m, anchor) => {
+          const clone = anchor
+            .replace(/href=(["'])\/contact\1/, 'href=$1/ai-kozijnenscan$1')
+            .replace(/>[\s\S]*?<\/a>$/, '>AI Scan</a>')
+            .replace(/\b(actief|active|is-active|current)\b/g, '')
+            .replace(/class=(["'])\s*\1/g, '');
+          return anchor + clone;
+        });
+      }
+    } catch (e) { /* menu-injectie mag een pagina nooit breken */ }
+    return origSend(body);
+  };
+  next();
+});
+
 
 
 function render(res, view, data = {}) { res.render(view, { active: '', ...data }); }
