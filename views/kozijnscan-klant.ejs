@@ -31,6 +31,7 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 .kz-wrap *{box-sizing:border-box}
 /* Site-CSS heeft fade/reveal-effecten op algemene elementen; die laten de
    scan-onderdelen half doorzichtig hangen. Forceer volle dekking. */
+#kz-scan{position:relative !important;z-index:60 !important}
 #kz-scan, #kz-scan *:not(.kz-spin){opacity:1 !important;filter:none !important;animation:none !important}
 #kz-scan .kz-step{color:#6b6459 !important}
 .kz-h1{font-family:'Archivo','Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em;margin:0}
@@ -95,9 +96,9 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 .kz-usp .kz-u b{display:block;color:var(--kz-ink);font-size:14px;margin-bottom:4px}
 </style>
 
-<div class="kz-wrap" id="kz-scan">
+<div class="kz-wrap" id="kz-scan" style="position:relative !important;z-index:60 !important;isolation:isolate">
 
-<div class="kz-hero" style="opacity:1 !important;filter:none !important">
+<div class="kz-hero" style="position:relative !important;z-index:61 !important;opacity:1 !important;filter:none !important">
   <div role="heading" aria-level="1" class="kz-h1" style="color:#161616 !important;-webkit-text-fill-color:#161616 !important;text-shadow:none !important;background:none !important;opacity:1 !important;filter:none !important">AI Kozijnen<span style="color:#e8590c !important;-webkit-text-fill-color:#e8590c !important">scan</span></div>
   <div class="kz-intro" style="color:#4a463d !important;-webkit-text-fill-color:#4a463d !important;text-shadow:none !important;opacity:1 !important;filter:none !important">Upload een foto van uw gevel en onze AI herkent binnen een minuut al uw kozijnen — inclusief geschatte afmetingen. U ontvangt daarna snel een richtprijs, geheel vrijblijvend.</div>
   <div class="kz-steps">
