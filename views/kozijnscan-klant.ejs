@@ -32,6 +32,8 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
 /* Site-CSS heeft fade/reveal-effecten op algemene elementen; die laten de
    scan-onderdelen half doorzichtig hangen. Forceer volle dekking. */
 #kz-scan{position:relative !important;z-index:60 !important}
+/* De plakkende menubalk moet ALTIJD boven de scan-content blijven */
+header.site{z-index:1000 !important}
 #kz-scan, #kz-scan *:not(.kz-spin){opacity:1 !important;filter:none !important;animation:none !important}
 #kz-scan .kz-step{color:#6b6459 !important}
 .kz-h1{font-family:'Archivo','Hanken Grotesk',sans-serif;font-weight:800;font-size:clamp(30px,5vw,44px);line-height:1.05;letter-spacing:-.02em;margin:0}
@@ -175,6 +177,9 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
       <div class="kz-field"><label>Adres / plaats</label><input type="text" id="kzAdres" autocomplete="street-address"></div>
     </div>
     <div class="kz-field"><label>Opmerkingen (kleurwens, beglazing, planning…)</label><textarea id="kzOpm" rows="3"></textarea></div>
+    <div style="position:absolute;left:-9999px;top:-9999px" aria-hidden="true">
+      <label>Website</label><input type="text" id="kzWebsite" tabindex="-1" autocomplete="off">
+    </div>
     <div class="kz-row">
       <button class="kz-btn kz-accent" id="kzSubmitBtn">Vraag richtprijs aan &rarr;</button>
       <span class="kz-status">Vrijblijvend · reactie meestal binnen 1 werkdag</span>
@@ -210,6 +215,7 @@ var kozijnen = [];
 var aiAlgemeen = '';
 function $(id){ return document.getElementById(id); }
 var BASE = '/ai-kozijnenscan';
+var kzStart = Date.now();
 var MAX_FOTO = 5;
 var MAX_PX = 1600; // client-side resize: scheelt data én API-kosten
 
@@ -357,6 +363,8 @@ $('kzSubmitBtn').addEventListener('click', function(){
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
+      website: $('kzWebsite').value,
+      elapsed: Date.now() - kzStart,
       fotos: photos.map(function(p){ return { base64: p.base64, mediaType: p.mediaType }; }),
       naam: $('kzNaam').value.trim(),
       email: $('kzEmail').value.trim(),

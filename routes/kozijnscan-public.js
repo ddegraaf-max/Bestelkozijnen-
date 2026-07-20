@@ -70,18 +70,20 @@ async function ensureTables() {
 const RATE_MAX = 3;
 const RATE_WINDOW_MS = 60 * 60 * 1000;
 const rateMap = new Map();
+const aanvraagRateMap = new Map();   // aparte limiet voor het indienen zelf
 
-function rateLimited(ip) {
+function rateLimited(ip, map) {
+  map = map || rateMap;
   const now = Date.now();
-  const entry = rateMap.get(ip) || [];
+  const entry = map.get(ip) || [];
   const recent = entry.filter(t => now - t < RATE_WINDOW_MS);
-  if (recent.length >= RATE_MAX) { rateMap.set(ip, recent); return true; }
+  if (recent.length >= RATE_MAX) { map.set(ip, recent); return true; }
   recent.push(now);
-  rateMap.set(ip, recent);
+  map.set(ip, recent);
   // opschonen zodat de map niet oneindig groeit
-  if (rateMap.size > 5000) {
-    for (const [k, v] of rateMap) {
-      if (!v.some(t => now - t < RATE_WINDOW_MS)) rateMap.delete(k);
+  if (map.size > 5000) {
+    for (const [k, v] of map) {
+      if (!v.some(t => now - t < RATE_WINDOW_MS)) map.delete(k);
     }
   }
   return false;
@@ -263,7 +265,22 @@ router.post('/analyse', async (req, res) => {
 router.post('/aanvraag', async (req, res) => {
   try {
     const { naam = '', email = '', telefoon = '', adres = '', opmerking = '',
-            refMaat = '', algemeen = '', items = [], fotos = [] } = req.body;
+            refMaat = '', algemeen = '', items = [], fotos = [],
+            website = '', elapsed = null } = req.body;
+
+    // --- Anti-misbruik (zelfde aanpak als het contactformulier) ---
+    // 1. Honeypot: het onzichtbare veld is ingevuld → bot; stil "accepteren"
+    //    zonder iets op te slaan of te mailen (bot niet wijzer maken).
+    // 2. Tijdscheck: sneller ingevuld dan menselijk mogelijk → idem.
+    // 3. Rate limit: max 3 aanvragen per IP per uur (los van de scan-limiet).
+    const nepNummer = new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' +
+                      String(Math.floor(Math.random() * 9000) + 1000);
+    if (website) return res.json({ ok: true, nummer: nepNummer });
+    if (typeof elapsed === 'number' && elapsed < 5000) return res.json({ ok: true, nummer: nepNummer });
+    const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'onbekend';
+    if (rateLimited(ip, aanvraagRateMap)) {
+      return res.status(429).json({ error: 'U heeft het maximum aantal aanvragen bereikt. Probeer het later opnieuw of neem contact met ons op.' });
+    }
 
     if (!naam.trim() || !email.trim()) {
       return res.status(400).json({ error: 'Vul in ieder geval uw naam en e-mailadres in.' });
