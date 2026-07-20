@@ -272,6 +272,35 @@ app.use((req, res, next) => {
           && !body.includes('id="kz-navfix"')) {
         body = body.replace('</body>', NAV_FIX_HTML + '\n</body>');
       }
+      // Offerte-PDF zichtbaar maken op de aanvraag-detailpagina in het
+      // beheer: bestandsnaam, uploaddatum, grootte en downloadlink bij
+      // het "PDF geüpload"-vinkje. Asynchroon (database-lookup), met
+      // volledige terugval naar de originele pagina bij elke fout.
+      const kzPdfMatch = kzUrl.match(/^\/beheer\/aanvraag\/([^\/]+)$/);
+      if (typeof body === 'string' && kzPdfMatch && body.includes('PDF ge&uuml;pload') === false
+          && /PDF geüpload/.test(body) && !body.includes('kz-pdf-info')) {
+        const rid = kzPdfMatch[1];
+        (async () => {
+          let out = body;
+          try {
+            const r = await db.getRequest(rid);
+            if (r && r.offertePdf) {
+              const file = path.join(db.UPLOAD_DIR, path.basename(r.offertePdf));
+              let meta = '';
+              try {
+                const st = fs.statSync(file);
+                meta = ' &middot; ge&uuml;pload ' + new Date(st.mtimeMs).toLocaleString('nl-NL', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+                     + ' &middot; ' + (st.size > 1048576 ? (st.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(st.size / 1024)) + ' kB');
+              } catch (e) { meta = ' &middot; <span style="color:#c92a2a">bestand niet gevonden op schijf</span>'; }
+              const naam = String(r.offertePdf).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+              out = out.replace(/PDF geüpload/, 'PDF ge&uuml;pload: <b class="kz-pdf-info">' + naam + '</b>' + meta +
+                ' &middot; <a href="/beheer/aanvraag/' + encodeURIComponent(rid) + '/offerte-download" style="display:inline;color:#e8590c">bekijken / downloaden</a>');
+            }
+          } catch (e) { /* originele pagina tonen */ }
+          origSend(out);
+        })();
+        return res;
+      }
     } catch (e) { /* menu-injectie mag een pagina nooit breken */ }
     return origSend(body);
   };
@@ -402,6 +431,25 @@ app.post('/api/konf/dims', async (req, res) => {
     _dimsCache.set(key, { t: Date.now(), data });
     res.json(data);
   } catch (e) { res.status(502).json({ ok: false }); }
+});
+
+// ---- Offerte-PDF downloaden vanuit het beheer ----
+// Hoort bij de PDF-verrijking op de aanvraag-detailpagina: de link
+// "bekijken / downloaden" bij het geüploade bestand. Alleen voor rol
+// 'beheer'; voor anderen gedraagt de URL zich als een gewone 404.
+app.get('/beheer/aanvraag/:id/offerte-download', async (req, res) => {
+  if (!req.user || req.user.role !== 'beheer') {
+    return res.status(404).render('404', { active: '', title: 'Niet gevonden' });
+  }
+  try {
+    const r = await db.getRequest(req.params.id);
+    if (!r || !r.offertePdf) return res.status(404).render('404', { active: '', title: 'Niet gevonden' });
+    const file = path.join(db.UPLOAD_DIR, path.basename(r.offertePdf));
+    if (!fs.existsSync(file)) return res.status(404).render('404', { active: '', title: 'Niet gevonden' });
+    res.download(file, 'Offerte-' + r.ref + '.pdf');
+  } catch (e) {
+    res.status(404).render('404', { active: '', title: 'Niet gevonden' });
+  }
 });
 
 // ================= AI KOZIJNENSCAN =================
