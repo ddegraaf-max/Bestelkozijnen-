@@ -239,6 +239,47 @@ const NAV_FIX_HTML = `
 }catch(e){/* vangnet mag de pagina nooit breken */}})();
 </script>`;
 
+// ---- Documentenpaneel voor de aanvraag-detailpagina ----
+function kzDocPanel(body, rid, r, docs) {
+  const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const fmtSize = (n) => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' kB';
+  const fmtDate = (t) => new Date(t).toLocaleString('nl-NL', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const rij = (naam, meta, acties) =>
+    '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #e5e0d5">' +
+    '<span style="font-size:18px">&#128196;</span><div style="flex:1;min-width:180px"><b>' + naam + '</b>' +
+    '<div style="font-size:12px;color:#6b6459">' + meta + '</div></div>' + acties + '</div>';
+
+  let hoofd = '';
+  if (r.offertePdf) {
+    let meta = 'Offerte-PDF &mdash; gaat mee met de offertemail';
+    try {
+      const st = fs.statSync(path.join(db.UPLOAD_DIR, path.basename(r.offertePdf)));
+      meta += ' &middot; ge&uuml;pload ' + fmtDate(st.mtimeMs) + ' &middot; ' + fmtSize(st.size);
+    } catch (e) { meta += ' &middot; <span style="color:#c92a2a">bestand niet gevonden op schijf</span>'; }
+    hoofd = rij(esc(r.offertePdf), meta,
+      '<a href="/beheer/aanvraag/' + encodeURIComponent(rid) + '/offerte-download" style="display:inline;color:#e8590c;font-size:13px">bekijken / downloaden</a>');
+  }
+
+  const extra = docs.map(d => rij(esc(d.origName || d.filename),
+    'ge&uuml;pload ' + fmtDate(d.createdAt) + ' &middot; ' + fmtSize(d.size),
+    '<a href="/beheer/aanvraag/' + encodeURIComponent(rid) + '/document/' + encodeURIComponent(d.id) + '" style="display:inline;color:#e8590c;font-size:13px">downloaden</a>' +
+    '<form method="post" action="/beheer/aanvraag/' + encodeURIComponent(rid) + '/document/' + encodeURIComponent(d.id) + '/verwijderen" style="display:inline;margin-left:10px" onsubmit="return confirm(\'Dit document verwijderen?\')">' +
+    '<button type="submit" style="background:none;border:1px solid #d8d2c4;border-radius:6px;color:#c92a2a;cursor:pointer;padding:4px 10px;font-size:12px">verwijderen</button></form>')).join('');
+
+  const totaal = docs.length + (r.offertePdf ? 1 : 0);
+  const panel =
+    '<section id="kz-doc-panel" style="max-width:1160px;margin:18px auto;background:#fcfbf8;border:1px solid #e5e0d5;border-radius:14px;padding:22px 26px;box-sizing:border-box">' +
+    '<h3 style="margin:0 0 4px;font-size:17px">Documenten (' + totaal + ')</h3>' +
+    '<p style="margin:0 0 8px;font-size:13px;color:#6b6459">De offerte-PDF gaat met de offertemail mee; extra documenten (tekeningen, foto\u2019s, voorwaarden) blijven hier bij de aanvraag bewaard.</p>' +
+    (hoofd || extra ? hoofd + extra : '<div style="padding:10px 0;color:#6b6459;font-size:14px;border-bottom:1px solid #e5e0d5">Nog geen documenten bij deze aanvraag.</div>') +
+    '<form method="post" action="/beheer/aanvraag/' + encodeURIComponent(rid) + '/documenten" enctype="multipart/form-data" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px">' +
+    '<input type="file" name="documenten" multiple accept="application/pdf,image/jpeg,image/png" style="font-size:13px">' +
+    '<button type="submit" style="background:#161616;color:#fff;border:none;border-radius:999px;padding:9px 18px;font-size:13px;font-weight:600;cursor:pointer">Documenten toevoegen</button>' +
+    '<span style="font-size:12px;color:#6b6459">PDF/JPG/PNG &middot; max 10 tegelijk &middot; 15 MB per stuk</span></form>' +
+    '</section>';
+  return body.replace('</main>', panel + '\n</main>');
+}
+
 app.use((req, res, next) => {
   const origSend = res.send.bind(res);
   res.send = function (body) {
@@ -272,29 +313,22 @@ app.use((req, res, next) => {
           && !body.includes('id="kz-navfix"')) {
         body = body.replace('</body>', NAV_FIX_HTML + '\n</body>');
       }
-      // Offerte-PDF zichtbaar maken op de aanvraag-detailpagina in het
-      // beheer: bestandsnaam, uploaddatum, grootte en downloadlink bij
-      // het "PDF geüpload"-vinkje. Asynchroon (database-lookup), met
-      // volledige terugval naar de originele pagina bij elke fout.
+      // Documentenpaneel op de aanvraag-detailpagina in het beheer:
+      // toont de offerte-PDF (met naam, datum, grootte en downloadlink)
+      // plus alle extra documenten, met upload- en verwijderknoppen.
+      // Asynchroon (database-lookup), met volledige terugval naar de
+      // originele pagina bij elke fout.
       const kzPdfMatch = kzUrl.match(/^\/beheer\/aanvraag\/([^\/]+)$/);
-      if (typeof body === 'string' && kzPdfMatch && body.includes('PDF ge&uuml;pload') === false
-          && /PDF geüpload/.test(body) && !body.includes('kz-pdf-info')) {
+      if (typeof body === 'string' && kzPdfMatch && body.includes('</main>')
+          && !body.includes('id="kz-doc-panel"')) {
         const rid = kzPdfMatch[1];
         (async () => {
           let out = body;
           try {
             const r = await db.getRequest(rid);
-            if (r && r.offertePdf) {
-              const file = path.join(db.UPLOAD_DIR, path.basename(r.offertePdf));
-              let meta = '';
-              try {
-                const st = fs.statSync(file);
-                meta = ' &middot; ge&uuml;pload ' + new Date(st.mtimeMs).toLocaleString('nl-NL', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-                     + ' &middot; ' + (st.size > 1048576 ? (st.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(st.size / 1024)) + ' kB');
-              } catch (e) { meta = ' &middot; <span style="color:#c92a2a">bestand niet gevonden op schijf</span>'; }
-              const naam = String(r.offertePdf).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-              out = out.replace(/PDF geüpload/, 'PDF ge&uuml;pload: <b class="kz-pdf-info">' + naam + '</b>' + meta +
-                ' &middot; <a href="/beheer/aanvraag/' + encodeURIComponent(rid) + '/offerte-download" style="display:inline;color:#e8590c">bekijken / downloaden</a>');
+            if (r) {
+              const docs = (typeof db.getDocuments === 'function') ? ((await db.getDocuments(rid)) || []) : [];
+              out = kzDocPanel(out, rid, r, docs);
             }
           } catch (e) { /* originele pagina tonen */ }
           origSend(out);

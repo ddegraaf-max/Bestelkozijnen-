@@ -33,6 +33,15 @@ Optioneel:    NOTIFY_FROM, KLANT_BEVESTIGING=true,
 
 ## Nieuw in deze versie
 
+- DOCUMENTENSYSTEEM in het beheer: op elke aanvraag-detailpagina staat nu
+  een paneel "Documenten (N)" met de offerte-PDF (naam, datum, grootte,
+  downloadlink) én onbeperkt extra documenten (PDF/JPG/PNG) met per stuk
+  download- en verwijderknoppen plus een uploadformulier (max 10 tegelijk,
+  15 MB per stuk). Hiervoor zijn db.js (nieuwe request_documents-tabel,
+  automatisch aangemaakt) en routes/admin.js (upload/download/verwijder-
+  routes) uitgebreid — VERVANG DUS OOK db.js EN routes/admin.js.
+  De offertemail blijft ongewijzigd: die verstuurt de offerte-PDF.
+
 - AI-scan aanvragen komen nu RECHTSTREEKS in je bestaande Aanvragen-lijst
   (Beheer > Aanvragen), via db.createRequest — zelfde nummering
   (JJJJMMDD-XXXX), status "ontvangen", jouw notificatiemail,

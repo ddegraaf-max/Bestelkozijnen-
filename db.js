@@ -122,6 +122,16 @@ function postgresStore() {
           value BIGINT NOT NULL
         );`);
       await pool.query(`INSERT INTO counters (name, value) VALUES ('ref', 1000) ON CONFLICT (name) DO NOTHING;`);
+      await pool.query(`
+        CREATE TABLE IF NOT EXISTS request_documents (
+          id TEXT PRIMARY KEY,
+          request_id TEXT NOT NULL,
+          filename TEXT NOT NULL,
+          orig_name TEXT NOT NULL DEFAULT '',
+          size BIGINT NOT NULL DEFAULT 0,
+          created_at BIGINT NOT NULL
+        );`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS request_documents_req ON request_documents (request_id);`);
       console.log('[db] Postgres verbonden en tabellen klaar.');
     },
 
@@ -215,6 +225,31 @@ function postgresStore() {
         `UPDATE requests SET offerte_pdf=$1 WHERE id=$2 RETURNING *`,
         [filename, rid]);
       return mapRequest(rows[0]);
+    },
+
+    // ---- documenten bij een aanvraag (meerdere per aanvraag) ----
+    async addDocument({ requestId, filename, origName, size }) {
+      const d = { id: id(), requestId, filename, origName: origName || filename, size: size || 0, createdAt: Date.now() };
+      await pool.query(
+        `INSERT INTO request_documents (id, request_id, filename, orig_name, size, created_at)
+         VALUES ($1,$2,$3,$4,$5,$6)`,
+        [d.id, d.requestId, d.filename, d.origName, d.size, d.createdAt]);
+      return d;
+    },
+    async getDocuments(requestId) {
+      const { rows } = await pool.query(
+        'SELECT * FROM request_documents WHERE request_id=$1 ORDER BY created_at DESC', [requestId]);
+      return rows.map(r => ({ id: r.id, requestId: r.request_id, filename: r.filename, origName: r.orig_name, size: Number(r.size), createdAt: Number(r.created_at) }));
+    },
+    async getDocument(docId) {
+      const { rows } = await pool.query('SELECT * FROM request_documents WHERE id=$1 LIMIT 1', [docId]);
+      const r = rows[0];
+      return r ? { id: r.id, requestId: r.request_id, filename: r.filename, origName: r.orig_name, size: Number(r.size), createdAt: Number(r.created_at) } : undefined;
+    },
+    async deleteDocument(docId) {
+      const { rows } = await pool.query('DELETE FROM request_documents WHERE id=$1 RETURNING *', [docId]);
+      const r = rows[0];
+      return r ? { id: r.id, requestId: r.request_id, filename: r.filename } : undefined;
     }
   };
 }
@@ -230,6 +265,7 @@ function jsonStore() {
   }
   function save(db) { fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2)); }
   let db = load();
+  db.documents = db.documents || [];
 
   return {
     UPLOAD_DIR,
@@ -283,6 +319,21 @@ function jsonStore() {
     setOffertePdf(rid, filename) {
       const r = this.getRequest(rid); if (!r) return null;
       r.offertePdf = filename; save(db); return r;
+    },
+
+    // ---- documenten bij een aanvraag (meerdere per aanvraag) ----
+    addDocument({ requestId, filename, origName, size }) {
+      const d = { id: id(), requestId, filename, origName: origName || filename, size: size || 0, createdAt: Date.now() };
+      db.documents.push(d); save(db); return d;
+    },
+    getDocuments(requestId) {
+      return db.documents.filter(d => d.requestId === requestId).sort((a, b) => b.createdAt - a.createdAt);
+    },
+    getDocument(docId) { return db.documents.find(d => d.id === docId); },
+    deleteDocument(docId) {
+      const i = db.documents.findIndex(d => d.id === docId);
+      if (i < 0) return undefined;
+      const [d] = db.documents.splice(i, 1); save(db); return d;
     }
   };
 }
