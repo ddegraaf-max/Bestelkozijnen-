@@ -108,6 +108,8 @@ module.exports = function (company, mailer) {
     if (!d || d.requestId !== req.params.id) return res.status(404).render('404', { company, active: '', title: 'Niet gevonden' });
     const file = path.join(db.UPLOAD_DIR, path.basename(d.filename));
     if (!fs.existsSync(file)) return res.status(404).render('404', { company, active: '', title: 'Niet gevonden' });
+    // ?weergave=1 → inline tonen (voor foto-miniaturen in het beheer)
+    if (req.query.weergave) return res.sendFile(file);
     res.download(file, d.origName || d.filename);
   });
   router.post('/aanvraag/:id/document/:docId/verwijderen', async (req, res) => {

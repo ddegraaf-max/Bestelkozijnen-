@@ -357,6 +357,7 @@ $('kzSubmitBtn').addEventListener('click', function(){
     method:'POST',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({
+      fotos: photos.map(function(p){ return { base64: p.base64, mediaType: p.mediaType }; }),
       naam: $('kzNaam').value.trim(),
       email: $('kzEmail').value.trim(),
       telefoon: $('kzTel').value.trim(),

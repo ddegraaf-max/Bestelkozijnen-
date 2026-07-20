@@ -244,9 +244,12 @@ function kzDocPanel(body, rid, r, docs) {
   const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
   const fmtSize = (n) => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' kB';
   const fmtDate = (t) => new Date(t).toLocaleString('nl-NL', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-  const rij = (naam, meta, acties) =>
+  const rij = (naam, meta, acties, thumbUrl) =>
     '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 0;border-bottom:1px solid #e5e0d5">' +
-    '<span style="font-size:18px">&#128196;</span><div style="flex:1;min-width:180px"><b>' + naam + '</b>' +
+    (thumbUrl
+      ? '<a href="' + thumbUrl + '" target="_blank"><img src="' + thumbUrl + '" alt="" style="height:56px;width:76px;object-fit:cover;border-radius:8px;border:1px solid #d8d2c4;display:block"></a>'
+      : '<span style="font-size:18px">&#128196;</span>') +
+    '<div style="flex:1;min-width:180px"><b>' + naam + '</b>' +
     '<div style="font-size:12px;color:#6b6459">' + meta + '</div></div>' + acties + '</div>';
 
   let hoofd = '';
@@ -264,7 +267,10 @@ function kzDocPanel(body, rid, r, docs) {
     'ge&uuml;pload ' + fmtDate(d.createdAt) + ' &middot; ' + fmtSize(d.size),
     '<a href="/beheer/aanvraag/' + encodeURIComponent(rid) + '/document/' + encodeURIComponent(d.id) + '" style="display:inline;color:#e8590c;font-size:13px">downloaden</a>' +
     '<form method="post" action="/beheer/aanvraag/' + encodeURIComponent(rid) + '/document/' + encodeURIComponent(d.id) + '/verwijderen" style="display:inline;margin-left:10px" onsubmit="return confirm(\'Dit document verwijderen?\')">' +
-    '<button type="submit" style="background:none;border:1px solid #d8d2c4;border-radius:6px;color:#c92a2a;cursor:pointer;padding:4px 10px;font-size:12px">verwijderen</button></form>')).join('');
+    '<button type="submit" style="background:none;border:1px solid #d8d2c4;border-radius:6px;color:#c92a2a;cursor:pointer;padding:4px 10px;font-size:12px">verwijderen</button></form>',
+    /\.(jpe?g|png|webp)$/i.test(d.filename)
+      ? '/beheer/aanvraag/' + encodeURIComponent(rid) + '/document/' + encodeURIComponent(d.id) + '?weergave=1'
+      : null)).join('');
 
   const totaal = docs.length + (r.offertePdf ? 1 : 0);
   const panel =

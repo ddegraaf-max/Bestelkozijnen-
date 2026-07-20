@@ -19,6 +19,8 @@
 
 const express = require('express');
 const { Pool } = require('pg');
+const fsMod2 = require('fs');
+const pathMod2 = require('path');
 const db = require('../db');
 
 module.exports = function (company, mailer) {
@@ -261,7 +263,7 @@ router.post('/analyse', async (req, res) => {
 router.post('/aanvraag', async (req, res) => {
   try {
     const { naam = '', email = '', telefoon = '', adres = '', opmerking = '',
-            refMaat = '', algemeen = '', items = [] } = req.body;
+            refMaat = '', algemeen = '', items = [], fotos = [] } = req.body;
 
     if (!naam.trim() || !email.trim()) {
       return res.status(400).json({ error: 'Vul in ieder geval uw naam en e-mailadres in.' });
@@ -317,6 +319,11 @@ router.post('/aanvraag', async (req, res) => {
     saveScanVoorKalibratie(request.ref, { naam, adres, refMaat, algemeen, items })
       .catch(e => console.error('[kozijnscan-public/kalibratie]', e.message));
 
+    // De gescande foto's opslaan als documenten bij de aanvraag, zodat je
+    // ze in het beheer terugziet (Documenten-paneel, met miniatuur).
+    bewaarScanFotos(request.id, fotos)
+      .catch(e => console.error('[kozijnscan-public/fotos]', e.message));
+
     // Mails via het bestaande mailer-systeem (zelfde als de configurator)
     if (mailer) {
       const samenvatting = 'AANVRAAG VIA AI KOZIJNENSCAN — maten zijn schattingen o.b.v. gevelfoto, definitieve maten na inmeting.\n\n' +
@@ -370,6 +377,32 @@ async function saveScanVoorKalibratie(ref, { naam, adres, refMaat, algemeen, ite
     throw e;
   } finally {
     client.release();
+  }
+}
+
+// ---------------------------------------------------------------------
+// Scanfoto's als documenten bij de aanvraag bewaren (max 5, alleen
+// afbeeldingen, elk begrensd). Mislukkingen blokkeren de aanvraag nooit.
+// ---------------------------------------------------------------------
+async function bewaarScanFotos(requestId, fotos) {
+  if (!Array.isArray(fotos) || !fotos.length) return;
+  if (typeof db.addDocument !== 'function' || !db.UPLOAD_DIR) return;
+  const ext = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
+  let n = 0;
+  for (const f of fotos.slice(0, 5)) {
+    if (!f || !ext[f.mediaType] || typeof f.base64 !== 'string') continue;
+    if (f.base64.length > 8 * 1024 * 1024) continue;
+    try {
+      const buf = Buffer.from(f.base64, 'base64');
+      n++;
+      const filename = requestId + '-scanfoto-' + n + '.' + ext[f.mediaType];
+      fsMod2.writeFileSync(pathMod2.join(db.UPLOAD_DIR, filename), buf);
+      await db.addDocument({
+        requestId, filename,
+        origName: 'Scanfoto ' + n + '.' + ext[f.mediaType],
+        size: buf.length
+      });
+    } catch (e) { console.warn('[kozijnscan-public/fotos]', e.message); }
   }
 }
 
