@@ -182,21 +182,21 @@ router.post('/analyse', async (req, res) => {
 
     const { images = [], refMaat = '' } = req.body;
     if (!images.length) return res.status(400).json({ error: 'Geen foto\'s ontvangen' });
-    if (images.length > 3) return res.status(400).json({ error: 'Maximaal 3 foto\'s per scan' });
+    if (images.length > 5) return res.status(400).json({ error: 'Maximaal 5 foto\'s per scan' });
     if (!process.env.ANTHROPIC_API_KEY) {
       return res.status(500).json({ error: 'Configuratiefout — neem contact met ons op' });
     }
 
     const kalibratie = await getKalibratie();
     const system = buildSystemPrompt(String(refMaat).slice(0, 300), kalibratie);
-    const kozijnen = [];
-    const notes = [];
 
-    for (let i = 0; i < images.length; i++) {
-      const img = images[i];
-      if (!/^image\/(jpeg|png|webp)$/.test(img.mediaType || '')) continue;
-      if ((img.base64 || '').length > 8 * 1024 * 1024) continue; // ~6MB foto na resize ruim voldoende
+    // Alle foto's PARALLEL analyseren: 5 foto's duren zo ongeveer even
+    // lang als 1. Eén mislukte foto laat de rest gewoon doorgaan.
+    const geldige = images.filter(img =>
+      /^image\/(jpeg|png|webp)$/.test(img.mediaType || '') &&
+      (img.base64 || '').length <= 8 * 1024 * 1024);
 
+    async function analyseer(img) {
       const apiRes = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
         headers: {
@@ -219,13 +219,20 @@ router.post('/analyse', async (req, res) => {
       });
       const data = await apiRes.json();
       if (data.error) throw new Error('Analyse tijdelijk niet beschikbaar');
-
       const raw = (data.content || []).map(c => (c.type === 'text' ? c.text : '')).join('');
       const clean = raw.replace(/```json|```/g, '').trim();
-      const parsed = JSON.parse(clean.slice(clean.indexOf('{')));
+      return JSON.parse(clean.slice(clean.indexOf('{')));
+    }
 
+    const resultaten = await Promise.allSettled(geldige.map(analyseer));
+    const kozijnen = [];
+    const notes = [];
+    let fouten = 0;
+    resultaten.forEach((uitkomst, i) => {
+      if (uitkomst.status !== 'fulfilled') { fouten++; return; }
+      const parsed = uitkomst.value;
       (parsed.kozijnen || []).forEach(k => kozijnen.push({
-        oms: (k.oms || 'Kozijn') + (images.length > 1 ? ` (foto ${i + 1})` : ''),
+        oms: (k.oms || 'Kozijn') + (geldige.length > 1 ? ` (foto ${i + 1})` : ''),
         type: k.type || 'vast',
         b: parseInt(k.b, 10) || 1000,
         h: parseInt(k.h, 10) || 1200,
@@ -233,7 +240,8 @@ router.post('/analyse', async (req, res) => {
         opm: k.opm || ''
       }));
       if (parsed.algemeen) notes.push(parsed.algemeen);
-    }
+    });
+    if (fouten && !kozijnen.length) throw new Error('Analyse tijdelijk niet beschikbaar');
 
     res.json({ kozijnen, algemeen: notes.join(' ') });
   } catch (err) {

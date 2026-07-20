@@ -115,7 +115,7 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
   <div class="kz-panel-b">
     <div class="kz-drop" id="kzDrop">
       <b>Sleep foto's hierheen of klik om te kiezen</b>
-      <p>Fotografeer uw kozijn(en) recht van voren, bij daglicht. Tip: de hele gevel in beeld maakt de maatschatting nauwkeuriger. Maximaal 3 foto's (JPG/PNG).</p>
+      <p>Fotografeer uw kozijn(en) recht van voren, bij daglicht. Tip: de hele gevel in beeld maakt de maatschatting nauwkeuriger. Maximaal 5 foto's (JPG/PNG).</p>
     </div>
     <input type="file" id="kzFileInput" accept="image/*" multiple class="kz-hidden">
     <input type="file" id="kzCameraInput" accept="image/*" capture="environment" class="kz-hidden">
@@ -210,7 +210,7 @@ var kozijnen = [];
 var aiAlgemeen = '';
 function $(id){ return document.getElementById(id); }
 var BASE = '/ai-kozijnenscan';
-var MAX_FOTO = 3;
+var MAX_FOTO = 5;
 var MAX_PX = 1600; // client-side resize: scheelt data én API-kosten
 
 /* ================= UPLOAD + RESIZE ================= */
