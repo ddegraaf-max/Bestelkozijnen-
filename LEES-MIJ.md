@@ -33,6 +33,16 @@ Optioneel:    NOTIFY_FROM, KLANT_BEVESTIGING=true,
 
 ## Nieuw in deze versie
 
+- AI-scan aanvragen komen nu RECHTSTREEKS in je bestaande Aanvragen-lijst
+  (Beheer > Aanvragen), via db.createRequest — zelfde nummering
+  (JJJJMMDD-XXXX), status "ontvangen", jouw notificatiemail,
+  fabrieksmail (met schattings-disclaimer) en klantbevestiging via je
+  bestaande mailer. NOTIFY_EMAIL/KLANT_BEVESTIGING zijn niet meer nodig.
+  Heeft de klant al een account (zelfde e-mailadres), dan verschijnt de
+  aanvraag ook in diens Mijn portaal. De scan zelf wordt daarnaast
+  bewaard voor de kalibratie, herkenbaar aan "Aanvraag <nummer>" in de
+  beheertool (/beheer/kozijnscan).
+
 - De scanpagina gebruikt nu de ECHTE header en footer van de site: de
   route detecteert automatisch welke partials home.ejs gebruikt en laadt
   exact diezelfde. Jouw logo, menu, stijl en footer — 1-op-1, want het

@@ -215,6 +215,30 @@ const BEHEER_FILTER_HTML = `
 }catch(e){/* filter mag de beheerpagina nooit breken */}})();
 </script>`;
 
+// ---- Vangnet mobiel menu ----
+// In gesloten toestand kan het hamburgermenu als "spooktekst" door de
+// pagina heen zichtbaar zijn. Dit script verbergt het menu zodra de
+// hamburger zichtbaar is (= mobiel) en het menu niet open staat; bij
+// openen via de hamburger verschijnt het weer volgens de site-CSS.
+const NAV_FIX_HTML = `
+<script id="kz-navfix">
+(function(){try{
+  var b=document.getElementById('burger'), n=document.getElementById('navLinks');
+  if(!b||!n)return;
+  function sync(){
+    try{
+      var mobiel = b.offsetParent!==null && getComputedStyle(b).display!=='none';
+      if(mobiel && !n.classList.contains('open')){ n.style.display='none'; }
+      else { n.style.display=''; }
+    }catch(e){}
+  }
+  b.addEventListener('click',function(){ setTimeout(sync,0); });
+  window.addEventListener('resize',sync);
+  new MutationObserver(sync).observe(n,{attributes:true,attributeFilter:['class']});
+  sync();
+}catch(e){/* vangnet mag de pagina nooit breken */}})();
+</script>`;
+
 app.use((req, res, next) => {
   const origSend = res.send.bind(res);
   res.send = function (body) {
@@ -241,6 +265,12 @@ app.use((req, res, next) => {
           && /aanvraag/i.test(body) && body.includes('</body>')
           && !body.includes('id="kz-status-filter"')) {
         body = body.replace('</body>', BEHEER_FILTER_HTML + '\n</body>');
+      }
+      // Vangnet mobiel menu op elke pagina met hamburger
+      if (typeof body === 'string' && body.includes('id="burger"')
+          && body.includes('id="navLinks"') && body.includes('</body>')
+          && !body.includes('id="kz-navfix"')) {
+        body = body.replace('</body>', NAV_FIX_HTML + '\n</body>');
       }
     } catch (e) { /* menu-injectie mag een pagina nooit breken */ }
     return origSend(body);
@@ -378,7 +408,7 @@ app.post('/api/konf/dims', async (req, res) => {
 // Publiek: klant uploadt gevelfoto's, AI herkent kozijnen + schat maten,
 // klant vraagt een richtprijs aan. Aanvraag + scan komen in de database
 // en jij krijgt een notificatiemail (NOTIFY_EMAIL).
-app.use('/ai-kozijnenscan', require('./routes/kozijnscan-public'));
+app.use('/ai-kozijnenscan', require('./routes/kozijnscan-public')(company, mailer));
 
 // Intern: beheertool (inmetingen invullen, kalibratie, dataset-export).
 // Alleen toegankelijk voor ingelogde gebruikers met rol 'beheer'; voor

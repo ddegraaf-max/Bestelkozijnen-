@@ -19,6 +19,9 @@
 
 const express = require('express');
 const { Pool } = require('pg');
+const db = require('../db');
+
+module.exports = function (company, mailer) {
 const router = express.Router();
 
 router.use(express.json({ limit: '20mb' }));
@@ -53,18 +56,6 @@ async function ensureTables() {
       werkelijk_b  INT,
       werkelijk_h  INT,
       updated_at   TIMESTAMPTZ DEFAULT now()
-    );
-    CREATE TABLE IF NOT EXISTS kozijn_scan_aanvragen (
-      id          SERIAL PRIMARY KEY,
-      nummer      TEXT UNIQUE,
-      scan_id     INT REFERENCES kozijn_scans(id) ON DELETE SET NULL,
-      naam        TEXT,
-      email       TEXT,
-      telefoon    TEXT,
-      adres       TEXT,
-      opmerking   TEXT,
-      status      TEXT DEFAULT 'ontvangen',
-      created_at  TIMESTAMPTZ DEFAULT now()
     );
   `);
   tablesReady = true;
@@ -253,12 +244,14 @@ router.post('/analyse', async (req, res) => {
 
 // ---------------------------------------------------------------------
 // POST /aanvraag — klant verstuurt de aanvraag
-// { naam, email, telefoon, adres, opmerking, refMaat, algemeen, items }
+// Gaat via db.createRequest, dus de aanvraag komt in DEZELFDE lijst
+// als de configurator-aanvragen (Beheer > Aanvragen), met eigen nummer,
+// status "ontvangen", jouw notificatiemail en klantbevestiging.
+// De scan zelf wordt daarnaast bewaard voor de kalibratie, gekoppeld
+// aan het aanvraagnummer.
 // ---------------------------------------------------------------------
 router.post('/aanvraag', async (req, res) => {
-  const client = await pool.connect();
   try {
-    await ensureTables();
     const { naam = '', email = '', telefoon = '', adres = '', opmerking = '',
             refMaat = '', algemeen = '', items = [] } = req.body;
 
@@ -268,24 +261,91 @@ router.post('/aanvraag', async (req, res) => {
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) {
       return res.status(400).json({ error: 'Het e-mailadres lijkt niet geldig.' });
     }
-    if (!items.length) {
+    if (!Array.isArray(items) || !items.length) {
       return res.status(400).json({ error: 'Er zijn geen kozijnen om aan te vragen. Doe eerst de scan.' });
     }
     if (items.length > 30) {
       return res.status(400).json({ error: 'Te veel kozijnen in één aanvraag.' });
     }
 
-    const nummer = new Date().toISOString().slice(0, 10).replace(/-/g, '') + '-' +
-                   String(Math.floor(Math.random() * 9000) + 1000);
+    // Nette items voor de aanvraag (zelfde vorm als configurator-elementen)
+    const schoon = items.slice(0, 30).map((it, i) => ({
+      label: 'AI-scan · ' + String(it.oms || ('Kozijn ' + (i + 1))).slice(0, 120),
+      indeling: String(it.type || 'vast').slice(0, 30),
+      afmetingen: (parseInt(it.b, 10) || 0) + ' × ' + (parseInt(it.h, 10) || 0) + ' mm (geschat)',
+      kleur: 'n.t.b.', glas: 'n.t.b.', montage: 'n.t.b.', aantal: 1,
+      zekerheid: ['hoog', 'middel', 'laag'].includes(it.conf) ? it.conf : 'middel',
+      bron: 'ai-kozijnenscan',
+      opmerkingAI: String(it.opm || '').slice(0, 200)
+    }));
 
+    // Bestaat er al een account met dit e-mailadres? Dan koppelen we de
+    // aanvraag daaraan, zodat hij ook in "Mijn portaal" van de klant staat.
+    // Zo niet, dan is het een gast-aanvraag (alleen zichtbaar in Beheer).
+    let userId = 'gast-ai-scan';
+    try {
+      const bestaand = await db.findUserByEmail(email);
+      if (bestaand) userId = bestaand.id;
+    } catch (e) { /* gast-aanvraag */ }
+
+    const opm = ['[Via AI Kozijnenscan — maten zijn schattingen, inmeting vereist]'];
+    if (adres.trim()) opm.push('Adres: ' + adres.trim().slice(0, 300));
+    if (refMaat.trim()) opm.push('Opgegeven referentiemaat: ' + refMaat.trim().slice(0, 300));
+    if (algemeen.trim()) opm.push('AI-observatie: ' + algemeen.trim().slice(0, 500));
+    if (opmerking.trim()) opm.push('Klant: ' + opmerking.trim().slice(0, 2000));
+
+    const request = await db.createRequest({
+      userId,
+      elementen: schoon,
+      klant: {
+        naam: naam.trim().slice(0, 120),
+        email: email.trim().slice(0, 200),
+        telefoon: telefoon.trim().slice(0, 40),
+        opmerking: opm.join('\n')
+      }
+    });
+
+    // Scan bewaren voor de kalibratie, gekoppeld aan het aanvraagnummer
+    saveScanVoorKalibratie(request.ref, { naam, adres, refMaat, algemeen, items })
+      .catch(e => console.error('[kozijnscan-public/kalibratie]', e.message));
+
+    // Mails via het bestaande mailer-systeem (zelfde als de configurator)
+    if (mailer) {
+      const samenvatting = 'AANVRAAG VIA AI KOZIJNENSCAN — maten zijn schattingen o.b.v. gevelfoto, definitieve maten na inmeting.\n\n' +
+        schoon.map((e2, i) =>
+          'Kozijn ' + String(i + 1).padStart(3, '0') + ': ' + e2.label + ' · ' + e2.indeling +
+          ' · ' + e2.afmetingen + ' · zekerheid: ' + e2.zekerheid +
+          (e2.opmerkingAI ? ' · ' + e2.opmerkingAI : '')
+        ).join('\n');
+      mailer.notifyNewRequest({ ref: request.ref, klant: request.klant, samenvatting }).catch(() => {});
+      mailer.notifyFabriek({ ref: request.ref, samenvatting }).catch(() => {});
+      mailer.confirmRequest({ to: email.trim(), ref: request.ref, naam: naam.trim() }).catch(() => {});
+    }
+
+    res.json({ ok: true, nummer: request.ref });
+  } catch (err) {
+    console.error('[kozijnscan-public/aanvraag]', err.message);
+    res.status(500).json({ error: 'Opslaan is niet gelukt. Probeer het opnieuw.' });
+  }
+});
+
+// ---------------------------------------------------------------------
+// Scan opslaan voor de kalibratie (kozijn_scans / kozijn_scan_items),
+// met het aanvraagnummer als projectnaam zodat je hem in de beheertool
+// terugvindt om na inmeting de werkelijke maten in te vullen.
+// ---------------------------------------------------------------------
+async function saveScanVoorKalibratie(ref, { naam, adres, refMaat, algemeen, items }) {
+  const client = await pool.connect();
+  try {
+    await ensureTables();
     await client.query('BEGIN');
-    const scanRes = await client.query(
+    const r = await client.query(
       'INSERT INTO kozijn_scans (project, referentie, algemeen) VALUES ($1,$2,$3) RETURNING id',
-      [`Klantscan ${nummer} — ${adres.slice(0, 120) || naam.slice(0, 120)}`, refMaat.slice(0, 300), algemeen.slice(0, 1000)]
+      ['Aanvraag ' + ref + ' — ' + String(adres || naam || '').slice(0, 120),
+       String(refMaat || '').slice(0, 300), String(algemeen || '').slice(0, 1000)]
     );
-    const scanId = scanRes.rows[0].id;
-
-    for (const it of items) {
+    const scanId = r.rows[0].id;
+    for (const it of items.slice(0, 30)) {
       await client.query(
         `INSERT INTO kozijn_scan_items
          (scan_id, omschrijving, type, schatting_b, schatting_h, zekerheid, opmerking)
@@ -296,103 +356,14 @@ router.post('/aanvraag', async (req, res) => {
          String(it.opm || '').slice(0, 300)]
       );
     }
-
-    await client.query(
-      `INSERT INTO kozijn_scan_aanvragen (nummer, scan_id, naam, email, telefoon, adres, opmerking)
-       VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-      [nummer, scanId, naam.slice(0, 120), email.slice(0, 200), telefoon.slice(0, 40),
-       adres.slice(0, 300), opmerking.slice(0, 2000)]
-    );
     await client.query('COMMIT');
-
-    // Notificatie + bevestiging — mogen de aanvraag nooit blokkeren
-    stuurNotificatie({ nummer, scanId, naam, email, telefoon, adres, opmerking, items }).catch(e =>
-      console.error('[kozijnscan-public/notificatie]', e.message));
-    if (process.env.KLANT_BEVESTIGING === 'true') {
-      stuurKlantBevestiging({ nummer, naam, email, items }).catch(e =>
-        console.error('[kozijnscan-public/bevestiging]', e.message));
-    }
-
-    res.json({ ok: true, nummer });
-  } catch (err) {
+  } catch (e) {
     await client.query('ROLLBACK').catch(() => {});
-    console.error('[kozijnscan-public/aanvraag]', err.message);
-    res.status(500).json({ error: 'Opslaan is niet gelukt. Probeer het opnieuw.' });
+    throw e;
   } finally {
     client.release();
   }
-});
-
-// ---------------------------------------------------------------------
-// Mails via Resend
-// ---------------------------------------------------------------------
-async function resendSend(payload) {
-  if (!process.env.RESEND_API_KEY) return;
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(payload)
-  });
-  if (!res.ok) {
-    const d = await res.json().catch(() => ({}));
-    throw new Error(d.message || `Resend-fout (${res.status})`);
-  }
 }
 
-function e(s) { return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
-
-async function stuurNotificatie({ nummer, scanId, naam, email, telefoon, adres, opmerking, items }) {
-  if (!process.env.NOTIFY_EMAIL) return;
-  const rows = items.map(it =>
-    `<tr><td style="padding:5px 8px;border-bottom:1px solid #eee">${e(it.oms)}</td>
-     <td style="padding:5px 8px;border-bottom:1px solid #eee">${e(it.type)}</td>
-     <td style="padding:5px 8px;border-bottom:1px solid #eee">${e(it.b)} × ${e(it.h)} mm</td>
-     <td style="padding:5px 8px;border-bottom:1px solid #eee">${e(it.conf)}</td></tr>`).join('');
-  await resendSend({
-    from: process.env.NOTIFY_FROM || 'Bestelkozijnenopmaat <onboarding@resend.dev>',
-    to: process.env.NOTIFY_EMAIL.split(',').map(s => s.trim()),
-    subject: `🔔 Nieuwe AI-scan aanvraag ${nummer} — ${items.length} kozijn(en)`,
-    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1b2733;max-width:640px">
-      <h2 style="margin:0 0 4px">Nieuwe AI-kozijnenscan aanvraag</h2>
-      <p style="color:#4a5a68;margin:0 0 16px">Nummer <b>${e(nummer)}</b> · Scan #${e(scanId)}</p>
-      <p><b>${e(naam)}</b><br>${e(email)} · ${e(telefoon) || '—'}<br>${e(adres) || '—'}</p>
-      ${opmerking ? `<p style="background:#fdece1;padding:10px 12px;border-left:3px solid #e8590c">${e(opmerking)}</p>` : ''}
-      <table style="width:100%;border-collapse:collapse;font-size:13px;margin-top:8px">
-        <tr><th style="text-align:left;padding:5px 8px;border-bottom:2px solid #1b2733">Kozijn</th>
-        <th style="text-align:left;padding:5px 8px;border-bottom:2px solid #1b2733">Type</th>
-        <th style="text-align:left;padding:5px 8px;border-bottom:2px solid #1b2733">Geschat</th>
-        <th style="text-align:left;padding:5px 8px;border-bottom:2px solid #1b2733">Zekerheid</th></tr>
-        ${rows}
-      </table>
-      <p style="color:#4a5a68;font-size:12px;margin-top:14px">
-        Open scan #${e(scanId)} in de KozijnScan-beheertool om te controleren en met
-        <i>stuurFabriekMail({ scanId: ${e(scanId)} })</i> door te sturen naar de fabriek.
-      </p>
-    </div>`
-  });
-}
-
-async function stuurKlantBevestiging({ nummer, naam, email, items }) {
-  await resendSend({
-    from: process.env.NOTIFY_FROM || 'Bestelkozijnenopmaat <onboarding@resend.dev>',
-    to: [email],
-    subject: `Uw aanvraag ${nummer} is ontvangen — bestelkozijnenopmaat.nl`,
-    html: `<div style="font-family:Arial,sans-serif;font-size:14px;color:#1b2733;max-width:640px">
-      <h2 style="margin:0 0 8px">Bedankt voor uw aanvraag, ${e(naam.split(' ')[0])}!</h2>
-      <p>Wij hebben uw AI-kozijnenscan ontvangen onder nummer <b>${e(nummer)}</b>,
-      met ${items.length} herkend(e) kozijn(en).</p>
-      <p>U ontvangt van ons zo snel mogelijk een <b>richtprijs op basis van de geschatte
-      afmetingen</b>. De definitieve offerte volgt na een vrijblijvende inmeting op locatie —
-      de gescande maten zijn een indicatie.</p>
-      <p>Vragen? Reageer gerust op deze e-mail.</p>
-      <p style="color:#4a5a68;font-size:12px;margin-top:18px">
-        bestelkozijnenopmaat.nl · Creditline B.V. · Torenlaan 5A/5B, Bussum · KvK 59683198
-      </p>
-    </div>`
-  });
-}
-
-module.exports = router;
+return router;
+};
