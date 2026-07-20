@@ -117,7 +117,12 @@ var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerParti
       <b>Sleep foto's hierheen of klik om te kiezen</b>
       <p>Fotografeer uw kozijn(en) recht van voren, bij daglicht. Tip: de hele gevel in beeld maakt de maatschatting nauwkeuriger. Maximaal 3 foto's (JPG/PNG).</p>
     </div>
-    <input type="file" id="kzFileInput" accept="image/jpeg,image/png,image/webp" multiple class="kz-hidden">
+    <input type="file" id="kzFileInput" accept="image/*" multiple class="kz-hidden">
+    <input type="file" id="kzCameraInput" accept="image/*" capture="environment" class="kz-hidden">
+    <div class="kz-row" style="margin-top:12px">
+      <button type="button" class="kz-btn kz-ghost kz-small" id="kzCameraBtn">&#128247; Foto maken met camera</button>
+      <span class="kz-hint" style="margin-top:0">Op uw telefoon opent dit direct de camera.</span>
+    </div>
     <div class="kz-thumbs" id="kzThumbs"></div>
 
     <div class="kz-field">
@@ -214,11 +219,14 @@ drop.addEventListener('click', function(){ fileInput.click(); });
 drop.addEventListener('dragover', function(e){ e.preventDefault(); drop.classList.add('kz-over'); });
 drop.addEventListener('dragleave', function(){ drop.classList.remove('kz-over'); });
 drop.addEventListener('drop', function(e){ e.preventDefault(); drop.classList.remove('kz-over'); addFiles(e.dataTransfer.files); });
-fileInput.addEventListener('change', function(e){ addFiles(e.target.files); });
+fileInput.addEventListener('change', function(e){ addFiles(e.target.files); fileInput.value=''; });
+var cameraInput = $('kzCameraInput');
+$('kzCameraBtn').addEventListener('click', function(){ cameraInput.click(); });
+cameraInput.addEventListener('change', function(e){ addFiles(e.target.files); cameraInput.value=''; });
 
 function addFiles(list){
   Array.prototype.slice.call(list, 0, MAX_FOTO - photos.length).forEach(function(f){
-    if(!/image\/(jpeg|png|webp)/.test(f.type)) return;
+    if(!/^image\//.test(f.type)) return;
     resizeImage(f).then(function(resized){
       if(resized && resized.base64){ photos.push(resized); renderThumbs(); }
     });
