@@ -33,6 +33,13 @@ Optioneel:    NOTIFY_FROM, KLANT_BEVESTIGING=true,
 
 ## Nieuw in deze versie
 
+- OFFERTEMAIL MET ALLE DOCUMENTEN: bij "Opslaan & versturen" gaan nu de
+  offerte-PDF én alle extra documenten van de aanvraag als bijlagen mee
+  (mailer.js + routes/admin.js aangepast — VERVANG OOK mailer.js). De
+  mailtekst vermeldt automatisch het aantal bijlagen; onleesbare bestanden
+  worden overgeslagen en het totaal is begrensd op ±25 MB zodat de mail
+  altijd aankomt.
+
 - DOCUMENTENSYSTEEM in het beheer: op elke aanvraag-detailpagina staat nu
   een paneel "Documenten (N)" met de offerte-PDF (naam, datum, grootte,
   downloadlink) én onbeperkt extra documenten (PDF/JPG/PNG) met per stuk

@@ -63,9 +63,18 @@ module.exports = function (company, mailer) {
       }
       if (r && mailer) {
         const pdfPath = r.offertePdf ? path.join(db.UPLOAD_DIR, r.offertePdf) : null;
+        // Alle extra documenten bij de aanvraag gaan als bijlagen mee.
+        let extraBijlagen = [];
+        try {
+          const docs = (typeof db.getDocuments === 'function') ? ((await db.getDocuments(id)) || []) : [];
+          extraBijlagen = docs.map(d => ({
+            filename: d.origName || d.filename,
+            path: path.join(db.UPLOAD_DIR, path.basename(d.filename))
+          }));
+        } catch (e) { /* zonder bijlagen versturen */ }
         mailer.sendOfferteNaarKlant({
           to: r.klant.email, ref: r.ref, naam: r.klant.naam,
-          prijs: r.prijs, notitie: r.prijsNotitie, pdfPath
+          prijs: r.prijs, notitie: r.prijsNotitie, pdfPath, extraBijlagen
         }).catch(() => {});
       }
     }

@@ -270,7 +270,7 @@ function kzDocPanel(body, rid, r, docs) {
   const panel =
     '<section id="kz-doc-panel" style="max-width:1160px;margin:18px auto;background:#fcfbf8;border:1px solid #e5e0d5;border-radius:14px;padding:22px 26px;box-sizing:border-box">' +
     '<h3 style="margin:0 0 4px;font-size:17px">Documenten (' + totaal + ')</h3>' +
-    '<p style="margin:0 0 8px;font-size:13px;color:#6b6459">De offerte-PDF gaat met de offertemail mee; extra documenten (tekeningen, foto\u2019s, voorwaarden) blijven hier bij de aanvraag bewaard.</p>' +
+    '<p style="margin:0 0 8px;font-size:13px;color:#6b6459">Bij \u201cOpslaan &amp; versturen\u201d gaan de offerte-PDF \u00e9n alle onderstaande documenten als bijlagen met de offertemail mee.</p>' +
     (hoofd || extra ? hoofd + extra : '<div style="padding:10px 0;color:#6b6459;font-size:14px;border-bottom:1px solid #e5e0d5">Nog geen documenten bij deze aanvraag.</div>') +
     '<form method="post" action="/beheer/aanvraag/' + encodeURIComponent(rid) + '/documenten" enctype="multipart/form-data" style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:14px">' +
     '<input type="file" name="documenten" multiple accept="application/pdf,image/jpeg,image/png" style="font-size:13px">' +

@@ -123,18 +123,45 @@ module.exports = function (company) {
       });
     },
 
-    // De offerte in één keer naar de klant: prijs + notitie + (optioneel) de PDF
-    // als bijlage. Alleen verstuurd als de beheerder op "versturen" klikt.
-    async sendOfferteNaarKlant({ to, ref, naam, prijs, notitie, pdfPath }) {
+    // De offerte in één keer naar de klant: prijs + notitie + de offerte-PDF
+    // én eventuele extra documenten (tekeningen, foto's, voorwaarden) als
+    // bijlagen. Alleen verstuurd als de beheerder op "versturen" klikt.
+    // extraBijlagen: [{ filename, path }] — bestanden die niet gelezen kunnen
+    // worden, worden overgeslagen met een waarschuwing; totaal begrensd op
+    // ±25 MB zodat de mail altijd aankomt.
+    async sendOfferteNaarKlant({ to, ref, naam, prijs, notitie, pdfPath, extraBijlagen = [] }) {
       const attachments = [];
-      if (pdfPath) {
-        try { attachments.push({ filename: `offerte-${ref}.pdf`, content: fs.readFileSync(pdfPath).toString('base64') }); }
-        catch (e) { console.warn('[MAIL] offerte-PDF kon niet worden bijgevoegd:', e.message); }
+      let totaal = 0;
+      const MAX_TOTAAL = 25 * 1024 * 1024;
+      function voegToe(filename, filePath) {
+        try {
+          const buf = fs.readFileSync(filePath);
+          if (totaal + buf.length > MAX_TOTAAL) {
+            console.warn('[MAIL] bijlage overgeslagen (mail zou te groot worden):', filename);
+            return false;
+          }
+          totaal += buf.length;
+          attachments.push({ filename, content: buf.toString('base64') });
+          return true;
+        } catch (e) {
+          console.warn('[MAIL] bijlage kon niet worden bijgevoegd:', filename, '-', e.message);
+          return false;
+        }
       }
+      if (pdfPath) voegToe(`offerte-${ref}.pdf`, pdfPath);
+      let extraCount = 0;
+      for (const b of extraBijlagen) {
+        if (b && b.path && voegToe(b.filename || require('path').basename(b.path), b.path)) extraCount++;
+      }
+      const bijlageTekst = attachments.length
+        ? (extraCount
+            ? `De volledige offerte en ${extraCount} bijbehorend${extraCount === 1 ? '' : 'e'} document${extraCount === 1 ? '' : 'en'} vind je in de bijlagen.`
+            : 'De volledige offerte vind je in de bijlage (PDF).')
+        : '';
       const body = par(`Hallo ${esc(naam || '')},`)
         + par(`Je offerte voor aanvraag <strong>${esc(ref)}</strong> staat klaar.`)
         + priceBox(prijs, notitie)
-        + (attachments.length ? par('De volledige offerte vind je in de bijlage (PDF).') : '')
+        + (bijlageTekst ? par(bijlageTekst) : '')
         + par('Je vindt alles ook terug in je portaal.')
         + par('Met vriendelijke groet,<br>' + esc(company.name));
       await send({
