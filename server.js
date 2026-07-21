@@ -239,6 +239,53 @@ const NAV_FIX_HTML = `
 }catch(e){/* vangnet mag de pagina nooit breken */}})();
 </script>`;
 
+// ---- Centrale SEO: canonical, Open Graph en JSON-LD op elke pagina ----
+// Wordt automatisch in de <head> van elke publieke pagina geplaatst;
+// beheer/portaal krijgen juist een noindex. Nieuwe pagina's liften
+// vanzelf mee — geen views aanpassen nodig.
+const KZ_SEO_BASE = (process.env.PUBLIC_URL || 'https://bestelkozijnenopmaat.nl').replace(/\/+$/, '');
+function kzSeoInject(body, url) {
+  if (typeof body !== 'string' || !body.includes('</head>')) return body;
+  const escAttr = (x) => String(x || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+  // Besloten delen: niet indexeren
+  if (/^\/(beheer|portaal|inloggen|registreren|wachtwoord)/.test(url)) {
+    if (!/name="robots"/i.test(body)) body = body.replace('</head>', '<meta name="robots" content="noindex">\n</head>');
+    return body;
+  }
+  if (body.includes('rel="canonical"')) return body;
+  const canon = KZ_SEO_BASE + (url === '/' ? '/' : url.replace(/\/+$/, ''));
+  const titel = ((body.match(/<title>([^<]*)<\/title>/i) || [])[1] || 'bestelkozijnenopmaat.nl').trim();
+  const descr = ((body.match(/<meta\s+name="description"\s+content="([^"]*)"/i) || [])[1] ||
+    'Kozijnen op maat in kunststof, hout en aluminium. Stel je kozijn samen of gebruik de gratis AI-kozijnenscan voor een snelle richtprijs.').trim();
+  const ogImg = KZ_SEO_BASE + '/img/og-image.png';
+  const jsonld = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: 'bestelkozijnenopmaat.nl',
+    legalName: 'Creditline Montage',
+    url: KZ_SEO_BASE,
+    image: ogImg,
+    telephone: '+31646150160',
+    email: 'montage@creditline.nl',
+    address: { '@type': 'PostalAddress', streetAddress: 'Torenlaan 5A', postalCode: '1402 AT', addressLocality: 'Bussum', addressCountry: 'NL' },
+    priceRange: '$$',
+    description: 'Kozijnen op maat in kunststof, hout en aluminium, inclusief montage. Online configurator en gratis AI-kozijnenscan.'
+  });
+  const inject =
+    '<link rel="canonical" href="' + escAttr(canon) + '">\n' +
+    '<meta property="og:type" content="website">\n' +
+    '<meta property="og:site_name" content="bestelkozijnenopmaat.nl">\n' +
+    '<meta property="og:url" content="' + escAttr(canon) + '">\n' +
+    '<meta property="og:title" content="' + escAttr(titel) + '">\n' +
+    '<meta property="og:description" content="' + escAttr(descr) + '">\n' +
+    '<meta property="og:image" content="' + escAttr(ogImg) + '">\n' +
+    '<meta property="og:image:width" content="1200">\n' +
+    '<meta property="og:image:height" content="630">\n' +
+    '<meta name="twitter:card" content="summary_large_image">\n' +
+    '<script type="application/ld+json">' + jsonld + '</scr' + 'ipt>';
+  return body.replace('</head>', inject + '\n</head>');
+}
+
 // ---- Documentenpaneel voor de aanvraag-detailpagina ----
 function kzDocPanel(body, rid, r, docs) {
   const esc = (x) => String(x ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;');
@@ -290,6 +337,10 @@ app.use((req, res, next) => {
   const origSend = res.send.bind(res);
   res.send = function (body) {
     try {
+      // Centrale SEO op elke pagina
+      if (typeof body === 'string') {
+        body = kzSeoInject(body, (req.originalUrl || req.url || '/').split('?')[0]);
+      }
       if (typeof body === 'string'
           && /<a\b[^>]*href=["']\/contact["']/.test(body)
           && !/<a\b[^>]*href=["']\/ai-kozijnenscan["']/.test(body)) {
@@ -471,6 +522,25 @@ app.post('/api/konf/dims', async (req, res) => {
     _dimsCache.set(key, { t: Date.now(), data });
     res.json(data);
   } catch (e) { res.status(502).json({ ok: false }); }
+});
+
+// ---- Sitemap & robots (voor Google Search Console) ----
+const KZ_SITEMAP_PATHS = ['/', '/configurator', '/ai-kozijnenscan',
+  '/kozijnen/kunststof', '/kozijnen/hout', '/kozijnen/aluminium',
+  '/werkwijze', '/montage', '/veelgestelde-vragen', '/contact',
+  '/algemene-voorwaarden', '/privacybeleid'];
+app.get('/sitemap.xml', (req, res) => {
+  const urls = KZ_SITEMAP_PATHS.map(p =>
+    '  <url><loc>' + KZ_SEO_BASE + p + '</loc><changefreq>' +
+    (p === '/' || p === '/ai-kozijnenscan' ? 'weekly' : 'monthly') +
+    '</changefreq></url>').join('\n');
+  res.type('application/xml').send(
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' + urls + '\n</urlset>');
+});
+app.get('/robots.txt', (req, res) => {
+  res.type('text/plain').send(
+    'User-agent: *\nAllow: /\nDisallow: /beheer\nDisallow: /portaal\n\nSitemap: ' + KZ_SEO_BASE + '/sitemap.xml\n');
 });
 
 // ---- Offerte-PDF downloaden vanuit het beheer ----

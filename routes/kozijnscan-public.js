@@ -168,7 +168,7 @@ router.get('/', (req, res) => {
   const { headerPartials, footerPartials } = detectSitePartials();
   res.render('kozijnscan-klant', {
     headerPartials, footerPartials,
-    title: 'AI Kozijnenscan – richtprijs op basis van een gevelfoto',
+    title: 'AI Kozijnenscan – gratis richtprijs',
     active: 'ai-scan'
   });
 });

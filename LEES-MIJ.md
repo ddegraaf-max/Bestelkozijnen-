@@ -33,6 +33,16 @@ Optioneel:    NOTIFY_FROM, KLANT_BEVESTIGING=true,
 
 ## Nieuw in deze versie
 
+- SEO-PAKKET (lost ~50 audit-taken in één keer op): canonical-tag, Open
+  Graph (title/description/image) en JSON-LD LocalBusiness worden nu
+  automatisch op ELKE publieke pagina geplaatst; beheer/portaal/inloggen
+  krijgen noindex. Nieuw: /sitemap.xml en /robots.txt (dien de sitemap in
+  via Google Search Console). Nieuw bestand: public/img/og-image.png
+  (1200x630, huisstijl) — ZET DEZE IN JE public/img MAP. Scanpagina heeft
+  weer een echte H1 en een title van 61 tekens.
+  Handmatig blijft over: teksten uitbreiden op /montage, /contact en
+  /inloggen naar 300+ woorden (copywriting in de views).
+
 - OFFERTEMAIL MET ALLE DOCUMENTEN: bij "Opslaan & versturen" gaan nu de
   offerte-PDF én alle extra documenten van de aanvraag als bijlagen mee
   (mailer.js + routes/admin.js aangepast — VERVANG OOK mailer.js). De
