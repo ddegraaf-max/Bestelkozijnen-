@@ -76,6 +76,15 @@ header.site{position:sticky !important;top:0 !important;z-index:1000 !important}
 .kz-hint{font-size:12px;color:var(--kz-ink-soft);margin-top:5px}
 .kz-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:600px){.kz-grid2{grid-template-columns:1fr}}
+/* Op telefoons wordt de kozijnentabel een stapel kaartjes i.p.v. zijwaarts scrollen */
+@media(max-width:640px){
+  #kzResultsPanel thead{display:none}
+  #kzResultsPanel table,#kzResultsPanel tbody,#kzResultsPanel tr,#kzResultsPanel td{display:block;width:100%}
+  #kzResultsPanel tr{border:1px solid var(--kz-line-strong);border-radius:10px;margin-bottom:12px;padding:12px 14px;background:#fff}
+  #kzResultsPanel td{border-bottom:none;padding:7px 0}
+  #kzResultsPanel td[data-label]::before{content:attr(data-label);display:block;font-family:var(--kz-mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--kz-ink-soft);margin-bottom:4px}
+  #kzResultsPanel td:last-child{text-align:right;padding-top:2px}
+}
 .kz-wrap table{width:100%;border-collapse:collapse;font-size:14px}
 .kz-wrap th{font-family:var(--kz-mono);font-size:10px;text-transform:uppercase;letter-spacing:.08em;text-align:left;color:var(--kz-ink-soft);padding:9px 8px;border-bottom:1px solid var(--kz-line-strong);font-weight:400}
 .kz-wrap td{padding:9px 8px;border-bottom:1px solid var(--kz-line);vertical-align:middle}
@@ -324,15 +333,15 @@ function renderRows(){
   var types = ['vast','draai','draaikiep','klep','deur','pui','combinatie'];
   $('kzResultsBody').innerHTML = kozijnen.map(function(k,i){ return '' +
     '<tr>' +
-      '<td><input data-i="'+i+'" data-f="oms" value="'+esc(k.oms)+'">' +
+      '<td data-label="Kozijn"><input data-i="'+i+'" data-f="oms" value="'+esc(k.oms)+'">' +
         (k.opm ? '<div class="kz-opm">'+esc(k.opm)+'</div>' : '') + '</td>' +
-      '<td><select data-i="'+i+'" data-f="type">' +
+      '<td data-label="Type"><select data-i="'+i+'" data-f="type">' +
         types.map(function(t){ return '<option'+(k.type===t?' selected':'')+'>'+t+'</option>'; }).join('') +
       '</select></td>' +
-      '<td><input data-i="'+i+'" data-f="b" type="number" step="10" value="'+k.b+'"></td>' +
-      '<td><input data-i="'+i+'" data-f="h" type="number" step="10" value="'+k.h+'"></td>' +
-      '<td><span class="kz-conf '+k.conf+'">'+k.conf+'</span></td>' +
-      '<td><button class="kz-delrow" data-i="'+i+'" title="Verwijderen">&#10005;</button></td>' +
+      '<td data-label="Breedte (mm)"><input data-i="'+i+'" data-f="b" type="number" step="10" value="'+k.b+'"></td>' +
+      '<td data-label="Hoogte (mm)"><input data-i="'+i+'" data-f="h" type="number" step="10" value="'+k.h+'"></td>' +
+      '<td data-label="Zekerheid"><span class="kz-conf '+k.conf+'">'+k.conf+'</span></td>' +
+      '<td><button class="kz-delrow" data-i="'+i+'" title="Verwijderen">&#10005; verwijderen</button></td>' +
     '</tr>'; }).join('');
   Array.prototype.forEach.call(document.querySelectorAll('#kzResultsBody [data-f]'), function(el){
     el.addEventListener('change', function(){
