@@ -245,7 +245,7 @@ const NAV_FIX_HTML = `
 // vanzelf mee — geen views aanpassen nodig.
 const KZ_SEO_BASE = (process.env.PUBLIC_URL || 'https://bestelkozijnenopmaat.nl').replace(/\/+$/, '');
 function kzSeoInject(body, url) {
-  if (typeof body !== 'string' || !body.includes('</head>')) return body;
+  if (typeof body !== 'string' || !/<(html|head|body)[\s>]/i.test(body)) return body;
   const escAttr = (x) => String(x || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
   // Besloten delen: niet indexeren en verder niets
   if (/^\/(beheer|portaal|wachtwoord)/.test(url)) {
@@ -283,7 +283,13 @@ function kzSeoInject(body, url) {
     '<meta property="og:image:height" content="630">\n' +
     '<meta name="twitter:card" content="summary_large_image">\n' +
     '<script type="application/ld+json">' + jsonld + '</scr' + 'ipt>';
-  return body.replace('</head>', inject + '\n</head>');
+  if (/<\/head\s*>/i.test(body)) {
+    return body.replace(/<\/head\s*>/i, inject + '\n</head>');
+  }
+  // Terugval voor pagina's zonder <head>-sluittag: direct na <body> plaatsen
+  const bodyOpen = body.match(/<body[^>]*>/i);
+  if (bodyOpen) return body.replace(bodyOpen[0], bodyOpen[0] + '\n' + inject);
+  return body;
 }
 
 // ---- Aanvullende contentblokken voor dunne pagina's (SEO + service) ----
@@ -324,8 +330,10 @@ const KZ_EXTRA_CONTENT = {
 function kzExtraContent(body, url) {
   const blok = KZ_EXTRA_CONTENT[url];
   if (!blok || typeof body !== 'string') return body;
-  if (body.includes('id="kz-extra-content"') || !body.includes('</main>')) return body;
-  return body.replace('</main>', blok + '\n</main>');
+  if (body.includes('id="kz-extra-content"')) return body;
+  if (/<\/main\s*>/i.test(body)) return body.replace(/<\/main\s*>/i, blok + '\n</main>');
+  if (/<\/body\s*>/i.test(body)) return body.replace(/<\/body\s*>/i, blok + '\n</body>');
+  return body;
 }
 
 // ---- Documentenpaneel voor de aanvraag-detailpagina ----
