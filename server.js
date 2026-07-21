@@ -247,8 +247,8 @@ const KZ_SEO_BASE = (process.env.PUBLIC_URL || 'https://bestelkozijnenopmaat.nl'
 function kzSeoInject(body, url) {
   if (typeof body !== 'string' || !body.includes('</head>')) return body;
   const escAttr = (x) => String(x || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-  // Besloten delen: niet indexeren
-  if (/^\/(beheer|portaal|inloggen|registreren|wachtwoord)/.test(url)) {
+  // Besloten delen: niet indexeren en verder niets
+  if (/^\/(beheer|portaal|wachtwoord)/.test(url)) {
     if (!/name="robots"/i.test(body)) body = body.replace('</head>', '<meta name="robots" content="noindex">\n</head>');
     return body;
   }
@@ -284,6 +284,48 @@ function kzSeoInject(body, url) {
     '<meta name="twitter:card" content="summary_large_image">\n' +
     '<script type="application/ld+json">' + jsonld + '</scr' + 'ipt>';
   return body.replace('</head>', inject + '\n</head>');
+}
+
+// ---- Aanvullende contentblokken voor dunne pagina's (SEO + service) ----
+// Wordt onder de bestaande content geplaatst op precies deze pagina's;
+// de views zelf blijven onaangeraakt.
+const KZ_EXTRA_CONTENT = {
+  '/montage': `
+<section id="kz-extra-content" style="max-width:1160px;margin:10px auto 40px;padding:0 20px;box-sizing:border-box">
+  <div style="background:#fcfbf8;border:1px solid #e5e0d5;border-radius:14px;padding:26px 30px">
+    <h2 style="margin:0 0 12px;font-size:22px">Veelgestelde vragen over montage</h2>
+    <h3 style="margin:14px 0 4px;font-size:16px">Hoe lang duurt het plaatsen van nieuwe kozijnen?</h3>
+    <p style="margin:0 0 10px;line-height:1.6;color:#3a382f">De meeste woningen zijn binnen &eacute;&eacute;n tot twee werkdagen voorzien van nieuwe kozijnen. Onze monteurs verwijderen de oude kozijnen, plaatsen de nieuwe waterdicht en luchtdicht, en werken de aansluitingen binnen en buiten netjes af. Aan het einde van de dag is uw woning altijd wind- en waterdicht.</p>
+    <h3 style="margin:14px 0 4px;font-size:16px">In welke regio&rsquo;s monteren jullie?</h3>
+    <p style="margin:0 0 10px;line-height:1.6;color:#3a382f">Wij leveren en monteren in vrijwel heel Nederland, met de focus op Noord-Holland, Utrecht en de Randstad. Vanuit Bussum zijn we snel op locatie voor zowel de inmeting als de plaatsing.</p>
+    <h3 style="margin:14px 0 4px;font-size:16px">Wordt er vooraf ingemeten?</h3>
+    <p style="margin:0;line-height:1.6;color:#3a382f">Altijd. Ook als u onze configurator of de gratis AI-kozijnenscan heeft gebruikt, komt een vakman de definitieve maten gratis en vrijblijvend opnemen. Zo weet u zeker dat elk kozijn tot op de millimeter past en voorkomen we verrassingen tijdens de montage.</p>
+  </div>
+</section>`,
+  '/contact': `
+<section id="kz-extra-content" style="max-width:1160px;margin:10px auto 40px;padding:0 20px;box-sizing:border-box">
+  <div style="background:#fcfbf8;border:1px solid #e5e0d5;border-radius:14px;padding:26px 30px">
+    <h2 style="margin:0 0 12px;font-size:22px">Wat kunt u van ons verwachten?</h2>
+    <p style="margin:0 0 10px;line-height:1.6;color:#3a382f">Op werkdagen reageren wij meestal binnen &eacute;&eacute;n werkdag op uw bericht. Stelt u een vraag over een lopende aanvraag? Vermeld dan uw aanvraagnummer (bijvoorbeeld 20260720-1234), dan kunnen we u direct verder helpen. Voor een snelle eerste prijsindicatie kunt u ook onze gratis <a href="/ai-kozijnenscan" style="color:#8E3417">AI-kozijnenscan</a> proberen: u uploadt een foto van uw gevel en ontvangt een vrijblijvende richtprijs.</p>
+    <p style="margin:0;line-height:1.6;color:#3a382f">Liever persoonlijk overleggen over kunststof, houten of aluminium kozijnen, kleuren of beglazing? Bel ons gerust of plan via het formulier een terugbelafspraak. We denken graag mee &mdash; van de eerste schets tot de gratis inmeting en de uiteindelijke montage, overal in de Randstad en ver daarbuiten.</p>
+  </div>
+</section>`,
+  '/inloggen': `
+<section id="kz-extra-content" style="max-width:1160px;margin:10px auto 40px;padding:0 20px;box-sizing:border-box">
+  <div style="background:#fcfbf8;border:1px solid #e5e0d5;border-radius:14px;padding:26px 30px">
+    <h2 style="margin:0 0 12px;font-size:22px">Waarom een account bij bestelkozijnenopmaat.nl?</h2>
+    <p style="margin:0 0 10px;line-height:1.6;color:#3a382f">Met uw persoonlijke portaal volgt u al uw kozijnaanvragen op &eacute;&eacute;n plek: van de eerste samenstelling in de configurator tot de definitieve offerte en de montageplanning. U ziet direct de actuele status, ontvangt uw offerte als PDF en kunt eerdere samenstellingen eenvoudig terugvinden of aanpassen.</p>
+    <p style="margin:0 0 10px;line-height:1.6;color:#3a382f">Nog geen account? <a href="/registreren" style="color:#8E3417">Registreren</a> duurt minder dan een minuut en is geheel gratis. Uw gegevens gebruiken we uitsluitend voor uw eigen aanvragen en offertes &mdash; nooit voor iets anders. Uw account beveiligt u desgewenst extra met tweestapsverificatie.</p>
+    <p style="margin:0 0 10px;line-height:1.6;color:#3a382f">Eerst vrijblijvend een prijsindicatie? Dat kan ook zonder account: probeer de gratis <a href="/ai-kozijnenscan" style="color:#8E3417">AI-kozijnenscan</a> of stel uw kozijn samen in de <a href="/configurator" style="color:#8E3417">configurator</a>.</p>
+    <p style="margin:0;line-height:1.6;color:#3a382f">Wachtwoord vergeten? Via de herstelfunctie op deze pagina ontvangt u binnen enkele minuten een beveiligde link per e-mail waarmee u direct een nieuw wachtwoord instelt. Komt u er niet uit, dan helpt ons team u graag verder via het <a href="/contact" style="color:#8E3417">contactformulier</a>.</p>
+  </div>
+</section>`
+};
+function kzExtraContent(body, url) {
+  const blok = KZ_EXTRA_CONTENT[url];
+  if (!blok || typeof body !== 'string') return body;
+  if (body.includes('id="kz-extra-content"') || !body.includes('</main>')) return body;
+  return body.replace('</main>', blok + '\n</main>');
 }
 
 // ---- Documentenpaneel voor de aanvraag-detailpagina ----
@@ -339,7 +381,9 @@ app.use((req, res, next) => {
     try {
       // Centrale SEO op elke pagina
       if (typeof body === 'string') {
-        body = kzSeoInject(body, (req.originalUrl || req.url || '/').split('?')[0]);
+        const kzSeoUrl = (req.originalUrl || req.url || '/').split('?')[0];
+        body = kzSeoInject(body, kzSeoUrl);
+        body = kzExtraContent(body, kzSeoUrl);
       }
       if (typeof body === 'string'
           && /<a\b[^>]*href=["']\/contact["']/.test(body)
