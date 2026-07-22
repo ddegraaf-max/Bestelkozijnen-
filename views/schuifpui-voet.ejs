@@ -1,0 +1,10 @@
+<%
+var fp = (typeof footerPartials !== 'undefined' && footerPartials && footerPartials.length) ? footerPartials : null;
+%>
+<% if (fp) { fp.forEach(function(p){ %><%- include(p) %><% }); } else { %>
+<div style="background:#161616;color:#a8a396;padding:26px 24px;font-family:sans-serif;font-size:13px;text-align:center">
+  bestelkozijnenopmaat.nl &middot; Creditline Montage &middot; Torenlaan 5A, 1402 AT Bussum &middot; KvK 59683198
+</div>
+</body>
+</html>
+<% } %>

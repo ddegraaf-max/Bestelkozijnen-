@@ -1,0 +1,239 @@
+<%- include('schuifpui-kop') %>
+
+<div class="sp-wrap">
+
+  <!-- ===== HERO ===== -->
+  <section>
+    <span class="sp-kicker">Drutex schuifpuien &middot; op maat &middot; inclusief montage</span>
+    <h1 class="sp-h1">Schuifpuien op maat,<br>rechtstreeks van Drutex</h1>
+    <p class="sp-lead">Van kunststof kiep-schuifpui tot aluminium hef-schuifpui over de volle breedte van uw achtergevel.
+    Wij leveren de originele Drutex-systemen op maat, meten gratis in en monteren zelf. En wilt u een gr&oacute;tere opening dan u nu heeft?
+    Dan regelen wij ook het voorwerk: van de bouwtekening bij de gemeente tot de constructieberekening voor de stalen latei.</p>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:26px">
+      <a class="sp-btn" href="#offerte">Vrijblijvende offerte aanvragen</a>
+      <a class="sp-btn-l" href="/schuifpuien/muur-uitbreken">Muur uitbreken? Lees dit eerst &rarr;</a>
+    </div>
+  </section>
+
+  <!-- ===== DRIE SYSTEMEN ===== -->
+  <section class="sp-sec">
+    <div class="sp-sechead">
+      <span class="sp-secnum">01</span>
+      <h2 class="sp-h2">Kies uw systeem</h2>
+    </div>
+    <div class="sp-grid sp-grid3">
+      <% Object.values(modellen).forEach(function(m){ %>
+      <a class="sp-card" href="/schuifpuien/<%= m.slug %>">
+        <div class="sp-card-vis"><%- include('schuifpui-svg', { soort: m.svg }) %></div>
+        <div class="sp-card-b">
+          <span class="sp-tag"><%= m.kort %> &middot; <%= m.materiaal %></span>
+          <h3><%= m.naam.split(' — ')[0] %></h3>
+          <p><%= m.sub %>.</p>
+          <span class="sp-meer">Bekijk specificaties &rarr;</span>
+        </div>
+      </a>
+      <% }); %>
+    </div>
+    <p style="margin:18px 0 0;font-size:14.5px;color:#6b6459">Twijfelt u tussen de systemen? In het
+    <a href="/schuifpuien/werkwijze" style="color:#e8590c">adviesgesprek</a> nemen we uw situatie, budget en de gewenste opening door &mdash; u kiest daarna pas.</p>
+  </section>
+
+  <!-- ===== CONSTRUCTIE-TEASER ===== -->
+  <section class="sp-sec">
+    <div class="sp-split">
+      <div>
+        <span class="sp-kicker">Grotere opening gewenst?</span>
+        <h2 class="sp-h2" style="margin-top:10px">Muur wegbreken kan &mdash;<br>maar nooit zomaar</h2>
+        <p style="margin:16px 0 0;font-size:16px;color:#3a362f;max-width:560px">De achtergevel van de meeste woningen is
+        <b>dragend</b>: hij draagt de verdiepingsvloer, het metselwerk erboven en vaak een deel van het dak. Wilt u een bredere
+        schuifpui dan de huidige opening, dan moet dat gewicht eerst worden opgevangen met een <b>stalen latei of staalportaal</b>.
+        Welke maat staal dat wordt, bepaalt niet de aannemer op gevoel, maar een erkend constructeur met een
+        <b>constructieberekening</b>. Wij regelen dat hele traject voor u &mdash; te beginnen met stap&nbsp;1:
+        de originele bouwtekening van uw achtergevel opvragen bij de gemeente.</p>
+        <div style="margin-top:22px">
+          <a class="sp-btn2" href="/schuifpuien/muur-uitbreken">Zo werkt het uitbreken &rarr;</a>
+        </div>
+      </div>
+      <div class="sp-illu">
+        <%- include('schuifpui-svg', { soort: 'latei' }) %>
+        <div class="sp-illu-cap">doorsnede achtergevel &middot; stalen latei boven de vergrote opening</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== WERKWIJZE COMPACT ===== -->
+  <section class="sp-sec">
+    <div class="sp-sechead">
+      <span class="sp-secnum">02</span>
+      <h2 class="sp-h2">Zo pakken wij het aan</h2>
+    </div>
+    <div class="sp-grid sp-grid3">
+      <div class="sp-card"><div class="sp-card-b">
+        <span class="sp-tag" style="background:#fdece1;border-color:#e8590c;color:#e8590c">Stap 1 &middot; altijd eerst</span>
+        <h3>Bouwtekening opvragen bij de gemeente</h3>
+        <p>V&oacute;&oacute;r alles vragen we de originele bouwtekening van de <b>achterzijde van uw woning</b> op uit het
+        bouwarchief van uw gemeente. Daarop zien we de bestaande opening, het metselwerk en hoe de vloeren dragen &mdash;
+        de basis voor elk goed advies.</p>
+      </div></div>
+      <div class="sp-card"><div class="sp-card-b">
+        <span class="sp-tag">Stap 2&ndash;3</span>
+        <h3>Advies &amp; constructiecheck</h3>
+        <p>We kiezen samen het systeem en de indeling. Wordt de opening groter, dan schakelen we de constructeur in
+        voor de berekening van latei of portaal.</p>
+      </div></div>
+      <div class="sp-card"><div class="sp-card-b">
+        <span class="sp-tag">Stap 4&ndash;6</span>
+        <h3>Inmeten, productie &amp; montage</h3>
+        <p>Gratis inmeting op de millimeter, productie bij Drutex, en onze eigen monteurs plaatsen de pui wind- en waterdicht.</p>
+      </div></div>
+    </div>
+    <p style="margin:18px 0 0"><a class="sp-btn-l" href="/schuifpuien/werkwijze" style="padding-left:0">Bekijk het volledige stappenplan &rarr;</a></p>
+  </section>
+
+  <!-- ===== OFFERTE ===== -->
+  <section class="sp-sec" id="offerte">
+    <div class="sp-sechead">
+      <span class="sp-secnum">03</span>
+      <h2 class="sp-h2">Vrijblijvende offerte</h2>
+    </div>
+    <p style="margin:0;max-width:680px;color:#3a362f">Vul in wat u weet &mdash; de rest zoeken wij uit. Na uw aanvraag vragen we
+    (als u dat wilt) direct de gemeentetekening op en plannen we het adviesgesprek.</p>
+
+    <form class="sp-form" id="spForm" novalidate>
+      <div class="sp-fgrid">
+        <div class="sp-veld"><label for="spNaam">Naam *</label><input id="spNaam" name="naam" type="text" autocomplete="name" required></div>
+        <div class="sp-veld"><label for="spEmail">E-mailadres *</label><input id="spEmail" name="email" type="email" autocomplete="email" required></div>
+        <div class="sp-veld"><label for="spTel">Telefoon</label><input id="spTel" name="telefoon" type="tel" autocomplete="tel"></div>
+        <div class="sp-veld"><label for="spPlaats">Plaats (voor de gemeentetekening)</label><input id="spPlaats" name="plaats" type="text" autocomplete="address-level2"></div>
+        <div class="sp-veld sp-vol"><label for="spAdres">Straat en huisnummer</label><input id="spAdres" name="adres" type="text" autocomplete="street-address"></div>
+        <div class="sp-veld"><label for="spSys">Voorkeur systeem</label>
+          <select id="spSys" name="systeem">
+            <option value="advies">Nog geen voorkeur &mdash; adviseer mij</option>
+            <option value="hef-schuifpui">Hef-schuifpui &mdash; Drutex IGLO-HS (kunststof)</option>
+            <option value="kiep-schuifpui">Kiep-schuifpui &mdash; Drutex PSK (kunststof)</option>
+            <option value="aluminium-schuifpui">Aluminium hef-schuifpui &mdash; Drutex MB-77HS</option>
+          </select>
+        </div>
+        <div class="sp-veld"><label>Gewenste afmeting (mm, indicatief)</label>
+          <div style="display:flex;gap:10px;align-items:center">
+            <input name="breedte" type="number" min="0" max="12000" placeholder="breedte" inputmode="numeric" aria-label="breedte in millimeters">
+            <span style="color:#6b6459">&times;</span>
+            <input name="hoogte" type="number" min="0" max="4000" placeholder="hoogte" inputmode="numeric" aria-label="hoogte in millimeters">
+          </div>
+        </div>
+        <div class="sp-veld"><label for="spGroter">Wordt de gevelopening groter dan nu?</label>
+          <select id="spGroter" name="openingGroter">
+            <option value="weetniet">Weet ik nog niet</option>
+            <option value="nee">Nee, de pui komt in de bestaande opening</option>
+            <option value="ja">Ja, er moet muur worden weggebroken</option>
+          </select>
+        </div>
+        <div class="sp-veld"><label for="spTek">Bouwtekening achtergevel (stap 1)</label>
+          <select id="spTek" name="tekeningHulp">
+            <option value="ja">Vraag &lsquo;m voor mij op / help mij daarbij</option>
+            <option value="zelf">Ik vraag &rsquo;m zelf op bij de gemeente</option>
+            <option value="heb-ik">Ik heb de bouwtekening al</option>
+          </select>
+        </div>
+        <div class="sp-veld sp-vol"><label for="spOpm">Opmerkingen</label>
+          <textarea id="spOpm" name="opmerking" rows="4" placeholder="Bijvoorbeeld: huidige situatie, bouwjaar woning, wensen voor kleur of indeling&hellip;"></textarea>
+        </div>
+        <div class="sp-hp" aria-hidden="true"><label>Website<input name="website" type="text" tabindex="-1" autocomplete="off"></label></div>
+      </div>
+      <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;margin-top:22px">
+        <button class="sp-btn" type="submit" id="spVerstuur">Verstuur aanvraag</button>
+        <span style="font-size:13px;color:#6b6459">Geheel vrijblijvend &middot; reactie binnen &eacute;&eacute;n werkdag</span>
+      </div>
+      <div class="sp-fmsg" id="spMsg"></div>
+    </form>
+  </section>
+
+  <!-- ===== FAQ ===== -->
+  <section class="sp-sec sp-faq">
+    <div class="sp-sechead">
+      <span class="sp-secnum">04</span>
+      <h2 class="sp-h2">Veelgestelde vragen</h2>
+    </div>
+    <details>
+      <summary>Wat kost een schuifpui op maat?</summary>
+      <p>Dat hangt af van het systeem (PSK is doorgaans het voordeligst, een aluminium hef-schuifpui het meest luxe),
+      de afmetingen, de beglazing en de kleur. Omdat elke pui bij Drutex op maat wordt gemaakt, geven we geen vanaf-prijzen
+      die achteraf tegenvallen: u ontvangt binnen &eacute;&eacute;n werkdag een concrete, vrijblijvende offerte voor &uacute;w situatie.</p>
+    </details>
+    <details>
+      <summary>Waarom vragen jullie altijd eerst de bouwtekening op bij de gemeente?</summary>
+      <p>Op de originele bouwtekening van de achtergevel staat precies hoe uw woning is gebouwd: de maat van de bestaande
+      opening, de dikte en opbouw van de muur, en hoe de verdiepingsvloer draagt. Daarmee adviseren we in &eacute;&eacute;n keer goed,
+      weet de constructeur direct waar hij aan toe is, en voorkomen we verrassingen tijdens de montage. De tekening zit in het
+      bouwarchief van uw gemeente; opvragen is meestal gratis of kost enkele euro&rsquo;s. Wij verzorgen dit graag voor u.</p>
+    </details>
+    <details>
+      <summary>Ik wil een bredere opening dan ik nu heb. Kan dat?</summary>
+      <p>Vrijwel altijd &mdash; maar de achtergevel is meestal dragend, dus er moet eerst een stalen latei of portaal komen die het
+      gewicht van vloer en gevel overneemt. Welke maat staal nodig is, bepaalt een erkend constructeur met een constructieberekening.
+      Wij co&ouml;rdineren het complete traject. Lees er alles over op de pagina
+      <a href="/schuifpuien/muur-uitbreken" style="color:#e8590c">muur uitbreken &amp; constructieberekening</a>.</p>
+    </details>
+    <details>
+      <summary>Heb ik een vergunning nodig voor een schuifpui in de achtergevel?</summary>
+      <p>Een kozijnwijziging in de achtergevel is in veel gevallen vergunningsvrij, maar dat hangt af van uw situatie
+      (zoals een monument of beschermd stadsgezicht) en van wat er constructief wijzigt. Wij checken dit standaard v&oacute;&oacute;r de
+      offerte definitief wordt, via het Omgevingsloket en de gegevens uit de gemeentetekening.</p>
+    </details>
+    <details>
+      <summary>Wat is het verschil tussen een hef-schuifpui en een kiep-schuifpui?</summary>
+      <p>Bij een hef-schuifpui (HST) tilt het beslag de vleugel enkele millimeters op, waardoor zelfs zeer grote en zware vleugels
+      moeiteloos schuiven &mdash; ideaal voor maximale glasoppervlakken en een lage drempel. Bij een kiep-schuifpui (PSK) kantelt de
+      vleugel eerst iets naar voren en schuift dan opzij; die kan bovendien op de kiepstand om te ventileren en is compacter en
+      voordeliger. Op de systeempagina&rsquo;s vindt u alle specificaties.</p>
+    </details>
+    <details>
+      <summary>Leveren jullie inclusief montage?</summary>
+      <p>Ja. Onze eigen monteurs verwijderen het oude kozijn of de oude pui, plaatsen de nieuwe schuifpui waterdicht en luchtdicht
+      en werken alles binnen en buiten netjes af. Bij het vergroten van de opening co&ouml;rdineren we ook het breekwerk en het
+      plaatsen van de stalen latei.</p>
+    </details>
+  </section>
+
+</div>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[
+ {"@type":"Question","name":"Waarom vragen jullie altijd eerst de bouwtekening op bij de gemeente?","acceptedAnswer":{"@type":"Answer","text":"Op de originele bouwtekening van de achtergevel staat de maat van de bestaande opening, de opbouw van de muur en hoe de verdiepingsvloer draagt. Daarmee adviseren we in één keer goed en weet de constructeur direct waar hij aan toe is. De tekening zit in het bouwarchief van uw gemeente; wij verzorgen het opvragen graag."}},
+ {"@type":"Question","name":"Ik wil een bredere opening dan ik nu heb. Kan dat?","acceptedAnswer":{"@type":"Answer","text":"Vrijwel altijd, maar de achtergevel is meestal dragend. Er moet dan eerst een stalen latei of portaal komen, berekend door een erkend constructeur met een constructieberekening. Wij coördineren dat complete traject."}},
+ {"@type":"Question","name":"Heb ik een vergunning nodig voor een schuifpui in de achtergevel?","acceptedAnswer":{"@type":"Answer","text":"Een kozijnwijziging in de achtergevel is in veel gevallen vergunningsvrij, maar dit hangt af van uw situatie en van wat er constructief wijzigt. Wij checken dit standaard vóór de offerte definitief wordt."}},
+ {"@type":"Question","name":"Wat is het verschil tussen een hef-schuifpui en een kiep-schuifpui?","acceptedAnswer":{"@type":"Answer","text":"Een hef-schuifpui tilt de vleugel op waardoor grote, zware vleugels moeiteloos schuiven. Een kiep-schuifpui kantelt eerst naar voren, kan ook op de kiepstand ventileren en is compacter en voordeliger."}}
+]}
+</script>
+
+<script>
+(function(){
+  var f=document.getElementById('spForm');if(!f)return;
+  var start=Date.now(), msg=document.getElementById('spMsg'), btn=document.getElementById('spVerstuur');
+  f.addEventListener('submit',function(e){
+    e.preventDefault();
+    msg.className='sp-fmsg';
+    var d={elapsed:Date.now()-start};
+    ['naam','email','telefoon','adres','plaats','systeem','breedte','hoogte','openingGroter','tekeningHulp','opmerking','website']
+      .forEach(function(n){var el=f.querySelector('[name="'+n+'"]');d[n]=el?el.value:'';});
+    if(!d.naam.trim()||!d.email.trim()){msg.className='sp-fmsg sp-fout';msg.textContent='Vul in ieder geval uw naam en e-mailadres in.';return;}
+    btn.disabled=true;btn.textContent='Versturen\u2026';
+    fetch('/schuifpuien/offerte',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(d)})
+      .then(function(r){return r.json().then(function(j){return{ok:r.ok,j:j};});})
+      .then(function(r){
+        if(r.ok&&r.j.ok){
+          msg.className='sp-fmsg sp-ok';
+          msg.innerHTML='Dank u wel! Uw aanvraag is ontvangen onder nummer <b>'+r.j.nummer+'</b>. U ontvangt een bevestiging per e-mail en wij nemen binnen \u00e9\u00e9n werkdag contact met u op'+
+            (d.tekeningHulp==='ja'?' \u2014 en we starten direct met het opvragen van de gemeentetekening.':'.');
+          f.reset();start=Date.now();
+        }else{
+          msg.className='sp-fmsg sp-fout';msg.textContent=(r.j&&r.j.error)||'Versturen is niet gelukt. Probeer het opnieuw.';
+        }
+      })
+      .catch(function(){msg.className='sp-fmsg sp-fout';msg.textContent='Versturen is niet gelukt. Controleer uw verbinding en probeer het opnieuw.';})
+      .finally(function(){btn.disabled=false;btn.textContent='Verstuur aanvraag';});
+  });
+})();
+</script>
+
+<%- include('schuifpui-voet') %>

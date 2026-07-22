@@ -121,6 +121,64 @@ const KOZI_HTML = `
 </div>
 </section>`;
 
+// ---- Schuifpuien-teaser op de homepage ----
+// Compacte sectie die naar /schuifpuien verwijst; wordt onderaan de
+// homepage-content geplaatst. Styling is spt-genaamruimt.
+const SCHUIFPUI_TEASER_HTML = `
+<section id="spt-intro">
+<style>
+#spt-intro{max-width:1160px;margin:26px auto 10px;padding:0 20px;box-sizing:border-box}
+#spt-intro *{box-sizing:border-box;opacity:1 !important;filter:none !important;animation:none !important}
+#spt-intro .spt-card{background:#161616;border-radius:16px;padding:30px;display:flex;gap:28px;align-items:center;flex-wrap:wrap}
+#spt-intro .spt-vis{flex:0 0 190px}
+#spt-intro .spt-body{flex:1;min-width:280px}
+#spt-intro .spt-tag{display:inline-block;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#e8590c;background:rgba(232,89,12,.14);border-radius:999px;padding:6px 13px;font-weight:600}
+#spt-intro h2{font-size:clamp(22px,3.2vw,30px);font-weight:800;margin:12px 0 0;color:#faf8f4;line-height:1.12}
+#spt-intro p{margin:12px 0 0;font-size:15px;line-height:1.6;color:#c9c3b6;max-width:640px}
+#spt-intro p b{color:#faf8f4}
+#spt-intro .spt-cta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-top:18px}
+#spt-intro .spt-btn{display:inline-block;background:#e8590c;color:#fff;text-decoration:none;font-weight:600;font-size:15px;border-radius:12px;padding:13px 24px}
+#spt-intro .spt-btn:hover{background:#d14e08}
+#spt-intro .spt-link{color:#faf8f4;text-decoration:none;font-weight:600;font-size:14.5px;border-bottom:1px solid rgba(250,248,244,.35)}
+#spt-intro .spt-link:hover{border-color:#e8590c;color:#fff}
+@media(max-width:560px){#spt-intro .spt-vis{flex-basis:100%}}
+</style>
+<div class="spt-card">
+  <div class="spt-vis">
+    <svg viewBox="0 0 200 132" xmlns="http://www.w3.org/2000/svg" aria-label="Schuifpui">
+      <rect x="8" y="8" width="184" height="104" fill="none" stroke="#faf8f4" stroke-width="6"/>
+      <rect x="18" y="18" width="80" height="84" fill="rgba(220,235,242,.16)" stroke="#faf8f4" stroke-width="3"/>
+      <rect x="100" y="14" width="88" height="92" fill="rgba(220,235,242,.28)" stroke="#faf8f4" stroke-width="5"/>
+      <line x1="26" y1="26" x2="62" y2="62" stroke="#faf8f4" stroke-width="2.5" opacity=".5"/>
+      <line x1="108" y1="24" x2="146" y2="62" stroke="#faf8f4" stroke-width="2.5" opacity=".5"/>
+      <g stroke="#e8590c" stroke-width="4.5" fill="none" stroke-linecap="round">
+        <line x1="166" y1="60" x2="122" y2="60"/><path d="M133 50 122 60 133 70"/>
+      </g>
+      <rect x="8" y="112" width="184" height="7" fill="#faf8f4"/>
+    </svg>
+  </div>
+  <div class="spt-body">
+    <span class="spt-tag">Nieuw &middot; Schuifpuien</span>
+    <h2>Schuifpuien op maat &mdash; ook als de muur eruit moet</h2>
+    <p>Drutex hef- en kiep-schuifpuien in kunststof en aluminium, inclusief inmeting en montage. Wilt u een
+    <b>grotere opening</b>? Wij regelen het complete traject: eerst de <b>bouwtekening van de achtergevel bij de gemeente</b>,
+    dan de <b>constructieberekening</b> voor de stalen latei, en dan pas breken.</p>
+    <div class="spt-cta">
+      <a class="spt-btn" href="/schuifpuien">Bekijk de schuifpuien &rarr;</a>
+      <a class="spt-link" href="/schuifpuien/muur-uitbreken">Muur uitbreken? Zo werkt het</a>
+    </div>
+  </div>
+</div>
+</section>`;
+
+function injectSchuifpuiTeaser(body) {
+  if (body.includes('id="spt-intro"')) return body;
+  let insertAt = body.lastIndexOf('</main>');
+  if (insertAt < 0) insertAt = body.lastIndexOf('<footer');
+  if (insertAt < 0) return body;
+  return body.slice(0, insertAt) + SCHUIFPUI_TEASER_HTML + '\n' + body.slice(insertAt);
+}
+
 function injectKozi(body) {
   if (body.includes('id="kozi-intro"')) return body;
   // Plaats vóór het Materialen-blok; met nette terugvalopties.
@@ -255,6 +313,19 @@ function kzSeoInject(body, url) {
   if (body.includes('rel="canonical"')) return body;
   const canon = KZ_SEO_BASE + (url === '/' ? '/' : url.replace(/\/+$/, ''));
   const titel = ((body.match(/<title>([^<]*)<\/title>/i) || [])[1] || 'bestelkozijnenopmaat.nl').trim();
+  // Eigen meta descriptions voor de schuifpui-pagina's (de views renderen
+  // met de site-header, dus de description regelen we hier centraal).
+  const KZ_PATH_DESCR = {
+    '/schuifpuien': 'Drutex schuifpuien op maat: hef-schuifpui (IGLO-HS), kiep-schuifpui (PSK) en aluminium MB-77HS. Inclusief gemeentetekening, constructiecheck, inmeting en montage.',
+    '/schuifpuien/hef-schuifpui': 'Drutex IGLO-HS hef-schuifpui op maat: 7-kamerprofiel, vleugels tot 400 kg, lage drempel en veloursafdichting. Inclusief inmeting en montage.',
+    '/schuifpuien/kiep-schuifpui': 'Drutex PSK kiep-schuifpui op maat: kiepen om te ventileren, schuiven om te openen. Inbraakwerend MACO-beslag, klasse A-profiel. Inclusief montage.',
+    '/schuifpuien/aluminium-schuifpui': 'Drutex MB-77HS aluminium hef-schuifpui: Uw vanaf 0,75, inbouwdiepte 174 of 271 mm, ruim 200 RAL-kleuren. Ideaal bij het vergroten van de gevelopening.',
+    '/schuifpuien/muur-uitbreken': 'Muur wegbreken voor een bredere schuifpui? Zo werkt de stalen latei en de constructieberekening — en waarom de bouwtekening van de gemeente altijd stap 1 is.',
+    '/schuifpuien/werkwijze': 'Onze werkwijze bij schuifpuien in 6 stappen: gemeentetekening opvragen, advies, constructiecheck, gratis inmeting, productie bij Drutex en montage.'
+  };
+  if (KZ_PATH_DESCR[url] && !/<meta\s+name="description"/i.test(body)) {
+    body = body.replace(/<\/head\s*>/i, '<meta name="description" content="' + escAttr(KZ_PATH_DESCR[url]) + '">\n</head>');
+  }
   const descr = ((body.match(/<meta\s+name="description"\s+content="([^"]*)"/i) || [])[1] ||
     'Kozijnen op maat in kunststof, hout en aluminium. Stel je kozijn samen of gebruik de gratis AI-kozijnenscan voor een snelle richtprijs.').trim();
   const ogImg = KZ_SEO_BASE + '/img/og-image.png';
@@ -405,10 +476,25 @@ app.use((req, res, next) => {
           return anchor + clone;
         });
       }
+      // "Schuifpuien" in het menu van elke pagina — zelfde kloontruc als
+      // AI Scan; komt in het menu direct NA Contact te staan, vóór AI Scan.
+      if (typeof body === 'string'
+          && /<a\b[^>]*href=["']\/contact["']/.test(body)
+          && !/<a\b[^>]*href=["']\/schuifpuien["']/.test(body)) {
+        body = body.replace(/(<a\b[^>]*href=["']\/contact["'][^>]*>[\s\S]*?<\/a>)/, (m, anchor) => {
+          const clone = anchor
+            .replace(/href=(["'])\/contact\1/, 'href=$1/schuifpuien$1')
+            .replace(/>[\s\S]*?<\/a>$/, '>Schuifpuien</a>')
+            .replace(/\b(actief|active|is-active|current)\b/g, '')
+            .replace(/class=(["'])\s*\1/g, '');
+          return anchor + clone;
+        });
+      }
       // Kozi-sectie alleen op de homepage
       const kzUrl = (req.originalUrl || req.url || '').split('?')[0];
       if (typeof body === 'string' && kzUrl === '/' && body.includes('</html>')) {
         body = injectKozi(body);
+        body = injectSchuifpuiTeaser(body);
       }
       // Statusfilter op beheerpagina's met een aanvragenlijst
       if (typeof body === 'string' && kzUrl.startsWith('/beheer')
@@ -579,6 +665,8 @@ app.post('/api/konf/dims', async (req, res) => {
 // ---- Sitemap & robots (voor Google Search Console) ----
 const KZ_SITEMAP_PATHS = ['/', '/configurator', '/ai-kozijnenscan',
   '/kozijnen/kunststof', '/kozijnen/hout', '/kozijnen/aluminium',
+  '/schuifpuien', '/schuifpuien/hef-schuifpui', '/schuifpuien/kiep-schuifpui',
+  '/schuifpuien/aluminium-schuifpui', '/schuifpuien/muur-uitbreken', '/schuifpuien/werkwijze',
   '/werkwijze', '/montage', '/veelgestelde-vragen', '/contact',
   '/algemene-voorwaarden', '/privacybeleid'];
 app.get('/sitemap.xml', (req, res) => {
@@ -619,6 +707,11 @@ app.get('/beheer/aanvraag/:id/offerte-download', async (req, res) => {
 // klant vraagt een richtprijs aan. Aanvraag + scan komen in de database
 // en jij krijgt een notificatiemail (NOTIFY_EMAIL).
 app.use('/ai-kozijnenscan', require('./routes/kozijnscan-public')(company, mailer));
+
+// ---- Schuifpuien-sectie (Drutex IGLO-HS / PSK / MB-77HS) ----
+// Publieke contentpagina's + offerteformulier; aanvragen komen in
+// Beheer > Aanvragen via db.createRequest (zelfde flow als de AI-scan).
+app.use('/schuifpuien', require('./routes/schuifpuien')(company, mailer));
 
 // Intern: beheertool (inmetingen invullen, kalibratie, dataset-export).
 // Alleen toegankelijk voor ingelogde gebruikers met rol 'beheer'; voor

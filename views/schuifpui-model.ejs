@@ -1,0 +1,72 @@
+<%- include('schuifpui-kop') %>
+
+<div class="sp-wrap">
+  <nav class="sp-crumb"><a href="/">home</a> / <a href="/schuifpuien">schuifpuien</a> / <%= m.slug %></nav>
+
+  <section class="sp-split">
+    <div>
+      <span class="sp-kicker"><%= m.kort %> &middot; <%= m.materiaal %></span>
+      <h1 class="sp-h1" style="font-size:clamp(28px,4.4vw,42px)"><%= m.naam %></h1>
+      <p class="sp-lead" style="font-size:16.5px"><%= m.intro %></p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-top:24px">
+        <a class="sp-btn" href="/schuifpuien#offerte">Offerte voor dit systeem</a>
+        <a class="sp-btn-l" href="/schuifpuien/werkwijze">Onze werkwijze &rarr;</a>
+      </div>
+    </div>
+    <div class="sp-illu">
+      <%- include('schuifpui-svg', { soort: m.svg }) %>
+      <div class="sp-illu-cap"><%= m.sub.toLowerCase() %></div>
+    </div>
+  </section>
+
+  <section class="sp-sec">
+    <div class="sp-sechead"><span class="sp-secnum">01</span><h2 class="sp-h2">Waarom de <%= m.kort %></h2></div>
+    <div class="sp-grid sp-grid2">
+      <% m.voordelen.forEach(function(v){ %>
+      <div class="sp-card"><div class="sp-card-b">
+        <h3 style="margin-top:0"><%= v[0] %></h3>
+        <p><%= v[1] %></p>
+      </div></div>
+      <% }); %>
+    </div>
+  </section>
+
+  <section class="sp-sec">
+    <div class="sp-sechead"><span class="sp-secnum">02</span><h2 class="sp-h2">Specificaties</h2></div>
+    <div class="sp-card" style="overflow:auto"><table class="sp-spec">
+      <% m.specs.forEach(function(s){ %>
+      <tr><td><%= s[0] %></td><td><%- s[1] %></td></tr>
+      <% }); %>
+    </table></div>
+    <p style="margin:14px 0 0;font-size:13.5px;color:#6b6459">Specificaties volgens opgave van Drutex; de exacte uitvoering en
+    haalbare afmetingen stemmen we af op uw situatie tijdens de inmeting.</p>
+  </section>
+
+  <section class="sp-sec">
+    <div class="sp-sechead"><span class="sp-secnum">03</span><h2 class="sp-h2">Indelingen</h2></div>
+    <div class="sp-grid sp-grid3">
+      <% m.indelingen.forEach(function(i){ %>
+      <div class="sp-card"><div class="sp-card-b">
+        <span class="sp-tag"><%= i[0] %></span>
+        <p style="margin-top:10px"><%= i[1] %></p>
+      </div></div>
+      <% }); %>
+    </div>
+  </section>
+
+  <section class="sp-sec">
+    <div class="sp-noot">
+      <b>Wordt de opening groter dan uw huidige kozijn of pui?</b> Dan is de gevel vrijwel zeker dragend en hoort er een
+      stalen latei met constructieberekening bij. Wij regelen dat traject volledig &mdash; te beginnen met het opvragen van
+      de bouwtekening van uw achtergevel bij de gemeente.
+      <a href="/schuifpuien/muur-uitbreken" style="color:#a13d05;font-weight:600">Lees hoe dat werkt &rarr;</a>
+    </div>
+  </section>
+
+  <section class="sp-sec" style="display:flex;gap:18px;flex-wrap:wrap;align-items:center">
+    <a class="sp-btn" href="/schuifpuien#offerte">Vrijblijvende offerte aanvragen</a>
+    <a class="sp-btn-l" href="/schuifpuien">Alle schuifpuien bekijken &rarr;</a>
+  </section>
+</div>
+
+<%- include('schuifpui-voet') %>
